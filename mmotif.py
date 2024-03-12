@@ -118,3 +118,198 @@ def motif_find(time_series, window, projection_iter, k, project_comp, lsh_thresh
     # Return top k collisions
     return top
 
+def motif_find2(time_series, window, projection_iter, k, project_comp, bin_width, lsh_threshold):
+    random_gen = np.random.default_rng()
+  # Data
+    dimension = time_series.shape[1]
+    num_comp = project_comp
+    top = queue.PriorityQueue(maxsize=k+1)
+  # Extract all subsequences
+    subsequences = []
+    hashed_sub = []
+    index_hash = 0
+    dist_comp = 0
+  # Hasher
+    n_projections = 64
+
+  # Extract all subsequences and z-normalize
+    for i in range(len(time_series) - window + 1):
+        subsequence = time_series[i:i + window]
+        subsequence = (subsequence - np.mean(subsequence)) / np.std(subsequence)
+        subsequences.append(subsequence)
+
+    # LSH repetitions
+    for i in tqdm(range(projection_iter)):
+        collided = False
+        index_hash = 0
+      #Each step has a different hasher
+        hashed_sub = []
+        rp = RandomDiscretizedProjections('rp', n_projections, bin_width)
+        engine = Engine(window, lshashes=[rp])
+        for subsequence in subsequences:
+          hashed_sub.append(np.apply_along_axis(euclidean_hash, 0, subsequence, rp))
+        #Save the couples that we already computed in this iteration
+        already_comp = set()
+
+
+        pj_ts = hashed_sub
+        while not collided:
+          if index_hash > 0:
+            print("Truncating:",index_hash)
+            pj_ts= np.apply_along_axis(truncate, 1, pj_ts, 1)
+        # Compute fingerprints
+            # Create MinHash object
+          minhash_seed = random_gen.integers(0, 2**32 - 1)
+          minhash_signatures = []
+
+          for projected_subsequence in pj_ts:
+              minhash_sig = minhash_signature(projected_subsequence, minhash_seed)
+              minhash_signatures.append(minhash_sig)
+          lsh = MinHashLSH(threshold=lsh_threshold, num_perm=128)
+          for ik, signature in enumerate(minhash_signatures):
+            lsh.insert(ik, signature)
+
+        # Find collisions
+          for j, minhash_sig in enumerate(minhash_signatures):
+                  collisions = lsh.query(minhash_sig)
+                  #print(collisions)
+                  if len(collisions) > 1:
+                      collided = True
+                      # Remove trivial matches, same subsequence or overlapping subsequences
+                      collisions = [sorted((j, c)) for c in collisions if c != j and abs(c - j) > window]
+                      #print(collisions)
+                      curr_dist = 0
+                      for collision in collisions:
+                          add = True
+
+                        # If we already computed this couple skip
+                          if tuple(collision) in already_comp:
+                            add=False
+                            break
+
+                          # Check overlap with the already computed
+                          for stored in top.queue:
+                            #Access the collision
+                            stored_dist = abs(stored[0])
+                            stored_el = stored[1]
+                            stored_el1 = stored_el[1]
+                            #stored = stored[1][0]
+                            # If it's the same couple skip
+                            if(collision == stored_el1):
+                              add = False
+                              break
+                            # If it's an overlap of both indices, keep the one with the smallest distance
+                            if (abs(collision[0] - stored_el1[0]) < window and
+                                abs(collision[1] - stored_el1[1]) < window):
+                                curr_dist = z_normalized_euclidean_distance(subsequences[collision[0]], subsequences[collision[1]], np.arange(dimension))
+                                if curr_dist < stored_dist:
+                                  top.queue.remove(stored)
+                                  top.put((-curr_dist, [dist_comp, collision]))
+                                  already_comp.add(tuple(collision))
+                                  add = False
+                                  break
+
+                          # Add to top with the projection index
+                          if add:
+                            dist_comp +=1
+                            distance = z_normalized_euclidean_distance(subsequences[collision[0]], subsequences[collision[1]], np.arange(dimension))
+                            top.put((-distance, [dist_comp , collision]))
+                            already_comp.add(tuple(collision))
+                            if top.full(): top.get(block=False)
+          # Repeat with K-1 hashes
+          if not collided:
+            index_hash +=1          
+
+    # Return top k collisions
+    return top, dist_comp
+    
+def motif_find3(time_series, window, projection_iter, k, project_comp, bin_width, lsh_threshold):
+    random_gen = np.random.default_rng()
+  # Data
+    dimension = time_series.shape[1]
+    num_comp = project_comp
+    top = queue.PriorityQueue(maxsize=k+1)
+  # Extract all subsequences
+    subsequences = []
+    hashed_sub = []
+    index_hash = 0
+    dist_comp = 0
+  # Hasher
+    n_projections = 64
+
+  # Extract all subsequences and z-normalize
+    for i in range(len(time_series) - window + 1):
+        subsequence = time_series[i:i + window]
+        subsequence = (subsequence - np.mean(subsequence)) / np.std(subsequence)
+        subsequences.append(subsequence)
+
+    # LSH repetitions
+    for i in tqdm(range(projection_iter)):
+      #Each step has a different hasher
+        hashed_sub = []
+        rp = RandomDiscretizedProjections('rp', n_projections, bin_width)
+        engine = Engine(window, lshashes=[rp])
+        for subsequence in subsequences:
+          hashed_sub.append(np.apply_along_axis(euclidean_hash, 0, subsequence, rp))
+        #Save the couples that we already computed in this iteration
+        already_comp = set()
+
+
+        pj_ts = hashed_sub
+        if index_hash > 0:
+          pj_ts= np.apply_along_axis(truncate, 1, pj_ts, index_hash)
+      # Compare the subsequences and find those whose at least two dimensions match
+        collisions = []
+      # Find collisions
+        for j, minhash_sig in enumerate(minhash_signatures):
+                collisions = lsh.query(minhash_sig)
+                 #print(collisions)
+                if len(collisions) > 1:
+                    # Remove trivial matches, same subsequence or overlapping subsequences
+                    collisions = [sorted((j, c)) for c in collisions if c != j and abs(c - j) > window]
+                    #print(collisions)
+                    curr_dist = 0
+                    for collision in collisions:
+                        add = True
+
+                      # If we already computed this couple skip
+                        if tuple(collision) in already_comp:
+                         add=False
+                         break
+
+                        # Check overlap with the already computed
+                        for stored in top.queue:
+                          #Access the collision
+                          stored_dist = abs(stored[0])
+                          stored_el = stored[1]
+                          stored_el1 = stored_el[1]
+                          #stored = stored[1][0]
+                          # If it's the same couple skip
+                          if(collision == stored_el1):
+                            add = False
+                            break
+                          # If it's an overlap of both indices, keep the one with the smallest distance
+                          if (abs(collision[0] - stored_el1[0]) < window and
+                              abs(collision[1] - stored_el1[1]) < window):
+                              curr_dist = z_normalized_euclidean_distance(subsequences[collision[0]], subsequences[collision[1]], np.arange(dimension))
+                              if curr_dist < stored_dist:
+                                top.queue.remove(stored)
+                                top.put((-curr_dist, [dist_comp, collision]))
+                                already_comp.add(tuple(collision))
+                                add = False
+                                break
+
+                        # Add to top with the projection index
+                        if add:
+                          dist_comp +=1
+                          distance = z_normalized_euclidean_distance(subsequences[collision[0]], subsequences[collision[1]], np.arange(dimension))
+                          top.put((-distance, [dist_comp , collision]))
+                          already_comp.add(tuple(collision))
+                          if top.full(): top.get(block=False)
+
+        if top.empty():
+          index_hash +=1
+          print(index_hash)
+
+    # Return top k collisions
+    return top, dist_comp
