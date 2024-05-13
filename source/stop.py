@@ -1,11 +1,14 @@
 from scipy.stats import norm
 import numpy as np
+from numba import jit
 
+@jit(parallel=True, nopython=True)
 def p(d, r):
     first_term = 1 - 2 * norm.cdf(-r / d)
     second_term = -2 / (np.sqrt(2 * np.pi) * r / d) * (1 - np.exp(-r**2 / (2 * d**2)))
     return first_term + second_term
 
+@jit(parallel=True, nopython=True)
 def stop(collision, jacc, b, s, i, j, threshold, K, L, r, dim):
   '''
     Returns true if the probability of having missed a pair at distance d(collision)

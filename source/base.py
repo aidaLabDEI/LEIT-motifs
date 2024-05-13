@@ -62,7 +62,7 @@ def find_collisions(lsh, query_signature):
 
     return result
 
-@jit(parallel=True, nopython=True)
+
 def process_chunk(time_series, ranges, window, rp):
     mean_container = {}
     std_container = {}
