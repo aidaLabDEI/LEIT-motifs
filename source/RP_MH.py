@@ -15,16 +15,18 @@ from datasketch import MinHashLSH, MinHash
 
 
 
-def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold, already_comp):
+def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
+        # Initialize variables
         K = subsequences.K
         dimensionality = subsequences.d
         window = subsequences.w
-        top = queue.PriorityQueue()
+        top = queue.PriorityQueue(k+1)
         random_gen = np.random.default_rng()
-        #pj_ts = np.empty([subsequences.dimensionality, subsequences.num_sub, K], dtype= np.int8)
 
+        # Extract the repetition we are working with, cut at the index
         pj_ts = hash_mat[:,j,:,:-i] if not i==0 else hash_mat[:,j,:,:]
 
+        # Count the number of distance computations
         dist_comp= 0
 
             # Compute fingerprints
@@ -36,22 +38,27 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold, already_comp):
               for ik, signature in enumerate(MinHash.generator(pj_ts, num_perm=int((K)/2), seed=minhash_seed)):
                 minhash_signatures.append(signature)
                 session.insert(ik, signature)
-            # Find collisions
+
+        # Find collisions
         for j, minhash_sig in enumerate(minhash_signatures):
                     collisions = lsh.query(minhash_sig)
                     #print(collisions)
-                    if len(collisions) > 1:
+                    if len(collisions) >= 1:
                         # Remove trivial matches, same subsequence or overlapping subsequences
                         collisions = [sorted((j, c)) for c in collisions if c != j and abs(c - j) > window]
-                        #print(collisions)
                         curr_dist = 0
+
                         for collision in collisions:
                             add = True
-
-                        # If we already computed this couple skip
-                            if tuple(collision) in already_comp:
-                                add=False
+                            # If they collide at the previous level, skip
+                            if not i == 0:
+                              rows = hash_mat[collision[0],j,:,:] == hash_mat[collision[1],j,:,:]
+                              comp = np.any(np.all(rows[:,:K-i], axis=1))
+                              if comp:
+                                print("Skipped")
+                                add = False
                                 break
+
                         # If already inserted skip
                             if( any(collision == stored_el1 for _, (_, stored_el1, _ , _) in top.queue)):
                                 add = False
@@ -63,28 +70,27 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold, already_comp):
                                 stored_dist = abs(stored[0])
                                 stored_el = stored[1]
                                 stored_el1 = stored_el[1]
-                                #stored = stored[1][0]
+                                
                                 # If it's an overlap of both indices, keep the one with the smallest distance
-
                                 if (abs(collision[0] - stored_el1[0]) < window or
                                     abs(collision[1] - stored_el1[1]) < window or
                                     abs(collision[0] - stored_el1[1]) < window or
                                     abs(collision[1] - stored_el1[0]) < window):
+
                                   # Distance is computed only on distances that match
                                     dim = pj_ts[collision[0]] == pj_ts[collision[1]]
                                     dim = np.all(dim, axis=1)
                                     dim = [i for i, elem in enumerate(dim) if elem == True]
 
-                                    #print(dim)
                                     if len(dim) < dimensionality: break
                                     dist_comp += 1
                                     curr_dist, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(collision[0]), subsequences.sub(collision[1]),
                                                                                 dim, subsequences.mean(collision[0]), subsequences.std(collision[0]),
                                                                            subsequences.mean(collision[1]), subsequences.std(collision[1]), dimensionality)
-                                    if curr_dist/len(dim) < stored_dist:
+                                    if curr_dist < stored_dist:
                                         top.queue.remove(stored)
                                         top.put((-curr_dist, [dist_comp, collision, [dim], stop_dist]))
-                                        already_comp.add(tuple(collision))
+
                                     collided = True
                                     add = False
                                     break
@@ -102,17 +108,17 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold, already_comp):
                                                                            dim, subsequences.mean(collision[0]), subsequences.std(collision[0]),
                                                                            subsequences.mean(collision[1]), subsequences.std(collision[1]), dimensionality)
                                 top.put((-distance, [dist_comp , collision, [dim], stop_dist]))
-                                already_comp.add(tuple(collision))
+
                                 if top.full(): top.get(block=False)
                                 collided = True
 
     # Return top k collisions
-        #print("Computed len:", len(already_comp))
-        return top, dist_comp, already_comp
+        #print("Computed len:", len(top.queue))
+        return top, dist_comp
 
 def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
 
-    global dist_comp, dimension, b, s, already_comp, top, failure_thresh
+    global dist_comp, dimension, b, s, top, failure_thresh, hash_mat
 
     random_gen = np.random.default_rng()
   # Data
@@ -162,22 +168,20 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
     global stopped_event
     stopped_event = threading.Event()
     stopped_event.clear()
-    already_comp = [set() for num in range(L)]
 
     #cProfile.runctx("minhash_cycle(i, windowed_ts, hash_mat, k, lsh_threshold, K)",
      #                 {'minhash_cycle':minhash_cycle},
       #                 {'i':0, 'windowed_ts':windowed_ts, 'hash_mat':hash_mat, 'k':k, 'lsh_threshold':lsh_threshold, 'K':K})
 
     def worker(i,j, K,L, r, motif_dimensionality, dimensions, k):
-        global stopped_event, dist_comp, already_comp, b, s, top, failure_thresh
-        top_i, dist_comp_i, already_comp_i = minhash_cycle(i, j, windowed_ts, hash_mat, k, lsh_threshold, already_comp[j])
+        global stopped_event, dist_comp, b, s, top, failure_thresh, hash_mat
+        top_i, dist_comp_i = minhash_cycle(i, j, windowed_ts, hash_mat, k, lsh_threshold)
         element = 0
         with lock:
-            # Since it's nodified in place theres (should be) no need
-            already_comp[j].update(already_comp_i)
 
             top.queue.extend(top_i.queue)
             top.queue.sort(reverse=True)
+
             for id, elem in enumerate(top.queue):
                 for elem2 in top.queue[id+1:]:
 
@@ -192,18 +196,17 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
                       top.queue.remove(elem)
                     else:
                       top.queue.remove(elem2)
-
+            
             top.queue = top.queue[:k]
             dist_comp += dist_comp_i
             element = top.queue[-1]
             length = len(top.queue)
-        if top.empty():
-              pass
+        if top.empty(): pass
         else:
               ss_val = stop(element, motif_dimensionality/dimensions, b,s, i, j, failure_thresh, K, L, r, motif_dimensionality)
-              print("Stop:", ss_val, length)
+              #print("Stop:", ss_val, length)
               if length >= k and ss_val:
-                  print("set exit")
+                  print("Set exit")
                   stopped_event.set()
 
     with ThreadPoolExecutor() as executor:
