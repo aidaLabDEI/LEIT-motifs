@@ -63,9 +63,9 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                                 break
 
                         # If already inserted skip
-                            if( any(collision == stored_el1 for _, (_, stored_el1, _ , _) in top.queue)):
-                                add = False
-                                break
+                            #if( any(collision == stored_el1 for _, (_, stored_el1, _ , _) in top.queue)):
+                             #   add = False
+                               # break
 
                             # Check overlap with the already computed
                             for stored in top.queue:
