@@ -4,6 +4,7 @@ from nearpy.hashes import RandomDiscretizedProjections
 from datasketch import MinHashLSH, MinHash
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from numba import jit
 
 
 class WindowedTS:
@@ -32,6 +33,7 @@ def euclidean_hash(data, rp):
   hash_str = rp.hash_vector(data)
   return list(map(np.int8, hash_str[0].split('_')))
 
+@njit(parallel=True)
 def z_normalized_euclidean_distance(ts1, ts2, indices, mean_ts1, std_ts1, mean_ts2, std_ts2, dimensionality = None):
     # Ensure both time series have the same dimensions
     if ts1.shape != ts2.shape:
@@ -60,6 +62,7 @@ def find_collisions(lsh, query_signature):
 
     return result
 
+@njit(parallel=True)
 def process_chunk(time_series, ranges, window, rp):
     mean_container = {}
     std_container = {}
@@ -88,6 +91,7 @@ def process_chunk(time_series, ranges, window, rp):
 
     return hash_mat, std_container, mean_container, subsequences
 
+@njit(parallel=True)
 def relative_contrast(ts, pair, window):
   dimensions = ts.shape[1]
   d, _ = z_normalized_euclidean_distance(ts[pair[0]:pair[0]+window],ts[pair[1]:pair[1]+window], np.arange(dimensions),
@@ -111,6 +115,7 @@ def relative_contrast(ts, pair, window):
 
   return d_hat/d
 
+@njit(parallel=True)
 def find_all_occur(ts, motifs, window):
   motif_copy = motifs
   for motif in motif_copy:
