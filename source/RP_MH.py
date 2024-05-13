@@ -49,12 +49,15 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                         curr_dist = 0
 
                         for collision in collisions:
+                            coll_0 = collision[0]
+                            coll_1 = collision[1]
+
                             add = True
                             # If they collide at the previous level, skip
                             if not i == 0:
-                              rows = hash_mat[collision[0],j,:,:] == hash_mat[collision[1],j,:,:]
-                              comp = np.any(np.all(rows[:,:K-i], axis=1))
-                              if comp:
+                              rows = hash_mat[coll_0,j,:,:] == hash_mat[coll_1,j,:,:]
+                              comp = np.sum(np.all(rows[:,:K-i], axis=1))
+                              if comp >= dimensionality:
                                 #print("Skipped")
                                 add = False
                                 break
@@ -70,23 +73,26 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                                 stored_dist = abs(stored[0])
                                 stored_el = stored[1]
                                 stored_el1 = stored_el[1]
+
+                                stor_0 = stored_el1[0]
+                                stor_1 = stored_el1[1]
                                 
                                 # If it's an overlap of both indices, keep the one with the smallest distance
-                                if (abs(collision[0] - stored_el1[0]) < window or
-                                    abs(collision[1] - stored_el1[1]) < window or
-                                    abs(collision[0] - stored_el1[1]) < window or
-                                    abs(collision[1] - stored_el1[0]) < window):
+                                if (abs(coll_0 - stor_0) < window or
+                                    abs(coll_1 - stor_1) < window or
+                                    abs(coll_0 - stor_1) < window or
+                                    abs(coll_1 - stor_0) < window):
 
                                   # Distance is computed only on distances that match
-                                    dim = pj_ts[collision[0]] == pj_ts[collision[1]]
+                                    dim = pj_ts[coll_0] == pj_ts[coll_1]
                                     dim = np.all(dim, axis=1)
                                     dim = [i for i, elem in enumerate(dim) if elem == True]
 
                                     if len(dim) < dimensionality: break
                                     dist_comp += 1
-                                    curr_dist, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(collision[0]), subsequences.sub(collision[1]),
-                                                                                np.array(dim), subsequences.mean(collision[0]), subsequences.std(collision[0]),
-                                                                           subsequences.mean(collision[1]), subsequences.std(collision[1]), dimensionality)
+                                    curr_dist, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
+                                                                                np.array(dim), subsequences.mean(coll_0), subsequences.std(coll_0),
+                                                                           subsequences.mean(coll_1), subsequences.std(coll_1), dimensionality)
                                     if curr_dist < stored_dist:
                                         top.queue.remove(stored)
                                         top.put((-curr_dist, [dist_comp, collision, [dim], stop_dist]))
@@ -99,14 +105,14 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                             if add:
 
                                 # Pick just the equal dimensions to compute the distance
-                                dim = pj_ts[collision[0]] == pj_ts[collision[1]]
+                                dim = pj_ts[coll_0] == pj_ts[coll_1]
                                 dim = np.all(dim, axis=1)
                                 dim = [i for i, elem in enumerate(dim) if elem == True]
                                 if len(dim) < dimensionality: break
                                 dist_comp +=1
-                                distance, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(collision[0]), subsequences.sub(collision[1]),
-                                                                           np.array(dim), subsequences.mean(collision[0]), subsequences.std(collision[0]),
-                                                                           subsequences.mean(collision[1]), subsequences.std(collision[1]), dimensionality)
+                                distance, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
+                                                                           np.array(dim), subsequences.mean(coll_0), subsequences.std(coll_0),
+                                                                           subsequences.mean(coll_1), subsequences.std(coll_1), dimensionality)
                                 top.put((-distance, [dist_comp , collision, [dim], stop_dist]))
 
                                 if top.full(): top.get(block=False)
@@ -116,7 +122,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
         #print("Computed len:", len(top.queue))
         return top, dist_comp
 
-def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
+def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.98):
 
     global dist_comp, dimension, b, s, top, failure_thresh, hash_mat
 
