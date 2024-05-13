@@ -4,7 +4,7 @@ from nearpy.hashes import RandomDiscretizedProjections
 from datasketch import MinHashLSH, MinHash
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from numba import jit
+from numba import jit, njit
 
 
 class WindowedTS:
