@@ -33,7 +33,7 @@ def euclidean_hash(data, rp):
   hash_str = rp.hash_vector(data)
   return list(map(np.int8, hash_str[0].split('_')))
 
-@jit(parallel=True, nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def z_normalized_euclidean_distance(ts1, ts2, indices, mean_ts1, std_ts1, mean_ts2, std_ts2, dimensionality = None):
     # Ensure both time series have the same dimensions
     if ts1.shape != ts2.shape:
@@ -44,7 +44,7 @@ def z_normalized_euclidean_distance(ts1, ts2, indices, mean_ts1, std_ts1, mean_t
     ts2 = ts2[indices]
 
     # Z-normalize each dimension separately
-    ts1_normalized = (ts1 - mean_ts1[indices,np.newaxis]) / std_ts1[indices, np.newaxis]
+    ts1_normalized = (ts1 - mean_ts1[indices, np.newaxis]) / std_ts1[indices, np.newaxis]
     ts2_normalized = (ts2 - mean_ts2[indices, np.newaxis]) / std_ts2[indices, np.newaxis]
 
     # Compute squared differences and sum them
