@@ -55,7 +55,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                               rows = hash_mat[collision[0],j,:,:] == hash_mat[collision[1],j,:,:]
                               comp = np.any(np.all(rows[:,:K-i], axis=1))
                               if comp:
-                                print("Skipped")
+                                #print("Skipped")
                                 add = False
                                 break
 
@@ -162,7 +162,7 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
 
     windowed_ts = WindowedTS(subsequences, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
-    print("Hashing finished")
+    #print("Hashing finished")
     lock = threading.Lock()
 
     global stopped_event
@@ -206,14 +206,14 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
               ss_val = stop(element, motif_dimensionality/dimensions, b,s, i, j, failure_thresh, K, L, r, motif_dimensionality)
               #print("Stop:", ss_val, length)
               if length >= k and ss_val:
-                  print("Set exit")
+                 # print("Set exit")
                   stopped_event.set()
 
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(worker, i, j, K, L, bin_width, motif_dimensionality, dimension, k) for i in range(K) for j in range(L)]
-        with tqdm(total=L*K, desc="Iteration") as pbar:
-            for future in as_completed(futures):
-                pbar.update()
+        #with tqdm(total=L*K, desc="Iteration") as pbar:
+        for future in as_completed(futures):
+                #pbar.update()
                 if stopped_event.is_set():  # Check if the stop event is set
                     executor.shutdown(wait= False, cancel_futures= True)
                     break
