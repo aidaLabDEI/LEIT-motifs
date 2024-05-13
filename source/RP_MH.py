@@ -85,7 +85,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                                     if len(dim) < dimensionality: break
                                     dist_comp += 1
                                     curr_dist, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(collision[0]), subsequences.sub(collision[1]),
-                                                                                dim, subsequences.mean(collision[0]), subsequences.std(collision[0]),
+                                                                                np.array(dim), subsequences.mean(collision[0]), subsequences.std(collision[0]),
                                                                            subsequences.mean(collision[1]), subsequences.std(collision[1]), dimensionality)
                                     if curr_dist < stored_dist:
                                         top.queue.remove(stored)
@@ -105,7 +105,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                                 if len(dim) < dimensionality: break
                                 dist_comp +=1
                                 distance, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(collision[0]), subsequences.sub(collision[1]),
-                                                                           dim, subsequences.mean(collision[0]), subsequences.std(collision[0]),
+                                                                           np.array(dim), subsequences.mean(collision[0]), subsequences.std(collision[0]),
                                                                            subsequences.mean(collision[1]), subsequences.std(collision[1]), dimensionality)
                                 top.put((-distance, [dist_comp , collision, [dim], stop_dist]))
 
