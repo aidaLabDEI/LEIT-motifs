@@ -208,7 +208,7 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
         if top.empty(): pass
         else:
               ss_val = stop(element, motif_dimensionality/dimensions, b,s, i, j, failure_thresh, K, L, r, motif_dimensionality)
-              #print("Stop:", ss_val, length)
+              print("Stop:", ss_val, length)
               if length >= k and ss_val:
                  # print("Set exit")
                   stopped_event.set()
