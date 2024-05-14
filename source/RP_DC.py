@@ -177,6 +177,9 @@ def pmotif_find3(time_series, window, projection_iter, k, motif_dimensionality, 
         with lock:
             top.queue.extend(top_i.queue)
             top.queue.sort(reverse=True)
+            length = len(top.queue)
+            if length == 0: return
+            
             for id, elem in enumerate(top.queue):
                 for elem2 in top.queue[id+1:]:
 
@@ -194,9 +197,9 @@ def pmotif_find3(time_series, window, projection_iter, k, motif_dimensionality, 
 
             top.queue = top.queue[:k]
             dist_comp += dist_comp_i
-            element = top.queue[-1]
-            length = len(top.queue)
-        if top.empty():
+            element = top.queue[0]
+
+        if length == 0:
               pass
         else:
               ss_val = stop(element, motif_dimensionality/dimensions, b,s, i, j, failure_thresh, K, L, r, motif_dimensionality)

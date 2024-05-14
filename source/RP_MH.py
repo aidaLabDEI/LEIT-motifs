@@ -178,6 +178,8 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
       #                 {'i':0, 'windowed_ts':windowed_ts, 'hash_mat':hash_mat, 'k':k, 'lsh_threshold':lsh_threshold, 'K':K})
 
     def worker(i,j, K,L, r, motif_dimensionality, dimensions, k):
+        pr = cProfile.Profile()
+        pr.enable()
         global stopped_event, dist_comp, b, s, top, failure_thresh, hash_mat
         top_i, dist_comp_i = minhash_cycle(i, j, windowed_ts, hash_mat, k, lsh_threshold)
         element = 0
@@ -203,13 +205,15 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
             
             top.queue = top.queue[:k]
             dist_comp += dist_comp_i
-            element = top.queue[-1]
+            element = top.queue[0]
             length = len(top.queue)
-        if top.empty(): pass
+        if length == 0: pass
         else:
               ss_val = stop(element, motif_dimensionality/dimensions, b,s, i, j, failure_thresh, K, L, r, motif_dimensionality)
               print("Stop:", ss_val, length)
               if length >= k and ss_val:
+                  pr.disable()
+                  pr.print_stats(sort='cumtime')
                  # print("Set exit")
                   stopped_event.set()
 
