@@ -97,7 +97,6 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                                         top.queue.remove(stored)
                                         top.put((-curr_dist, [dist_comp, collision, [dim], stop_dist]))
 
-                                    collided = True
                                     add = False
                                     break
 
@@ -116,7 +115,6 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                                 top.put((-distance, [dist_comp , collision, [dim], stop_dist]))
 
                                 if top.full(): top.get(block=False)
-                                collided = True
 
     # Return top k collisions
         #print("Computed len:", len(top.queue))
@@ -168,7 +166,7 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
 
     windowed_ts = WindowedTS(subsequences, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
-    #print("Hashing finished")
+    print("Hashing finished")
     lock = threading.Lock()
 
     global stopped_event

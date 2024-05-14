@@ -19,7 +19,7 @@ def find_matching_pairs(index, proj_hashes):
       dictionary.setdefault(np.array2string(el), []).append(num_sub)
     return [(pair, index) for key, value in dictionary.items() for pair in itertools.combinations(value, 2)]
 
-def eq_cycle(i, j, subsequences, hash_mat, k, lsh_threshold, already_comp):
+def eq_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
         K = subsequences.K
         dimensionality = subsequences.dimensionality
         dimensionality_motifs = subsequences.d
@@ -43,12 +43,18 @@ def eq_cycle(i, j, subsequences, hash_mat, k, lsh_threshold, already_comp):
 
         # Check between the collisions all the valid ones
         for collision_couple, coll_dim in matching_pairs_with_indices:
-            if len(coll_dim) >= dimensionality_motifs and abs(collision_couple[1]-collision_couple[0]) > window:
+            coll_0 = collision_couple[0]
+            coll_1 = collision_couple[1]
+            if len(coll_dim) >= dimensionality_motifs and abs(coll_0-coll_1) > window:
                             add = True
 
                         # If we already computed this couple skip
-                            if collision_couple in already_comp:
-                                add=False
+                            if not i == 0:
+                              rows = hash_mat[coll_0,j,:,:] == hash_mat[coll_1,j,:,:]
+                              comp = np.sum(np.all(rows[:,:K-i], axis=1))
+                              if comp >= dimensionality:
+                                #print("Skipped")
+                                add = False
                                 break
                         # If already inserted skip
                             if( any(collision_couple == stored_el1 for _, (_, stored_el1, _ , _) in top.queue)):
@@ -60,25 +66,30 @@ def eq_cycle(i, j, subsequences, hash_mat, k, lsh_threshold, already_comp):
                                 stored_dist = abs(stored[0])
                                 stored_el = stored[1]
                                 stored_el1 = stored_el[1]
-                                #stored = stored[1][0]
+
+                                stor_0 = stored_el1[0]
+                                stor_1 = stored_el1[1]
+                                
                                 # If it's an overlap of both indices, keep the one with the smallest distance
+                                if (abs(coll_0 - stor_0) < window or
+                                    abs(coll_1 - stor_1) < window or
+                                    abs(coll_0 - stor_1) < window or
+                                    abs(coll_1 - stor_0) < window):
 
-                                if (abs(collision_couple[0] - stored_el1[0]) < window or
-                                    abs(collision_couple[1] - stored_el1[1]) < window or
-                                    abs(collision_couple[0] - stored_el1[1]) < window or
-                                    abs(collision_couple[1] - stored_el1[0]) < window):
                                   # Distance is computed only on distances that match
-                                    dim = coll_dim
+                                    dim = pj_ts[coll_0] == pj_ts[coll_1]
+                                    dim = np.all(dim, axis=1)
+                                    dim = [i for i, elem in enumerate(dim) if elem == True]
 
+                                    if len(dim) < dimensionality: break
                                     dist_comp += 1
-                                    curr_dist, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(collision_couple[0]), subsequences.sub(collision_couple[1]),
-                                                                                dim, subsequences.mean(collision_couple[0]), subsequences.std(collision_couple[0]),
-                                                                           subsequences.mean(collision_couple[1]), subsequences.std(collision_couple[1]), dimensionality_motifs)
-                                    if curr_dist/len(dim) < stored_dist:
+                                    curr_dist, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
+                                                                                np.array(dim), subsequences.mean(coll_0), subsequences.std(coll_0),
+                                                                           subsequences.mean(coll_1), subsequences.std(coll_1), dimensionality)
+                                    if curr_dist < stored_dist:
                                         top.queue.remove(stored)
-                                        top.put((-curr_dist, [dist_comp, collision_couple, [dim], stop_dist]))
-                                        already_comp.add(collision_couple)
-                                    collided = True
+                                        top.put((-curr_dist, [dist_comp, collision, [dim], stop_dist]))
+
                                     add = False
                                     break
 
@@ -86,26 +97,25 @@ def eq_cycle(i, j, subsequences, hash_mat, k, lsh_threshold, already_comp):
                             if add:
 
                                 # Pick just the equal dimensions to compute the distance
-                                dim = pj_ts[collision_couple[0]] == pj_ts[collision_couple[1]]
-                                dim = coll_dim
-
+                                dim = pj_ts[coll_0] == pj_ts[coll_1]
+                                dim = np.all(dim, axis=1)
+                                dim = [i for i, elem in enumerate(dim) if elem == True]
+                                if len(dim) < dimensionality: break
                                 dist_comp +=1
-                                distance, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(collision_couple[0]), subsequences.sub(collision_couple[1]),
-                                                                           dim, subsequences.mean(collision_couple[0]), subsequences.std(collision_couple[0]),
-                                                                           subsequences.mean(collision_couple[1]), subsequences.std(collision_couple[1]), dimensionality_motifs)
-                                top.put((-distance, [dist_comp , collision_couple, [dim], stop_dist]))
+                                distance, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
+                                                                           np.array(dim), subsequences.mean(coll_0), subsequences.std(coll_0),
+                                                                           subsequences.mean(coll_1), subsequences.std(coll_1), dimensionality)
+                                top.put((-distance, [dist_comp , collision, [dim], stop_dist]))
 
-                                already_comp.add(collision_couple)
                                 if top.full(): top.get(block=False)
-                                collided = True
 
     # Return top k collisions
         #print("Computed len:", len(already_comp))
-        return top, dist_comp, already_comp
+        return top, dist_comp
 
 def pmotif_find3(time_series, window, projection_iter, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
 
-    global dist_comp, dimension, b, s, already_comp, top, failure_thresh
+    global dist_comp, dimension, b, s, top, failure_thresh
 
     random_gen = np.random.default_rng()
   # Data
@@ -155,7 +165,6 @@ def pmotif_find3(time_series, window, projection_iter, k, motif_dimensionality, 
     global stopped_event
     stopped_event = threading.Event()
     stopped_event.clear()
-    already_comp = [set() for num in range(L)]
 
     #cProfile.runctx("minhash_cycle(i, windowed_ts, hash_mat, k, lsh_threshold, K)",
      #                 {'minhash_cycle':minhash_cycle},
@@ -163,12 +172,9 @@ def pmotif_find3(time_series, window, projection_iter, k, motif_dimensionality, 
 
     def worker(i,j, K,L, r, motif_dimensionality, dimensions, k):
         global stopped_event, dist_comp, already_comp, b, s, top, failure_thresh
-        top_i, dist_comp_i, already_comp_i = eq_cycle(i, j, windowed_ts, hash_mat, k, lsh_threshold, already_comp[j])
+        top_i, dist_comp_i, already_comp_i = eq_cycle(i, j, windowed_ts, hash_mat, k, lsh_threshold)
         element = 0
         with lock:
-            # Since it's nodified in place theres (should be) no need
-            already_comp[j].update(already_comp_i)
-
             top.queue.extend(top_i.queue)
             top.queue.sort(reverse=True)
             for id, elem in enumerate(top.queue):
