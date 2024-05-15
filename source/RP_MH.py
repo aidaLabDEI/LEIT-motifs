@@ -28,12 +28,12 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
 
         # Count the number of distance computations
         dist_comp= 0
-
             # Compute fingerprints
                 # Create MinHash object
         minhash_seed = random_gen.integers(0, 2**32 - 1)
         minhash_signatures = []
         lsh = MinHashLSH(threshold=lsh_threshold, num_perm=int(K/2))
+        
         with lsh.insertion_session() as session:
               for ik, signature in enumerate(MinHash.generator(pj_ts, num_perm=int((K)/2), seed=minhash_seed)):
                 minhash_signatures.append(signature)
@@ -76,7 +76,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
 
                                 stor_0 = stored_el1[0]
                                 stor_1 = stored_el1[1]
-                                
+
                                 # If it's an overlap of both indices, keep the one with the smallest distance
                                 if (abs(coll_0 - stor_0) < window or
                                     abs(coll_1 - stor_1) < window or
@@ -122,7 +122,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
 
 def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.98):
 
-    global dist_comp, dimension, b, s, top, failure_thresh, hash_mat
+    global dist_comp, dimension, b, s, top, failure_thresh
 
     random_gen = np.random.default_rng()
   # Data
@@ -180,13 +180,14 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
     def worker(i,j, K,L, r, motif_dimensionality, dimensions, k):
         pr = cProfile.Profile()
         pr.enable()
-        global stopped_event, dist_comp, b, s, top, failure_thresh, hash_mat
+        global stopped_event, dist_comp, b, s, top, failure_thresh
         top_i, dist_comp_i = minhash_cycle(i, j, windowed_ts, hash_mat, k, lsh_threshold)
-        element = 0
+        element = None
+        length = 0
         with lock:
-
             top.queue.extend(top_i.queue)
             top.queue.sort(reverse=True)
+            length = len(top.queue)  
 
             for id, elem in enumerate(top.queue):
                 for elem2 in top.queue[id+1:]:
@@ -202,26 +203,29 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
                       top.queue.remove(elem)
                     else:
                       top.queue.remove(elem2)
-            
+
             top.queue = top.queue[:k]
             dist_comp += dist_comp_i
-            element = top.queue[0]
-            length = len(top.queue)
-        if length == 0: pass
+            if length != 0:
+              element = top.queue[0]
+
+        if length == 0:
+              pass
         else:
               ss_val = stop(element, motif_dimensionality/dimensions, b,s, i, j, failure_thresh, K, L, r, motif_dimensionality)
               print("Stop:", ss_val, length)
               if length >= k and ss_val:
-                  pr.disable()
-                  pr.print_stats(sort='cumtime')
-                 # print("Set exit")
-                  stopped_event.set()
+                pr.disable()
+                pr.print_stats(sort="tottime")
+
+                  #print("set exit")
+                stopped_event.set()
 
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(worker, i, j, K, L, bin_width, motif_dimensionality, dimension, k) for i in range(K) for j in range(L)]
-        #with tqdm(total=L*K, desc="Iteration") as pbar:
-        for future in as_completed(futures):
-                #pbar.update()
+        with tqdm(total=L*K, desc="Iteration") as pbar:
+            for future in as_completed(futures):
+                pbar.update()
                 if stopped_event.is_set():  # Check if the stop event is set
                     executor.shutdown(wait= False, cancel_futures= True)
                     break

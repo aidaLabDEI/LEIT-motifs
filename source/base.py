@@ -55,17 +55,16 @@ def z_normalized_euclidean_distance(ts1, ts2, indices, mean_ts1, std_ts1, mean_t
       min_indices_corr = min_indices[:dimensionality]
       sum = np.sum(squared_diff_sum[min_indices_corr])
 
-      return sum, min_indices_corr, squared_diff_sum[min_indices_corr[-1]]
-      
+      return sum, min_indices_corr.astype(np.int32), squared_diff_sum[min_indices_corr[-1]]
+
     sum = np.sum(squared_diff_sum)
-    return sum, indices, np.max(squared_diff_sum)
-    
+    return sum, indices.astype(np.int32) , np.max(squared_diff_sum)
+
 def find_collisions(lsh, query_signature):
     # Query the LSH index for potential collisions
     result = lsh.query(query_signature)
 
     return result
-
 
 def process_chunk(time_series, ranges, window, rp):
     mean_container = {}
@@ -95,7 +94,6 @@ def process_chunk(time_series, ranges, window, rp):
 
     return hash_mat, std_container, mean_container, subsequences
 
-@jit(parallel=True, nopython=True, cache=True)
 def relative_contrast(ts, pair, window):
   dimensions = ts.shape[1]
   d, _ = z_normalized_euclidean_distance(ts[pair[0]:pair[0]+window],ts[pair[1]:pair[1]+window], np.arange(dimensions),
@@ -119,7 +117,6 @@ def relative_contrast(ts, pair, window):
 
   return d_hat/d
 
-@jit(parallel=True, nopython=True, cache=True)
 def find_all_occur(ts, motifs, window):
   motif_copy = motifs
   for motif in motif_copy:
