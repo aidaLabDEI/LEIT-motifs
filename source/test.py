@@ -1,5 +1,5 @@
 from RP_MH import pmotif_find2
-import time, sys, pandas as pd, numpy as np
+import time, sys, pandas as pd, numpy as np, queue
 sys.path.append('external_dependecies')
 from data_loader import convert_tsf_to_dataframe
 from base import z_normalized_euclidean_distance
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         d = data.to_numpy()
     
 
-
+    
     thresh = 0.5#dimensionality/d.shape[1]
     # Start the timer
     start = time.process_time()
@@ -44,19 +44,21 @@ if __name__ == "__main__":
 
     end = (time.process_time() - start)
     print("Time elapsed: ", end)
-
+    
     # Plot
+    #motifs = queue.PriorityQueue()
     copy = motifs.queue
     motifs = copy
     #motifs = find_all_occur(extract, motifs, window_size)
     colors = ["red", "green", "blue", "pink", "cyan", "yellow", "orange", "gray", "purple"]
     fig, axs = plt.subplots(8, 1, figsize=(12, 8))
-    X = pd.DataFrame(data)
+    X = pd.DataFrame(d)
     for i, dimension in enumerate(X.columns):
         axs[i].plot(X[dimension], label=dimension)
         axs[i].set_xlabel("Time")
         axs[i].set_ylabel(f"Value - {dimension}")
         axs[i].legend()
+
 
         for idx, motif in enumerate(motifs):
             # Highlight the motifs in all dimensions

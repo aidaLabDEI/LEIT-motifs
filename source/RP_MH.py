@@ -40,12 +40,12 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                 session.insert(ik, signature)
 
         # Find collisions
-        for j, minhash_sig in enumerate(minhash_signatures):
+        for j_index, minhash_sig in enumerate(minhash_signatures):
                     collisions = lsh.query(minhash_sig)
                     #print(collisions)
                     if len(collisions) >= 1:
                         # Remove trivial matches, same subsequence or overlapping subsequences
-                        collisions = [sorted((j, c)) for c in collisions if c != j and abs(c - j) > window]
+                        collisions = [sorted((j_index, c)) for c in collisions if c != j_index and abs(c - j_index) > window]
                         curr_dist = 0
 
                         for collision in collisions:
@@ -117,7 +117,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                                 if top.full(): top.get(block=False)
 
     # Return top k collisions
-        #print("Computed len:", len(top.queue))
+        print("Computed len:", len(top.queue))
         return top, dist_comp
 
 def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.98):
@@ -178,8 +178,8 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
       #                 {'i':0, 'windowed_ts':windowed_ts, 'hash_mat':hash_mat, 'k':k, 'lsh_threshold':lsh_threshold, 'K':K})
 
     def worker(i,j, K,L, r, motif_dimensionality, dimensions, k):
-        pr = cProfile.Profile()
-        pr.enable()
+       # pr = cProfile.Profile()
+       # pr.enable()
         global stopped_event, dist_comp, b, s, top, failure_thresh
         top_i, dist_comp_i = minhash_cycle(i, j, windowed_ts, hash_mat, k, lsh_threshold)
         element = None
@@ -215,8 +215,8 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
               ss_val = stop(element, motif_dimensionality/dimensions, b,s, i, j, failure_thresh, K, L, r, motif_dimensionality)
               print("Stop:", ss_val, length)
               if length >= k and ss_val:
-                pr.disable()
-                pr.print_stats(sort="tottime")
+               # pr.disable()
+                #pr.print_stats(sort="tottime")
 
                   #print("set exit")
                 stopped_event.set()
