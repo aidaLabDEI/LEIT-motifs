@@ -9,8 +9,9 @@ import multiprocessing
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import cProfile
-from nearpy import Engine
-from nearpy.hashes import RandomDiscretizedProjections
+from hash_lsh import RandomProjection, euclidean_hash
+#from nearpy import Engine
+#from nearpy.hashes import RandomDiscretizedProjections
 from datasketch import MinHashLSH, MinHash
 
 
@@ -117,7 +118,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                                 if top.full(): top.get(block=False)
 
     # Return top k collisions
-        #print("Computed len:", len(top.queue))
+        print("Computed len:", len(top.queue))
         return top, dist_comp
 
 def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.98):
@@ -141,10 +142,11 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
     rp = []
     # Create the repetitions for the LSH
     for i in range(L):
-      rps= RandomDiscretizedProjections('rp', K, bin_width)
-      engine = Engine(window, lshashes=[rps])
+      rps= RandomProjection(window, bin_width, K) 
+      #RandomDiscretizedProjections('rp', K, bin_width)
+      #engine = Engine(window, lshashes=[rps])
       rp.append(rps)
-      engines.append(engine)
+      #engines.append(engine)
 
     chunks = [(np.array(time_series), ranges, window, rp) for ranges in np.array_split(np.arange(time_series.shape[0] - window + 1), multiprocessing.cpu_count())]
 
@@ -163,7 +165,7 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
       std_container.update(std_temp)
       mean_container.update(mean_temp)
     hash_mat = np.ascontiguousarray(hash_mat, dtype=np.int8)
-
+    #print(hash_mat)
     windowed_ts = WindowedTS(subsequences, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
     print("Hashing finished")

@@ -11,7 +11,6 @@ if __name__ == "__main__":
     # 0: FOETAL_ECG.dat
     # 1: evaporator.dat
     # 2: oikolab_weather_dataset.tsf
-
     if len(sys.argv) < 6:
         print("Usage: python test.py <dataset> <window_size> <dimensionality_motif> <K> <L>")
         sys.exit(1)
@@ -24,7 +23,7 @@ if __name__ == "__main__":
     paths = ["Datasets\FOETAL_ECG.dat", "Datasets\evaporator.dat", "Datasets\oikolab_weather_dataset.tsf"]
     d = None
 
-    ## Load the dataset
+    # Load the dataset
     if dataset == 2:
         data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[2], 0)
         d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])]).T
@@ -35,25 +34,24 @@ if __name__ == "__main__":
     
 
     
-    thresh = 0.5 #dimensionality/d.shape[1]
-
+    thresh = 0.5#dimensionality/d.shape[1]
     # Start the timer
     start = time.process_time()
     
-    ## Find the motifs
-    motifs, num_dist = pmotif_find2(d, window_size, 0, 1, dimensionality, 10, thresh, L, K)
+    # Find the motifs
+    motifs, num_dist = pmotif_find2(d, window_size, 0, 1, dimensionality, 8, thresh, L, K)
 
 
     end = (time.process_time() - start)
     print("Time elapsed: ", end)
+    print("Distance computations:", num_dist)
     
-    ## Plot
-
+    # Plot
     #motifs = queue.PriorityQueue()
     copy = motifs.queue
     motifs = copy
     #motifs = find_all_occur(extract, motifs, window_size)
-    colors = ["red", "green", "blue", "pink", "cyan", "yellow", "orange", "gray", "purple", "black"]
+    colors = ["red", "green", "blue", "pink", "cyan", "yellow", "orange", "gray", "purple"]
     fig, axs = plt.subplots(8, 1, figsize=(12, 8))
     X = pd.DataFrame(d)
     for i, dimension in enumerate(X.columns):
@@ -73,5 +71,6 @@ if __name__ == "__main__":
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.show()
 
-    ## Compute relative contrast RC1
-    rc1= relative_contrast(d, motifs[0][1][1], window_size)
+
+    # Compute relative contrast 
+    # rc1= relative_contrast(d, motifs[0][1][1], window_size)

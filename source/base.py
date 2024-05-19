@@ -5,6 +5,7 @@ from datasketch import MinHashLSH, MinHash
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from numba import jit
+from hash_lsh import RandomProjection, euclidean_hash
 
 
 class WindowedTS:
@@ -29,9 +30,11 @@ class WindowedTS:
   def std(self, i: int):
     return self.stds[i]
 
+'''
 def euclidean_hash(data, rp):
   hash_str = rp.hash_vector(data)
   return list(map(np.int8, hash_str[0].split('_')))
+'''
 
 @jit(nopython= True, cache = True)
 def z_normalized_euclidean_distance(ts1, ts2, indices, mean_ts1, std_ts1, mean_ts2, std_ts2, dimensionality = None):
