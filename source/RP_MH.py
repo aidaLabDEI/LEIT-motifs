@@ -139,16 +139,17 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
     dist_comp = 0
   # Hasher
     engines= []
-    rp = []
+    rp = RandomProjection(window, bin_width, K, L) #[]
     # Create the repetitions for the LSH
+    '''
     for i in range(L):
       rps= RandomProjection(window, bin_width, K) 
       #RandomDiscretizedProjections('rp', K, bin_width)
       #engine = Engine(window, lshashes=[rps])
       rp.append(rps)
       #engines.append(engine)
-
-    chunks = [(np.array(time_series), ranges, window, rp) for ranges in np.array_split(np.arange(time_series.shape[0] - window + 1), multiprocessing.cpu_count())]
+    '''
+    chunks = [(np.array(time_series), ranges, window, rp) for ranges in np.array_split(np.arange(time_series.shape[0] - window + 1), multiprocessing.cpu_count()*2)]
 
     hash_mat = np.array([], dtype=np.int8).reshape(0,L,dimension,K)
     subsequences = np.array([]).reshape(0,dimension,window)
@@ -161,6 +162,9 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
       hash_mat_temp, std_temp, mean_temp, sub_temp = result
 
       subsequences = np.concatenate([subsequences, sub_temp])
+      # Print the shapes of hash_mat_temp and hash_mat
+      #print("Hash mat temp shape:", len(hash_mat_temp), hash_mat_temp[0].shape)
+      #print("Hash mat shape:", hash_mat.shape)
       hash_mat = np.concatenate([hash_mat, hash_mat_temp])
       std_container.update(std_temp)
       mean_container.update(mean_temp)

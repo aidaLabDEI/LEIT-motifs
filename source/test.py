@@ -29,7 +29,7 @@ if __name__ == "__main__":
         d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])]).T
     else:
         data = pd.read_csv(paths[dataset], delim_whitespace= True)
-        data = data.drop(data.columns[[0]],axis=1)
+        data = data.drop(data.columns[[0]], axis=1)
         d = data.to_numpy()
     
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     start = time.process_time()
     
     # Find the motifs
-    motifs, num_dist = pmotif_find2(d, window_size, 0, 1, dimensionality, 8, thresh, L, K)
+    motifs, num_dist = pmotif_find2(d, window_size, 0, 1, dimensionality, 32, thresh, L, K)
 
 
     end = (time.process_time() - start)

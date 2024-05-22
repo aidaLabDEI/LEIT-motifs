@@ -76,7 +76,7 @@ def process_chunk(time_series, ranges, window, rp):
     hash_mat = []
 
     for idx in ranges:
-        hashed_sub = []
+        #hashed_sub = []
         subsequence = time_series[idx:idx+window].T
 
         subsequences.append(subsequence)
@@ -89,8 +89,13 @@ def process_chunk(time_series, ranges, window, rp):
 
         subsequence_n = (subsequence - mean_container[idx][:,np.newaxis]) / std_container[idx][:,np.newaxis]
 
-        for rp_temp in rp:
-          hashed_sub.append(np.apply_along_axis(euclidean_hash, 1, subsequence_n, rp_temp))
+        #for rp_temp in rp:
+          #hashed_sub.append(np.apply_along_axis(euclidean_hash, 1, subsequence_n, rp_temp))
+        # It should be a list for the repetitions that contains the list for the dimensions
+        hashed_sub = np.apply_along_axis(euclidean_hash, 1, subsequence_n, rp)
+        #Swap axis 0 and 1
+        hashed_sub = np.swapaxes(hashed_sub, 0, 1)
+        #print(hashed_sub)
         hash_mat.append(hashed_sub)
 
 
