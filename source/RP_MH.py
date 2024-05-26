@@ -1,125 +1,133 @@
 from base import *
 from find_bin_width import *
 from stop import stop
-import numpy as np
-import pandas as pd
-import queue
-import threading
-import multiprocessing
+import numpy as np, queue, threading, multiprocessing
+from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import cProfile
-from hash_lsh import RandomProjection, euclidean_hash
-#from nearpy import Engine
-#from nearpy.hashes import RandomDiscretizedProjections
+from hash_lsh import RandomProjection
 from datasketch import MinHashLSH, MinHash
 
 
-
 def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
-        # Initialize variables
-        K = subsequences.K
-        dimensionality = subsequences.d
-        window = subsequences.w
-        top = queue.PriorityQueue(k+1)
-        random_gen = np.random.default_rng()
+  """
+  Perform the MinHash cycle.
 
-        # Extract the repetition we are working with, cut at the index
-        pj_ts = hash_mat[:,j,:,:-i] if not i==0 else hash_mat[:,j,:,:]
+  Args:
+    i (int): The index of the repetition pair.
+    j (int): The index of the concatenation.
+    subsequences (object): The time series subsequences.
+    hash_mat (ndarray): The hash matrix.
+    k (int): The number of top collisions to return.
+    lsh_threshold (float): The threshold for MinHash.
 
-        # Count the number of distance computations
-        dist_comp= 0
-            # Compute fingerprints
-                # Create MinHash object
-        minhash_seed = random_gen.integers(0, 2**32 - 1)
-        minhash_signatures = []
-        lsh = MinHashLSH(threshold=lsh_threshold, num_perm=int(K/2))
-        
-        with lsh.insertion_session() as session:
-              for ik, signature in enumerate(MinHash.generator(pj_ts, num_perm=int((K)/2), seed=minhash_seed)):
-                minhash_signatures.append(signature)
-                session.insert(ik, signature)
+  Returns:
+    PriorityQueue: The top k collisions.
+    int: The number of distance computations.
+  """
 
-        # Find collisions
-        for j_index, minhash_sig in enumerate(minhash_signatures):
-                    collisions = lsh.query(minhash_sig)
-                    #print(collisions)
-                    if len(collisions) >= 1:
-                        # Remove trivial matches, same subsequence or overlapping subsequences
-                        collisions = [sorted((j_index, c)) for c in collisions if c != j_index and abs(c - j_index) > window]
-                        curr_dist = 0
+  # Initialize variables
+  K = subsequences.K
+  dimensionality = subsequences.d
+  window = subsequences.w
+  top = queue.PriorityQueue(k+1)
+  random_gen = np.random.default_rng()
 
-                        for collision in collisions:
-                            coll_0 = collision[0]
-                            coll_1 = collision[1]
+  # Extract the repetition we are working with, cut at the index
+  pj_ts = hash_mat[:,j,:,:-i] if not i==0 else hash_mat[:,j,:,:]
 
-                            add = True
-                            # If they collide at the previous level, skip
-                            if not i == 0:
-                              rows = hash_mat[coll_0,j,:,:] == hash_mat[coll_1,j,:,:]
-                              comp = np.sum(np.all(rows[:,:K-i], axis=1))
-                              if comp >= dimensionality:
-                                #print("Skipped")
-                                add = False
-                                break
+  # Count the number of distance computations
+  dist_comp= 0
 
-                        # If already inserted skip
-                            #if( any(collision == stored_el1 for _, (_, stored_el1, _ , _) in top.queue)):
-                             #   add = False
-                               # break
+  # Compute fingerprints
+  minhash_seed = random_gen.integers(0, 2**32 - 1)
+  minhash_signatures = []
+  lsh = MinHashLSH(threshold=lsh_threshold, num_perm=int(K/2))
+    
+  with lsh.insertion_session() as session:
+    for ik, signature in enumerate(MinHash.generator(pj_ts, num_perm=int((K)/2), seed=minhash_seed)):
+      minhash_signatures.append(signature)
+      session.insert(ik, signature)
 
-                            # Check overlap with the already computed
-                            for stored in top.queue:
-                                #Access the collision
-                                stored_dist = abs(stored[0])
-                                stored_el = stored[1]
-                                stored_el1 = stored_el[1]
+  # Find collisions
+  for j_index, minhash_sig in enumerate(minhash_signatures):
+    collisions = lsh.query(minhash_sig)
+    
+    if len(collisions) >= 1:
+      # Remove trivial matches, same subsequence or overlapping subsequences
+      collisions = [sorted((j_index, c)) for c in collisions if c != j_index and abs(c - j_index) > window]
+      curr_dist = 0
 
-                                stor_0 = stored_el1[0]
-                                stor_1 = stored_el1[1]
+      for collision in collisions:
+        coll_0 = collision[0]
+        coll_1 = collision[1]
 
-                                # If it's an overlap of both indices, keep the one with the smallest distance
-                                if (abs(coll_0 - stor_0) < window or
-                                    abs(coll_1 - stor_1) < window or
-                                    abs(coll_0 - stor_1) < window or
-                                    abs(coll_1 - stor_0) < window):
+        add = True
 
-                                  # Distance is computed only on distances that match
-                                    dim = pj_ts[coll_0] == pj_ts[coll_1]
-                                    dim = np.all(dim, axis=1)
-                                    dim = [i for i, elem in enumerate(dim) if elem == True]
+        # If they collide at the previous level, skip
+        if not i == 0:
+          rows = hash_mat[coll_0,j,:,:-i+1] == hash_mat[coll_1,j,:,:-i+1]
+          comp = np.sum(np.all(rows, axis=1))
+          if comp >= dimensionality:
+            add = False
+            break
 
-                                    if len(dim) < dimensionality: break
-                                    dist_comp += 1
-                                    curr_dist, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
-                                                                                np.array(dim), subsequences.mean(coll_0), subsequences.std(coll_0),
-                                                                           subsequences.mean(coll_1), subsequences.std(coll_1), dimensionality)
-                                    if curr_dist < stored_dist:
-                                        top.queue.remove(stored)
-                                        top.put((-curr_dist, [dist_comp, collision, [dim], stop_dist]))
+        # Check overlap with the already computed
+        for stored in top.queue:
+          stored_dist = abs(stored[0])
+          stored_el = stored[1]
+          stored_el1 = stored_el[1]
 
-                                    add = False
-                                    break
+          stor_0 = stored_el1[0]
+          stor_1 = stored_el1[1]
 
-                            # Add to top with the projection index
-                            if add:
+          # If it's an overlap of both indices, keep the one with the smallest distance
+          if (abs(coll_0 - stor_0) < window or
+            abs(coll_1 - stor_1) < window or
+            abs(coll_0 - stor_1) < window or
+            abs(coll_1 - stor_0) < window):
 
-                                # Pick just the equal dimensions to compute the distance
-                                dim = pj_ts[coll_0] == pj_ts[coll_1]
-                                dim = np.all(dim, axis=1)
-                                dim = [i for i, elem in enumerate(dim) if elem == True]
-                                if len(dim) < dimensionality: break
-                                dist_comp +=1
-                                distance, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
-                                                                           np.array(dim), subsequences.mean(coll_0), subsequences.std(coll_0),
-                                                                           subsequences.mean(coll_1), subsequences.std(coll_1), dimensionality)
-                                top.put((-distance, [dist_comp , collision, [dim], stop_dist]))
+            # Distance is computed only on distances that match
+            dim = pj_ts[coll_0] == pj_ts[coll_1]
+            dim = np.all(dim, axis=1)
+            dim = [i for i, elem in enumerate(dim) if elem == True]
 
-                                if top.full(): top.get(block=False)
+            if len(dim) < dimensionality:
+              break
 
-    # Return top k collisions
-        print("Computed len:", len(top.queue))
-        return top, dist_comp
+            dist_comp += 1
+            curr_dist, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
+                                          np.array(dim), subsequences.mean(coll_0), subsequences.std(coll_0),
+                                          subsequences.mean(coll_1), subsequences.std(coll_1), dimensionality)
+            if curr_dist < stored_dist:
+              top.queue.remove(stored)
+              top.put((-curr_dist, [dist_comp, collision, [dim], stop_dist]))
+
+            add = False
+            break
+
+        # Add to top with the projection index
+        if add:
+          # Pick just the equal dimensions to compute the distance
+          dim = pj_ts[coll_0] == pj_ts[coll_1]
+          dim = np.all(dim, axis=1)
+          dim = [i for i, elem in enumerate(dim) if elem == True]
+          if len(dim) < dimensionality:
+            break
+
+          dist_comp += 1
+          distance, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
+                                         np.array(dim), subsequences.mean(coll_0), subsequences.std(coll_0),
+                                         subsequences.mean(coll_1), subsequences.std(coll_1), dimensionality)
+          top.put((-distance, [dist_comp , collision, [dim], stop_dist]))
+
+          if top.full():
+            top.get(block=False)
+
+  # Return top k collisions
+  print("Computed len:", len(top.queue))
+  return top, dist_comp
 
 def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.98):
 
@@ -128,6 +136,7 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
     random_gen = np.random.default_rng()
   # Data
     dimension = time_series.shape[1]
+    n = time_series.shape[0]
     top = queue.PriorityQueue(maxsize=k+1)
     std_container = {}
     mean_container = {}
@@ -138,38 +147,28 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
 
     dist_comp = 0
   # Hasher
-    engines= []
     rp = RandomProjection(window, bin_width, K, L) #[]
-    # Create the repetitions for the LSH
-    '''
-    for i in range(L):
-      rps= RandomProjection(window, bin_width, K) 
-      #RandomDiscretizedProjections('rp', K, bin_width)
-      #engine = Engine(window, lshashes=[rps])
-      rp.append(rps)
-      #engines.append(engine)
-    '''
-    chunks = [(np.array(time_series), ranges, window, rp) for ranges in np.array_split(np.arange(time_series.shape[0] - window + 1), multiprocessing.cpu_count()*2)]
 
-    hash_mat = np.array([], dtype=np.int8).reshape(0,L,dimension,K)
-    subsequences = np.array([]).reshape(0,dimension,window)
 
-    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-      results = pool.starmap(process_chunk, [chunk for chunk in chunks])
+    chunk_sz = int(np.sqrt(n))
+    num_chunks = max(1, n // chunk_sz)
+    chunks = [(time_series[ranges[0]:ranges[-1]+window], ranges, window, rp) for ranges in np.array_split(np.arange(n - window + 1), num_chunks)]
 
-    for index, result in enumerate(results):
+    shm_hash_mat, hash_mat = create_shared_array((n-window+1, L, dimension, K), dtype=np.int8)
+    shm_subsequences, subsequences = create_shared_array((n-window+1, dimension, window))
 
-      hash_mat_temp, std_temp, mean_temp, sub_temp = result
+    with Pool(processes=int(multiprocessing.cpu_count() / 2)) as pool:
+        results = []
 
-      subsequences = np.concatenate([subsequences, sub_temp])
-      # Print the shapes of hash_mat_temp and hash_mat
-      #print("Hash mat temp shape:", len(hash_mat_temp), hash_mat_temp[0].shape)
-      #print("Hash mat shape:", hash_mat.shape)
-      hash_mat = np.concatenate([hash_mat, hash_mat_temp])
-      std_container.update(std_temp)
-      mean_container.update(mean_temp)
-    hash_mat = np.ascontiguousarray(hash_mat, dtype=np.int8)
-    #print(hash_mat)
+        for chunk in chunks:
+            result = pool.apply_async(process_chunk, (*chunk, shm_hash_mat.name, hash_mat.shape, shm_subsequences.name, subsequences.shape, L, dimension, K))
+            results.append(result)
+
+        for result in results:
+            std_temp, mean_temp = result.get()
+            std_container.update(std_temp)
+            mean_container.update(mean_temp)
+
     windowed_ts = WindowedTS(subsequences, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
     print("Hashing finished")
@@ -227,7 +226,7 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
                   #print("set exit")
                 stopped_event.set()
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers= int(multiprocessing.cpu_count()/2) ) as executor:
         futures = [executor.submit(worker, i, j, K, L, bin_width, motif_dimensionality, dimension, k) for i in range(K) for j in range(L)]
         with tqdm(total=L*K, desc="Iteration") as pbar:
             for future in as_completed(futures):
@@ -235,5 +234,11 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
                 if stopped_event.is_set():  # Check if the stop event is set
                     executor.shutdown(wait= False, cancel_futures= True)
                     break
+
+        # Cleanup shared memory
+    shm_hash_mat.close()
+    shm_hash_mat.unlink()
+    shm_subsequences.close()
+    shm_subsequences.unlink()
 
     return top, dist_comp

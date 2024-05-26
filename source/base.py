@@ -1,9 +1,5 @@
-import numpy as np
-from nearpy import Engine
-from nearpy.hashes import RandomDiscretizedProjections
-from datasketch import MinHashLSH, MinHash
-import pandas as pd
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import numpy as np, pandas as pd
+from multiprocessing import shared_memory
 from numba import jit
 from hash_lsh import RandomProjection, euclidean_hash
 
@@ -30,126 +26,127 @@ class WindowedTS:
   def std(self, i: int):
     return self.stds[i]
 
-'''
-def euclidean_hash(data, rp):
-  hash_str = rp.hash_vector(data)
-  return list(map(np.int8, hash_str[0].split('_')))
-'''
+
 
 @jit(nopython= True, cache = True)
-def z_normalized_euclidean_distance(ts1, ts2, indices, mean_ts1, std_ts1, mean_ts2, std_ts2, dimensionality = None):
-    # Ensure both time series have the same dimensions
-    if ts1.shape != ts2.shape:
-        raise ValueError("Time series must have the same dimensions.")
+def z_normalized_euclidean_distance(ts1, ts2, indices, mean_ts1, std_ts1, mean_ts2, std_ts2, dimensionality=None):
+  """
+  Compute the z-normalized Euclidean distance between two subsequences, if a dimensionality is specified the algorithm
+  will find the set of dimensions that minimize the distance.
 
-    # Pick the dimensions used in this iteration
-    ts1 = ts1[indices]
-    ts2 = ts2[indices]
+  Parameters:
+  ts1 (ndarray): The first subsequence.
+  ts2 (ndarray): The second subsequence.
+  indices (ndarray): The indices of the dimensions to consider.
+  mean_ts1 (ndarray): The mean values of the first subsequence.
+  std_ts1 (ndarray): The standard deviation values of the first subsequence.
+  mean_ts2 (ndarray): The mean values of the second subsequence.
+  std_ts2 (ndarray): The standard deviation values of the second subsequence.
+  dimensionality (int, optional): The dimensionality of the result.
 
-    # Z-normalize each dimension separately
-    ts1_normalized = (ts1 - mean_ts1[indices,np.newaxis]) / std_ts1[indices, np.newaxis]
-    ts2_normalized = (ts2 - mean_ts2[indices, np.newaxis]) / std_ts2[indices, np.newaxis]
+  Returns:
+  tuple: A tuple containing the sum of the distances, the indices of the dimensions used, and the maximum distance.
 
-    # Compute squared differences and sum them
-    squared_diff_sum = np.sqrt(np.sum(np.square(ts1_normalized - ts2_normalized),axis=1))
+  Raises:
+  ValueError: If the subsequences have different dimensions.
 
-    if dimensionality and dimensionality != len(indices):
-      min_indices = np.argsort(squared_diff_sum)
-      min_indices_corr = min_indices[:dimensionality]
-      sum = np.sum(squared_diff_sum[min_indices_corr])
+  """
+  # Ensure both time series have the same dimensions
+  if ts1.shape != ts2.shape:
+    raise ValueError("Time series must have the same dimensions.")
 
-      return sum, min_indices_corr.astype(np.int32), squared_diff_sum[min_indices_corr[-1]]
+  # Pick the dimensions used in this iteration
+  ts1 = ts1[indices]
+  ts2 = ts2[indices]
 
-    sum = np.sum(squared_diff_sum)
-    return sum, indices.astype(np.int32) , np.max(squared_diff_sum)
+  # Z-normalize each dimension separately
+  ts1_normalized = (ts1 - mean_ts1[indices, np.newaxis]) / std_ts1[indices, np.newaxis]
+  ts2_normalized = (ts2 - mean_ts2[indices, np.newaxis]) / std_ts2[indices, np.newaxis]
+
+  # Compute squared differences and sum them
+  squared_diff_sum = np.sqrt(np.sum(np.square(ts1_normalized - ts2_normalized), axis=1))
+
+  if dimensionality and dimensionality != len(indices):
+    min_indices = np.argsort(squared_diff_sum)
+    min_indices_corr = min_indices[:dimensionality]
+    sum = np.sum(squared_diff_sum[min_indices_corr])
+
+    return sum, min_indices_corr.astype(np.int8), squared_diff_sum[min_indices_corr[-1]]
+
+  sum = np.sum(squared_diff_sum)
+  return sum, indices.astype(np.int8), np.max(squared_diff_sum)
 
 def find_collisions(lsh, query_signature):
-    # Query the LSH index for potential collisions
-    result = lsh.query(query_signature)
+  """
+  Finds potential collisions in the LSH index for a given query signature.
 
-    return result
+  Parameters:
+  - lsh: The LSH index to query.
+  - query_signature: The query signature to search for collisions.
 
-def process_chunk(time_series, ranges, window, rp):
-    mean_container = {}
-    std_container = {}
-    subsequences = []
-    hash_mat = []
+  Returns:
+  - result: The potential collisions found in the LSH index.
+  """
+  result = lsh.query(query_signature)
 
-    for idx in ranges:
-        #hashed_sub = []
-        subsequence = time_series[idx:idx+window].T
+  return result
 
-        subsequences.append(subsequence)
+def create_shared_array(shape, dtype=np.float64):
+  """
+  Create a shared memory array with the given shape and data type.
 
-        mean_container[idx] = np.mean(subsequence, axis=1)
+  Parameters:
+  shape (tuple): The shape of the array.
+  dtype (data type, optional): The data type of the array. Defaults to np.float64.
 
-        std_held = np.std(subsequence, axis=1)
+  Returns:
+  tuple: A tuple containing the shared memory object and the numpy array.
 
-        std_container[idx] = np.where(std_held == 0, 0.00001, std_held)
+  """
+  size = int(np.prod(shape) * np.dtype(dtype).itemsize)
+  shm = shared_memory.SharedMemory(create=True, size=size)
+  array = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
+  return shm, array
 
-        subsequence_n = (subsequence - mean_container[idx][:,np.newaxis]) / std_container[idx][:,np.newaxis]
+def process_chunk(time_series, ranges, window, rp, shm_name_hash_mat, shm_shape_hash_mat, shm_name_subsequences, shm_shape_subsequences, L, dimension, K):
+  """
+  Process a chunk of time series data.
 
-        #for rp_temp in rp:
-          #hashed_sub.append(np.apply_along_axis(euclidean_hash, 1, subsequence_n, rp_temp))
-        # It should be a list for the repetitions that contains the list for the dimensions
-        hashed_sub = np.apply_along_axis(euclidean_hash, 1, subsequence_n, rp)
-        #Swap axis 0 and 1
-        hashed_sub = np.swapaxes(hashed_sub, 0, 1)
-        #print(hashed_sub)
-        hash_mat.append(hashed_sub)
+  Args:
+    time_series (numpy.ndarray): The time series chunk.
+    ranges (list): The indices of the original time series data to process.
+    window (int): The size of the window.
+    rp (float): The random projection hasher.
+    shm_name_hash_mat (str): The name of the shared memory for the hash matrix.
+    shm_shape_hash_mat (tuple): The shape of the shared memory for the hash matrix.
+    shm_name_subsequences (str): The name of the shared memory for the subsequences.
+    shm_shape_subsequences (tuple): The shape of the shared memory for the subsequences.
+    L (int): The length of the subsequences.
+    dimension (int): The dimension of the time series data.
+    K (int): The number of hash functions.
 
+  Returns:
+    tuple: A tuple containing the standard deviation container and the mean container.
+  """
+  existing_shm_hash_mat = shared_memory.SharedMemory(name=shm_name_hash_mat)
+  existing_shm_subsequences = shared_memory.SharedMemory(name=shm_name_subsequences)
 
+  hash_mat = np.ndarray(shm_shape_hash_mat, dtype=np.int8, buffer=existing_shm_hash_mat.buf)
+  subsequences = np.ndarray(shm_shape_subsequences, buffer=existing_shm_subsequences.buf)
 
-    return hash_mat, std_container, mean_container, subsequences
+  mean_container = {}
+  std_container = {}
 
-def relative_contrast(ts, pair, window):
-  dimensions = ts.shape[1]
-  d, _, _ = z_normalized_euclidean_distance(ts[pair[0]:pair[0]+window],ts[pair[1]:pair[1]+window], np.arange(dimensions),
-                                      np.mean(ts[pair[0]:pair[0]+window], axis=0).T, np.std(ts[pair[0]:pair[0]+window], axis=0).T,
-                                      np.mean(ts[pair[1]:pair[1]+window], axis=0).T, np.std(ts[pair[1]:pair[1]+window], axis=0).T)
+  for idx_ts, idx in enumerate(ranges):
+    subsequence = time_series[idx_ts:idx_ts+window].T
+    subsequences[idx] = subsequence
 
-  num = 0
-  sum = 0
-  for i in range(ts.shape[0]-window+1):
-    for j in range(ts.shape[0]-window+1):
-      if abs(i-j) > window:
-        num += 1
-        mean_i = np.mean(ts[i:i+window], axis=0).T
-        std_i = np.std(ts[i:i+window], axis=0).T
-        mean_j = np.mean(ts[j:j+window], axis=0).T
-        std_j = np.std(ts[j:j+window], axis=0).T
-        d_ij, _, _ = z_normalized_euclidean_distance(ts[i:i+window], ts[j:j+window], np.arange(dimensions), mean_i, std_i, mean_j, std_j)
-        sum += d_ij
+    mean_container[idx] = np.mean(subsequence, axis=1)
+    std_held = np.std(subsequence, axis=1)
+    std_container[idx] = np.where(std_held == 0, 0.00001, std_held)
 
-  d_hat = sum/num
-
-  return d_hat/d
-
-def find_all_occur(ts, motifs, window):
-  motif_copy = motifs
-  for motif in motif_copy:
-    occurrences = motif[1][1]
-
-    base = motif[1][1][0]
-    base = ts[base:base+window,:].T
-    dim = motif[1][2]
-
-    mean_i = np.mean(base, axis=1)
-    std_i = np.std(base, axis=1)
-
-
-    for i in range(ts.shape[0]-window+1):
-      ins = True
-      for occurr in occurrences:
-        if abs(i-occurr) > window:
-          ins = ins and True
-        else: ins = False
-      if ins:
-        other = ts[i:i+window,:].T
-        print(base, other, dim, mean_i)
-        dist, _, _ = z_normalized_euclidean_distance(base, other, dim[0], mean_i, std_i,
-                                              np.mean(other, axis=1), np.std(other, axis=1) )
-        # If the distance is small enough consider it as a new occurrence of the motif
-        if dist < 2:
-          occurrences.append(i)
-  return motif_copy
+    subsequence_n = (subsequence - mean_container[idx][:, np.newaxis]) / std_container[idx][:, np.newaxis]
+    hashed_sub = np.apply_along_axis(euclidean_hash, 1, subsequence_n, rp)
+    hashed_sub = np.swapaxes(hashed_sub, 0, 1)
+    hash_mat[idx] = hashed_sub
+  return std_container, mean_container

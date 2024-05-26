@@ -2,3 +2,4 @@
 /source/__pycache__
 /.vscode
 *.pyc
+*.csv

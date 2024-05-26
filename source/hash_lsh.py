@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
 
     timei = time.process_time()
-    for i in range(100000):
+    for i in range(10000):
         hashed = euclidean_hash(data, rp)
     print("Time elapsed: ", time.process_time() - timei)
     #print(hashed)

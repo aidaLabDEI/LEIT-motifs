@@ -1,10 +1,13 @@
 from RP_MH import pmotif_find2
+from RP_DC import pmotif_find3
 import time, sys, pandas as pd, numpy as np, queue
 sys.path.append('external_dependecies')
 from data_loader import convert_tsf_to_dataframe
-from base import z_normalized_euclidean_distance, find_all_occur, relative_contrast
+from base import z_normalized_euclidean_distance
+from extra import relative_contrast
 import matplotlib.pyplot as plt
 
+import tracemalloc
 if __name__ == "__main__":
     
     # Get from command line arguments the number of the dataset to be used, the window size, dimensionality, K and L
@@ -20,45 +23,56 @@ if __name__ == "__main__":
     K = int(sys.argv[4])
     L = int(sys.argv[5])
 
-    paths = ["Datasets\FOETAL_ECG.dat", "Datasets\evaporator.dat", "Datasets\oikolab_weather_dataset.tsf"]
+    paths = ["Datasets\FOETAL_ECG.dat", "Datasets\evaporator.dat", "Datasets\oikolab_weather_dataset.tsf", "Datasets\CLEAN_House1.csv"]
     d = None
 
     # Load the dataset
     if dataset == 2:
         data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[2], 0)
-        d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])]).T
+        d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C').T
+    elif dataset == 3:
+        data = pd.read_csv(paths[dataset])
+        data = data.drop(['Time','Unix', 'Issues'],axis=1)
+        d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
     else:
         data = pd.read_csv(paths[dataset], delim_whitespace= True)
         data = data.drop(data.columns[[0]], axis=1)
-        d = data.to_numpy()
+        d = np.ascontiguousarray(data.to_numpy())
     
 
     
     thresh = 0.5#dimensionality/d.shape[1]
     # Start the timer
+    #tracemalloc.start()
     start = time.process_time()
     
     # Find the motifs
-    motifs, num_dist = pmotif_find2(d, window_size, 0, 1, dimensionality, 32, thresh, L, K)
+    motifs, num_dist = pmotif_find2(d, window_size, 0, 1, dimensionality, 16, thresh, L, K)
 
 
     end = (time.process_time() - start)
     print("Time elapsed: ", end)
     print("Distance computations:", num_dist)
+    #snapshot = tracemalloc.take_snapshot()
+    #top_stats = snapshot.statistics('lineno')
     
+    #print("[ Top 10 memory-consuming lines ]")
+    #for stat in top_stats[:10]:
+     #   print(stat)
+
     # Plot
     #motifs = queue.PriorityQueue()
     copy = motifs.queue
     motifs = copy
     #motifs = find_all_occur(extract, motifs, window_size)
     colors = ["red", "green", "blue", "pink", "cyan", "yellow", "orange", "gray", "purple"]
-    fig, axs = plt.subplots(8, 1, figsize=(12, 8))
+    fig, axs = plt.subplots(d.shape[1], 1)
     X = pd.DataFrame(d)
     for i, dimension in enumerate(X.columns):
         axs[i].plot(X[dimension], label=dimension)
         axs[i].set_xlabel("Time")
-        axs[i].set_ylabel(f"Value - {dimension}")
-        axs[i].legend()
+        axs[i].set_ylabel(f"V - {dimension}")
+        #axs[i].legend()
 
 
         for idx, motif in enumerate(motifs):
@@ -68,7 +82,7 @@ if __name__ == "__main__":
                     axs[i].axvspan(m, m + window_size, color=colors[idx], alpha=0.3)
 
     plt.suptitle("MultiDimensional Timeseries with Motifs Highlighted")
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    #plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.show()
 
 
