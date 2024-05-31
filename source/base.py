@@ -18,7 +18,7 @@ class WindowedTS:
     self.r = bin_width
 
   def sub(self, i:int):
-    return self.subsequences[i]
+    return self.subsequences[i:i+self.w].T
 
   def mean(self, i: int):
     return self.avgs[i]
@@ -108,7 +108,7 @@ def create_shared_array(shape, dtype=np.float64):
   array = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
   return shm, array
 
-def process_chunk(time_series, ranges, window, rp, shm_name_hash_mat, shm_shape_hash_mat, shm_name_subsequences, shm_shape_subsequences, L, dimension, K):
+def process_chunk(time_series, ranges, window, rp, shm_name_hash_mat, shm_shape_hash_mat, L, dimension, K):
   """
   Process a chunk of time series data.
 
@@ -129,17 +129,14 @@ def process_chunk(time_series, ranges, window, rp, shm_name_hash_mat, shm_shape_
     tuple: A tuple containing the standard deviation container and the mean container.
   """
   existing_shm_hash_mat = shared_memory.SharedMemory(name=shm_name_hash_mat)
-  existing_shm_subsequences = shared_memory.SharedMemory(name=shm_name_subsequences)
 
   hash_mat = np.ndarray(shm_shape_hash_mat, dtype=np.int8, buffer=existing_shm_hash_mat.buf)
-  subsequences = np.ndarray(shm_shape_subsequences, buffer=existing_shm_subsequences.buf)
 
   mean_container = {}
   std_container = {}
 
   for idx_ts, idx in enumerate(ranges):
     subsequence = time_series[idx_ts:idx_ts+window].T
-    subsequences[idx] = subsequence
 
     mean_container[idx] = np.mean(subsequence, axis=1)
     std_held = np.std(subsequence, axis=1)

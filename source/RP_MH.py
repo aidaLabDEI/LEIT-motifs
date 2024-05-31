@@ -26,7 +26,6 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
     PriorityQueue: The top k collisions.
     int: The number of distance computations.
   """
-
   # Initialize variables
   K = subsequences.K
   dimensionality = subsequences.d
@@ -126,10 +125,10 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
             top.get(block=False)
 
   # Return top k collisions
-  print("Computed len:", len(top.queue))
+  #print("Computed len:", len(top.queue))
   return top, dist_comp
 
-def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.98):
+def pmotif_find2(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.98):
 
     global dist_comp, dimension, b, s, top, failure_thresh
 
@@ -152,16 +151,16 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
 
     chunk_sz = int(np.sqrt(n))
     num_chunks = max(1, n // chunk_sz)
+    
     chunks = [(time_series[ranges[0]:ranges[-1]+window], ranges, window, rp) for ranges in np.array_split(np.arange(n - window + 1), num_chunks)]
 
     shm_hash_mat, hash_mat = create_shared_array((n-window+1, L, dimension, K), dtype=np.int8)
-    shm_subsequences, subsequences = create_shared_array((n-window+1, dimension, window))
 
     with Pool(processes=int(multiprocessing.cpu_count() / 2)) as pool:
         results = []
 
         for chunk in chunks:
-            result = pool.apply_async(process_chunk, (*chunk, shm_hash_mat.name, hash_mat.shape, shm_subsequences.name, subsequences.shape, L, dimension, K))
+            result = pool.apply_async(process_chunk, (*chunk, shm_hash_mat.name, hash_mat.shape, L, dimension, K))
             results.append(result)
 
         for result in results:
@@ -169,7 +168,7 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
             std_container.update(std_temp)
             mean_container.update(mean_temp)
 
-    windowed_ts = WindowedTS(subsequences, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
+    windowed_ts = WindowedTS(time_series, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
     print("Hashing finished")
     lock = threading.Lock()
@@ -177,10 +176,6 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
     global stopped_event
     stopped_event = threading.Event()
     stopped_event.clear()
-
-    #cProfile.runctx("minhash_cycle(i, windowed_ts, hash_mat, k, lsh_threshold, K)",
-     #                 {'minhash_cycle':minhash_cycle},
-      #                 {'i':0, 'windowed_ts':windowed_ts, 'hash_mat':hash_mat, 'k':k, 'lsh_threshold':lsh_threshold, 'K':K})
 
     def worker(i,j, K,L, r, motif_dimensionality, dimensions, k):
        # pr = cProfile.Profile()
@@ -223,14 +218,13 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
                # pr.disable()
                 #pr.print_stats(sort="tottime")
 
-                  #print("set exit")
                 stopped_event.set()
 
     with ThreadPoolExecutor(max_workers= int(multiprocessing.cpu_count()/2) ) as executor:
         futures = [executor.submit(worker, i, j, K, L, bin_width, motif_dimensionality, dimension, k) for i in range(K) for j in range(L)]
-        with tqdm(total=L*K, desc="Iteration") as pbar:
-            for future in as_completed(futures):
-                pbar.update()
+        #with tqdm(total=L*K, desc="Iteration") as pbar:
+        for future in as_completed(futures):
+               # pbar.update()
                 if stopped_event.is_set():  # Check if the stop event is set
                     executor.shutdown(wait= False, cancel_futures= True)
                     break
@@ -238,7 +232,5 @@ def pmotif_find2(time_series, window, projection_iter, k, motif_dimensionality, 
         # Cleanup shared memory
     shm_hash_mat.close()
     shm_hash_mat.unlink()
-    shm_subsequences.close()
-    shm_subsequences.unlink()
 
     return top, dist_comp

@@ -4,6 +4,7 @@ import time, sys, pandas as pd, numpy as np, queue
 sys.path.append('external_dependecies')
 from data_loader import convert_tsf_to_dataframe
 from base import z_normalized_euclidean_distance
+from find_bin_width import find_width_discr
 from extra import relative_contrast
 import matplotlib.pyplot as plt
 
@@ -40,14 +41,17 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy())
     
 
-    
+    r = find_width_discr(d, window_size, K)
+    print("Bin width:", r)
+
     thresh = 0.5#dimensionality/d.shape[1]
     # Start the timer
     #tracemalloc.start()
     start = time.process_time()
     
     # Find the motifs
-    motifs, num_dist = pmotif_find2(d, window_size, 0, 1, dimensionality, 16, thresh, L, K)
+    #for _ in range(3):
+    motifs, num_dist = pmotif_find2(d, window_size, 1, dimensionality, r, thresh, L, K)
 
 
     end = (time.process_time() - start)
