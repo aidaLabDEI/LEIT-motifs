@@ -9,7 +9,11 @@ from extra import relative_contrast
 import matplotlib.pyplot as plt
 
 
-paths = ["motifs/MultiDimMotifDiscovery/Datasets/FOETAL_ECG.dat", "motifs/MultiDimMotifDiscovery/Datasets/evaporator.dat", "motifs/MultiDimMotifDiscovery/Datasets/oikolab_weather_dataset.tsf"]
+paths = [
+    os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
+    os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
+    os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf')
+]
 
 results = pd.DataFrame(columns=['Dataset', 'Time elapsed', 'RC1', 'K', 'L', 'w', 'r', 'dist_computed'])
 
