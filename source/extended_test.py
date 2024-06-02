@@ -8,7 +8,7 @@ from find_bin_width import find_width_discr
 from extra import relative_contrast
 import matplotlib.pyplot as plt
 
-
+current_dir = os.path.dirname(__file__)
 paths = [
     os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
     os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
