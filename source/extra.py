@@ -1,27 +1,32 @@
 from base import *
 
 def relative_contrast(ts, pair, window):
-  dimensions = ts.shape[1]
-  d, _, _ = z_normalized_euclidean_distance(ts[pair[0]:pair[0]+window],ts[pair[1]:pair[1]+window], np.arange(dimensions),
-                                      np.mean(ts[pair[0]:pair[0]+window], axis=0).T, np.std(ts[pair[0]:pair[0]+window], axis=0).T,
-                                      np.mean(ts[pair[1]:pair[1]+window], axis=0).T, np.std(ts[pair[1]:pair[1]+window], axis=0).T)
+    dimensions = ts.shape[1]
 
-  num = 0
-  sum = 0
-  for i in range(ts.shape[0]-window+1):
-    for j in range(ts.shape[0]-window+1):
-      if abs(i-j) > window:
-        num += 1
-        mean_i = np.mean(ts[i:i+window], axis=0).T
-        std_i = np.std(ts[i:i+window], axis=0).T
-        mean_j = np.mean(ts[j:j+window], axis=0).T
-        std_j = np.std(ts[j:j+window], axis=0).T
-        d_ij, _, _ = z_normalized_euclidean_distance(ts[i:i+window], ts[j:j+window], np.arange(dimensions), mean_i, std_i, mean_j, std_j)
-        sum += d_ij
+    # Precompute means and standard deviations for all windows
+    means = np.array([np.mean(ts[i:i+window], axis=0) for i in range(ts.shape[0] - window + 1)])
+    stds = np.array([np.std(ts[i:i+window], axis=0) for i in range(ts.shape[0] - window + 1)])
 
-  d_hat = sum/num
+    # Calculate the distance for the given pair
+    d, _, _ = z_normalized_euclidean_distance(ts[pair[0]:pair[0]+window], ts[pair[1]:pair[1]+window], np.arange(dimensions),
+                                              means[pair[0]].T, stds[pair[0]].T, means[pair[1]].T, stds[pair[1]].T)
 
-  return d_hat/d
+    num = 0
+    total_sum = 0.0
+
+    for i in range(ts.shape[0] - window + 1):
+        for j in range(ts.shape[0] - window + 1):
+            if abs(i - j) > window:
+                num += 1
+                mean_i = means[i].T
+                std_i = stds[i].T
+                mean_j = means[j].T
+                std_j = stds[j].T
+                d_ij, _, _ = z_normalized_euclidean_distance(ts[i:i+window], ts[j:j+window], np.arange(dimensions), mean_i, std_i, mean_j, std_j)
+                total_sum += d_ij
+
+    d_hat = total_sum / num
+    return d_hat / d
 
 def find_all_occur(ts, motifs, window):
   motif_copy = motifs

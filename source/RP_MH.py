@@ -156,7 +156,7 @@ def pmotif_find2(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     shm_hash_mat, hash_mat = create_shared_array((n-window+1, L, dimension, K), dtype=np.int8)
 
-    with Pool(processes=int(multiprocessing.cpu_count() / 2)) as pool:
+    with Pool(processes=int(multiprocessing.cpu_count())) as pool:
         results = []
 
         for chunk in chunks:
@@ -170,7 +170,7 @@ def pmotif_find2(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     windowed_ts = WindowedTS(time_series, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
-    print("Hashing finished")
+    #print("Hashing finished")
     lock = threading.Lock()
 
     global stopped_event
@@ -220,7 +220,7 @@ def pmotif_find2(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
                 stopped_event.set()
 
-    with ThreadPoolExecutor(max_workers= int(multiprocessing.cpu_count()/2) ) as executor:
+    with ThreadPoolExecutor(max_workers= int(multiprocessing.cpu_count()) ) as executor:
         futures = [executor.submit(worker, i, j, K, L, bin_width, motif_dimensionality, dimension, k) for i in range(K) for j in range(L)]
         #with tqdm(total=L*K, desc="Iteration") as pbar:
         for future in as_completed(futures):
