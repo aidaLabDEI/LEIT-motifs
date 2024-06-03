@@ -1,7 +1,14 @@
 from base import *
+from multiprocessing import Pool
+
+def calculate_distance(args):
+    ts_chunk_i, ts_chunk_j, means_chunk_i, stds_chunk_i, means_chunk_j, stds_chunk_j, dimensions = args
+    d_ij, _, _ = z_normalized_euclidean_distance(ts_chunk_i, ts_chunk_j, np.arange(dimensions), means_chunk_i, stds_chunk_i, means_chunk_j, stds_chunk_j)
+    return d_ij
 
 def relative_contrast(ts, pair, window):
     dimensions = ts.shape[1]
+    num_chunks = int(np.sqrt(ts.shape[0] - window + 1))
 
     # Precompute means and standard deviations for all windows
     means = np.array([np.mean(ts[i:i+window], axis=0) for i in range(ts.shape[0] - window + 1)])
@@ -14,16 +21,28 @@ def relative_contrast(ts, pair, window):
     num = 0
     total_sum = 0.0
 
-    for i in range(ts.shape[0] - window + 1):
-        for j in range(ts.shape[0] - window + 1):
-            if abs(i - j) > window:
-                num += 1
-                mean_i = means[i].T
-                std_i = stds[i].T
-                mean_j = means[j].T
-                std_j = stds[j].T
-                d_ij, _, _ = z_normalized_euclidean_distance(ts[i:i+window], ts[j:j+window], np.arange(dimensions), mean_i, std_i, mean_j, std_j)
-                total_sum += d_ij
+    chunk_size = (ts.shape[0] - window + 1) // num_chunks
+    args_list = []
+
+    for i in range(num_chunks):
+        for j in range(num_chunks):
+            start_i = i * chunk_size
+            end_i = min(start_i + chunk_size, ts.shape[0] - window + 1)
+            start_j = j * chunk_size
+            end_j = min(start_j + chunk_size, ts.shape[0] - window + 1)
+            ts_chunk_i = ts[start_i:start_i+window]
+            ts_chunk_j = ts[start_j:start_j+window]
+            means_chunk_i = means[start_i].T
+            stds_chunk_i = stds[start_i].T
+            means_chunk_j = means[start_j].T
+            stds_chunk_j = stds[start_j].T
+            args_list.append((ts_chunk_i, ts_chunk_j, means_chunk_i, stds_chunk_i, means_chunk_j, stds_chunk_j, dimensions))
+
+    with Pool() as pool:
+        result = pool.map(calculate_distance, args_list)
+
+    num = len(result)
+    total_sum = sum(result)
 
     d_hat = total_sum / num
     return d_hat / d

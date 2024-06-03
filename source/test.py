@@ -41,8 +41,8 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy())
     
 
-    #r = find_width_discr(d, window_size, K)
-    #print("Bin width:", r)
+    r = find_width_discr(d, window_size, K)
+    print("Bin width:", r)
 
     thresh = 0.5#dimensionality/d.shape[1]
     # Start the timer
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     
     # Find the motifs
     #for _ in range(3):
-    motifs, num_dist = pmotif_find2(d, window_size, 1, dimensionality, 4, thresh, L, K)
+    motifs, num_dist = pmotif_find2(d, window_size, 1, dimensionality, r, thresh, L, K)
 
 
     end = (time.process_time() - start)

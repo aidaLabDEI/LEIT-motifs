@@ -2,6 +2,7 @@ from base import *
 from find_bin_width import *
 from stop import stop
 import numpy as np, queue, threading, multiprocessing
+import numpy.typing as npt
 from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
@@ -125,10 +126,27 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
             top.get(block=False)
 
   # Return top k collisions
-  #print("Computed len:", len(top.queue))
   return top, dist_comp
 
-def pmotif_find2(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.98):
+def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensionality: int, bin_width: int, 
+          lsh_threshold: float, L: int, K: int, fail_thresh:float=0.98) -> tuple[queue.PriorityQueue, int]:
+    '''
+  Finds the top-k motifs in a multi-dimensional time series using the Random Projection MinHash algorithm.
+
+  Args:
+    time_series (npt.ArrayLike): The multi-dimensional time series data.
+    window (int): The size of the window for the subsequences.
+    k (int): The number of top motifs to be returned.
+    motif_dimensionality (int): The dimensionality of the motifs.
+    bin_width (int): The width of the bins used for discretization.
+    lsh_threshold (float): The threshold for MinHash.
+    L (int): The number of repetitons.
+    K (int): The number of concatenations.
+    fail_thresh (float, optional): The failure threshold for stopping early. Defaults to 0.98.
+
+  Returns:
+    tuple[queue.PriorityQueue, int]: A tuple containing the priority queue of top motifs and the number of distance computations performed.
+    '''
 
     global dist_comp, dimension, b, s, top, failure_thresh
 

@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.typing as npt
-from numpy.fft import fft
+from numpy.fft import fft, ifft
 from numba import njit
 
 def z_normalize(ts: npt.ArrayLike) -> npt.ArrayLike:
@@ -9,27 +9,16 @@ def z_normalize(ts: npt.ArrayLike) -> npt.ArrayLike:
     std[std == 0] = 1  # Avoid division by zero if standard deviation is zero
     return (ts - mean) / std
 
-@njit
-def compute_distances(ts_fft_real, ts_fft_imag, rand_indices):
-    num_rand_indices = rand_indices.shape[0]
-    num_subsequences = ts_fft_real.shape[0]
-    num_dimensions = ts_fft_real.shape[2]
-    distances = np.empty((num_rand_indices, num_subsequences))
 
-    for i in range(num_rand_indices):
-        idx = rand_indices[i]
-        for j in range(num_subsequences):
-            if j == idx:
-                distances[i, j] = 0
-            else:
-                dist = 0
-                for k in range(num_dimensions):
-                    real_diff = ts_fft_real[idx, :, k] - ts_fft_real[j, :, k]
-                    imag_diff = ts_fft_imag[idx, :, k] - ts_fft_imag[j, :, k]
-                    dist += np.linalg.norm(real_diff + 1j * imag_diff) ** 2
-                distances[i, j] = np.sqrt(dist)
+def compute_dot_products_fft(ts_fft, sub_fft_conj, num_subsequences):
+    dot_products = np.zeros(num_subsequences)
 
-    return distances
+    for j in range(num_subsequences):
+        product_fft = ts_fft[j] * sub_fft_conj
+        dot_product = np.sum(ifft(product_fft).real)
+        dot_products[j] = dot_product
+
+    return dot_products
 
 def find_width_discr(ts: npt.ArrayLike, window: int, K: int) -> int:
     # Z-normalize the entire time series for each dimension
@@ -41,21 +30,26 @@ def find_width_discr(ts: npt.ArrayLike, window: int, K: int) -> int:
     d = ts.shape[1]
     rand_indices = random_gen.choice(n - window, 40, replace=False)
 
-    # Compute the FFT for all subsequences in the time series
-    ts_fft_real = np.empty((n - window, window, d))
-    ts_fft_imag = np.empty((n - window, window, d))
-    for j in range(n - window):
-        for k in range(d):
-            ts_fft = fft(ts[j:j + window, k])
-            ts_fft_real[j, :, k] = ts_fft.real
-            ts_fft_imag[j, :, k] = ts_fft.imag
+    num_subsequences = n - window + 1
 
-    # Compute distances
-    distances = compute_distances(ts_fft_real, ts_fft_imag, rand_indices)
-    
-    # Flatten the distances array and filter out infinity values
-    distances = distances[distances != np.inf]
-    
-    # Find r such that the max value of the distribution is < r * 2^K
-    r = np.max(distances) / (2 ** K)
+    # Compute the FFT for all subsequences in the time series
+    ts_fft = np.empty((num_subsequences, window, d), dtype=np.complex_)
+    for j in range(num_subsequences):
+        for k in range(d):
+            ts_fft[j, :, k] = fft(ts[j:j + window, k])
+
+    all_dot_products = []
+    for idx in rand_indices:
+        dot_products = np.zeros((num_subsequences, d))
+        for k in range(d):
+            sub_fft = ts_fft[idx, :, k]
+            sub_fft_conj = np.conj(sub_fft)
+            dot_products[:, k] = compute_dot_products_fft(ts_fft[:, :, k], sub_fft_conj, num_subsequences)
+        all_dot_products.append(np.sum(dot_products, axis=1))
+
+    all_dot_products = np.array(all_dot_products).flatten()
+
+    # Find r such that the value of a certain percentile of the distribution is < r * 2^K
+    percentile_value = np.percentile(all_dot_products, 2)
+    r = abs(percentile_value / (2 ** K))
     return int(np.ceil(r))
