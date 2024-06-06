@@ -50,6 +50,6 @@ def find_width_discr(ts: npt.ArrayLike, window: int, K: int) -> int:
     all_dot_products = np.array(all_dot_products).flatten()
 
     # Find r such that the value of a certain percentile of the distribution is < r * 2^K
-    percentile_value = np.percentile(all_dot_products, 2)
+    percentile_value = np.percentile(all_dot_products, 4)
     r = abs(percentile_value / (2 ** K))
     return int(np.ceil(r))

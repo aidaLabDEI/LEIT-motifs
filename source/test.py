@@ -24,16 +24,19 @@ if __name__ == "__main__":
     K = int(sys.argv[4])
     L = int(sys.argv[5])
 
-    paths = ["Datasets\FOETAL_ECG.dat", "Datasets\evaporator.dat", "Datasets\oikolab_weather_dataset.tsf", "Datasets\CLEAN_House1.csv"]
+    paths = ["Datasets\FOETAL_ECG.dat", "Datasets\evaporator.dat", "Datasets\oikolab_weather_dataset.tsf", "Datasets\RUTH.csv", "Datasets\CLEAN_House1.csv"]
     d = None
 
     # Load the dataset
     if dataset == 2:
         data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[2], 0)
         d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C').T
-    elif dataset == 3:
+    elif dataset == 4:
         data = pd.read_csv(paths[dataset])
         data = data.drop(['Time','Unix', 'Issues'],axis=1)
+        d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
+    elif dataset == 3:
+        data = pd.read_csv(paths[dataset])
         d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
     else:
         data = pd.read_csv(paths[dataset], delim_whitespace= True)
@@ -44,7 +47,7 @@ if __name__ == "__main__":
     r = find_width_discr(d, window_size, K)
     print("Bin width:", r)
 
-    thresh = 0.5#dimensionality/d.shape[1]
+    thresh = dimensionality/d.shape[1]
     # Start the timer
     #tracemalloc.start()
     start = time.process_time()

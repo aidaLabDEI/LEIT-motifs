@@ -43,10 +43,10 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
   # Compute fingerprints
   minhash_seed = random_gen.integers(0, 2**32 - 1)
   minhash_signatures = []
-  lsh = MinHashLSH(threshold=lsh_threshold, num_perm=int(K/2))
+  lsh = MinHashLSH(threshold=lsh_threshold, num_perm=dimensionality)
     
   with lsh.insertion_session() as session:
-    for ik, signature in enumerate(MinHash.generator(pj_ts, num_perm=int((K)/2), seed=minhash_seed)):
+    for ik, signature in enumerate(MinHash.generator(pj_ts, num_perm=dimensionality, seed=minhash_seed)):
       minhash_signatures.append(signature)
       session.insert(ik, signature)
 
