@@ -21,8 +21,8 @@ def main():
     results = pd.DataFrame(columns=['Dataset', 'Time elapsed', 'RC1', 'K', 'L', 'w', 'r', 'dist_computed'])
 
     r_vals_computed = [2, 8, 16, 16]
-    windows = [45, 70, 1000, 500]
-    dimensionality = [4, 2, 2, 4]
+    windows = [45, 70, 500, 1000]
+    dimensionality = [4, 2, 4, 2]
     '''
     # Base test for time elapsed
     for number, path in enumerate(paths):
@@ -56,24 +56,22 @@ def main():
 
         print("Dataset", number, "finished")
     # Run the garbage collector
-s
     gc.collect()
     '''
     # Test for different K, L and r values independently
-    Ks = [4, 8, 12, 16]
-    Ls = [10, 50, 100, 150, 200]
-    rs = [2, 8, 16, 32]
+    Ks = []#[4, 8, 12, 16]
+    Ls = [400]#[10, 50, 100, 150, 200]
+    rs = []#[2, 8, 16, 32]
     paths = [
-        #os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
-        #os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
-       # os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
+        os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
+        os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
         os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
+       # os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf')
     ]
     for number, path in enumerate(paths):
     # Load the dataset
-        '''
         if number == 3:
-            data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[2], 0)
+            data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[3], 0)
             d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C').T
         elif number == 4:
             data = pd.read_csv(paths[number])
@@ -86,9 +84,8 @@ s
             data = pd.read_csv(paths[number], delim_whitespace= True)
             data = data.drop(data.columns[[0]], axis=1)
             d = np.ascontiguousarray(data.to_numpy())
-        '''
-        data = pd.read_csv(paths[number])
-        d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
+
+
         '''
         for K in Ks:
                     start = time.process_time()
@@ -117,7 +114,7 @@ s
                     results = results._append(temp_df, ignore_index=True)
         print("Extended test for dataset", number, "finished")
 
-    results.to_csv('results_run3.csv', index=False)
+    results.to_csv('results_run4.csv', index=False)
 
 
 if __name__ == '__main__':
