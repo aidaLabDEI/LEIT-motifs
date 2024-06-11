@@ -35,6 +35,7 @@ if __name__ == "__main__":
         data = pd.read_csv(paths[dataset])
         data = data.drop(['Time','Unix', 'Issues'],axis=1)
         d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
+        d = d[:100000,:]
     elif dataset == 3:
         data = pd.read_csv(paths[dataset])
         d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
@@ -44,7 +45,7 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy())
     
 
-    r = find_width_discr(d, window_size, K)
+    r = 16#find_width_discr(d, window_size, K)
     print("Bin width:", r)
 
     thresh = dimensionality/d.shape[1]
