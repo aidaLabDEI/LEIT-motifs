@@ -9,13 +9,14 @@ from extra import relative_contrast
 import matplotlib.pyplot as plt
 import gc
 
+
 def main():
     current_dir = os.path.dirname(__file__)
     paths = [
         os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
         os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
-        os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
         os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
+        os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
     ]
 
     results = pd.DataFrame(columns=['Dataset', 'Time elapsed', 'RC1', 'K', 'L', 'w', 'r', 'dist_computed'])
@@ -58,6 +59,34 @@ def main():
     # Run the garbage collector
     gc.collect()
     '''
+    # Test for memory, run with mprof
+    for number, path in enumerate(paths):
+        gc.collect()
+    # Load the dataset
+        if number == 3:
+            data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[3], 0)
+            d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C').T
+        elif number == 4:
+            data = pd.read_csv(paths[number])
+            data = data.drop(['Time','Unix', 'Issues'],axis=1)
+            d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
+        elif number == 2:
+            data = pd.read_csv(paths[number])
+            d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
+        else:
+            data = pd.read_csv(paths[number], delim_whitespace= True)
+            data = data.drop(data.columns[[0]], axis=1)
+            d = np.ascontiguousarray(data.to_numpy())
+
+        #tracemalloc.start()    
+        motifs, num_dist = pmotif_find2(d, windows[number], 1, dimensionality[number], r_vals_computed[number], dimensionality[number]/d.shape[1], 100, 8)
+        gc.collect()
+        #current, peak = tracemalloc.get_traced_memory()  # Get the current and peak memory usage
+       # tracemalloc.stop()  # Stop tracking memory allocations
+
+        #print("Dataset", number)
+        #print("Peak memory usage:", peak / 10**9, "GB")
+
     # Test for different K, L and r values independently
     Ks = []#[4, 8, 12, 16]
     Ls = [1]#[10, 50, 100, 150, 200, 400]
@@ -69,6 +98,7 @@ def main():
        # os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf')
     ]
 
+    '''
     for number, path in enumerate(paths):
     # Load the dataset
         if number == 3:
@@ -114,7 +144,7 @@ def main():
                     temp_df = pd.DataFrame([{ 'Dataset': number, 'Time elapsed': end, 'RC1': np.nan, 'K': 8, 'L': 100, 'w': windows[number], 'r': r, 'dist_computed': num_dist}])
                     results = results._append(temp_df, ignore_index=True)
         print("Extended test for dataset", number, "finished")
-        '''
+        
     Fail = pd.DataFrame(columns=['Dataset', 'Prob','Motif1', 'Motif2', 'Motif3'])
     failure_probs = [0.8, 0.5, 0.2]
     motif_found = []
@@ -149,7 +179,7 @@ def main():
             motif_found.clear()  
     '''
     #Fail.to_csv('Failures.csv', index=False)  
-    results.to_csv('results_run5.csv', index=False)
+    #results.to_csv('results_run5.csv', index=False)
 
 
 if __name__ == '__main__':
