@@ -96,7 +96,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
             if len(dim) < dimensionality:
               break
 
-            dist_comp += 1
+            dist_comp += len(dim)
             curr_dist, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
                                           np.array(dim), subsequences.mean(coll_0), subsequences.std(coll_0),
                                           subsequences.mean(coll_1), subsequences.std(coll_1), dimensionality)
@@ -116,7 +116,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
           if len(dim) < dimensionality:
             break
 
-          dist_comp += 1
+          dist_comp += len(dim)
           distance, dim, stop_dist = z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
                                          np.array(dim), subsequences.mean(coll_0), subsequences.std(coll_0),
                                          subsequences.mean(coll_1), subsequences.std(coll_1), dimensionality)
@@ -129,7 +129,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
   return top, dist_comp
 
 def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensionality: int, bin_width: int, 
-          lsh_threshold: float, L: int, K: int, fail_thresh:float=0.98) -> tuple[queue.PriorityQueue, int]:
+          lsh_threshold: float, L: int=200, K: int=8, fail_thresh:float=0.01) -> tuple[queue.PriorityQueue, int]:
     '''
   Finds the top-k motifs in a multi-dimensional time series using the Random Projection MinHash algorithm.
 
@@ -157,8 +157,11 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
     top = queue.PriorityQueue(maxsize=k+1)
     std_container = {}
     mean_container = {}
-    b  = K/2
-    s = 2
+    minhash_example = MinHashLSH(threshold=lsh_threshold, num_perm=motif_dimensionality)
+    b  = minhash_example.b
+    s = minhash_example.r
+    del minhash_example
+    
     failure_thresh = fail_thresh
     index_hash = 0
 
