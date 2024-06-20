@@ -1,6 +1,8 @@
+import os, sys
+sys.path.append('source')
 from RP_MH import pmotif_find2
 from RP_DC import pmotif_find3
-import time, sys, os, pandas as pd, numpy as np, queue
+import time, pandas as pd, numpy as np, queue
 sys.path.append(os.path.join(os.path.dirname(__file__), 'external_dependencies'))
 from data_loader import convert_tsf_to_dataframe
 from base import z_normalized_euclidean_distance
@@ -115,10 +117,10 @@ def main():
 
         #print("Dataset", number)
         #print("Peak memory usage:", peak / 10**9, "GB")
-
+    '''
     # Test for different K, L and r values independently
-    Ks = []#[4, 8, 12, 16]
-    Ls = [1]#[10, 50, 100, 150, 200, 400]
+    Ks = [4, 8, 12, 16]
+    Ls = []#[10, 50, 100, 150, 200, 400]
     rs = []#[2, 8, 16, 32]
     paths = [
         os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
@@ -151,7 +153,7 @@ def main():
                     start = time.process_time()
                     for i in range(2):
                         motifs, num_dist = pmotif_find2(d, windows[number], 1, dimensionality[number], r_vals_computed[number], dimensionality[number]/d.shape[1], 100, K)
-                    end = (time.process_time() - start)/3
+                    end = (time.process_time() - start)/2
                     temp_df = pd.DataFrame([{ 'Dataset': number, 'Time elapsed': end, 'RC1': np.nan, 'K': K, 'L': 100, 'w': windows[number], 'r': r_vals_computed[number], 'dist_computed': num_dist}])
                     results = results._append(temp_df, ignore_index=True)   
               
@@ -161,7 +163,7 @@ def main():
                     start = time.process_time()
                     for i in range(2):
                         motifs, num_dist = pmotif_find2(d, windows[number], 1, dimensionality[number], r_vals_computed[number], dimensionality[number]/d.shape[1], L, 8)
-                    end = (time.process_time() - start)/3
+                    end = (time.process_time() - start)/2
                     temp_df = pd.DataFrame([{ 'Dataset': number, 'Time elapsed': end, 'RC1': np.nan, 'K': 8, 'L': L, 'w': windows[number], 'r': r_vals_computed[number], 'dist_computed': num_dist}])
                     results = results._append(temp_df, ignore_index=True)
         gc.collect()
@@ -169,12 +171,13 @@ def main():
                     start = time.process_time()
                     for i in range(2):
                         motifs, num_dist = pmotif_find2(d, windows[number], 1, dimensionality[number], r, dimensionality[number]/d.shape[1], 100, 8)
-                    end = (time.process_time() - start)/3
+                    end = (time.process_time() - start)/2
                     temp_df = pd.DataFrame([{ 'Dataset': number, 'Time elapsed': end, 'RC1': np.nan, 'K': 8, 'L': 100, 'w': windows[number], 'r': r, 'dist_computed': num_dist}])
                     results = results._append(temp_df, ignore_index=True)
         print("Extended test for dataset", number, "finished")
 
     # Failure test    
+    '''
     Fail = pd.DataFrame(columns=['Dataset', 'Prob','Motif1', 'Motif2', 'Motif3'])
     failure_probs = [0.8, 0.5, 0.2]
     motif_found = []
@@ -207,7 +210,7 @@ def main():
             Fail = Fail._append(temp_df, ignore_index=True)
             print("Dataset", number, "finished")
             motif_found.clear()  
-    '''
+    
     paths = [
         os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
         os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat')
@@ -249,11 +252,11 @@ def main():
             Noise = Noise._append(temp_df, ignore_index=True)
             print("Dataset", number, "finished")
             motif_found.clear()  
-
+    '''
 
     #Fail.to_csv('Failures.csv', index=False)  
-    #results.to_csv('results_run5.csv', index=False)
-    Noise.to_csv('Noise.csv', index=False)
+    results.to_csv('results_run6.csv', index=False)
+    #Noise.to_csv('Noise.csv', index=False)
 
 if __name__ == '__main__':
     from multiprocessing import freeze_support
