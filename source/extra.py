@@ -1,51 +1,50 @@
 from base import *
 from multiprocessing import Pool
+import stumpy
 
-def calculate_distance(args):
-    ts_chunk_i, ts_chunk_j, means_chunk_i, stds_chunk_i, means_chunk_j, stds_chunk_j, dimensions = args
-    d_ij, _, _ = z_normalized_euclidean_distance(ts_chunk_i, ts_chunk_j, np.arange(dimensions), means_chunk_i, stds_chunk_i, means_chunk_j, stds_chunk_j)
-    return d_ij
+def relative_contrast(ts, pair, window, dimensionality):
 
-def relative_contrast(ts, pair, window):
+    pair_indices = pair[1][1]
+    matching_dims = pair[1][2]
+
+
     dimensions = ts.shape[1]
-    num_chunks = int(np.sqrt(ts.shape[0] - window + 1))
+    num_subsequences = ts.shape[0] - window + 1
+    distances_matrix = np.zeros((num_subsequences, dimensions))
+    dist_pair = np.zeros((num_subsequences, dimensions))
+    sum_distances = 0.0
 
-    # Precompute means and standard deviations for all windows
-    means = np.array([np.mean(ts[i:i+window], axis=0) for i in range(ts.shape[0] - window + 1)])
-    stds = np.array([np.std(ts[i:i+window], axis=0) for i in range(ts.shape[0] - window + 1)])
+    # Compute distances for each dimension
+    for i in range(num_subsequences):
+      distances = np.zeros((num_subsequences, dimensions))
+      for dim in range(dimensions):
+        series = ts[:, dim]
 
-    # Calculate the distance for the given pair
-    d, _, _ = z_normalized_euclidean_distance(ts[pair[0]:pair[0]+window], ts[pair[1]:pair[1]+window], np.arange(dimensions),
-                                              means[pair[0]].T, stds[pair[0]].T, means[pair[1]].T, stds[pair[1]].T)
+        subseq = series[i:i+window]
+        distances[:,dim] = stumpy.mass(subseq ,ts[:, dim])
+      if i == pair_indices[0]:
+        dist_pair = distances.copy()
 
-    num = 0
-    total_sum = 0.0
+      # Order the columns of the distance matrix
+      distances = np.sort(distances, axis=1)
 
-    chunk_size = (ts.shape[0] - window + 1) // num_chunks
-    args_list = []
+      # Remove the trivial matches, so the indices from i-window to i+window are removed on the first axis
+      start = max(0, i - window)
+      end = min(num_subsequences, i + window + 1)
+      distances[start:end, :] = np.inf
+      # Find the column that allows the smallest sum using dimensionality equal to the number of dimensions
+      sum_d = np.sum(distances[:,:dimensionality], axis=1)
 
-    for i in range(num_chunks):
-        for j in range(num_chunks):
-            start_i = i * chunk_size
-            end_i = min(start_i + chunk_size, ts.shape[0] - window + 1)
-            start_j = j * chunk_size
-            end_j = min(start_j + chunk_size, ts.shape[0] - window + 1)
-            ts_chunk_i = ts[start_i:start_i+window]
-            ts_chunk_j = ts[start_j:start_j+window]
-            means_chunk_i = means[start_i].T
-            stds_chunk_i = stds[start_i].T
-            means_chunk_j = means[start_j].T
-            stds_chunk_j = stds[start_j].T
-            args_list.append((ts_chunk_i, ts_chunk_j, means_chunk_i, stds_chunk_i, means_chunk_j, stds_chunk_j, dimensions))
+      sum_distances += np.min(sum_d)
 
-    with Pool() as pool:
-        result = pool.map(calculate_distance, args_list)
+    dist_pair = dist_pair[pair_indices[1],:]
 
-    num = len(result)
-    total_sum = sum(result)
+    pair_distance = np.sum(dist_pair[matching_dims])
 
-    d_hat = total_sum / num
-    return d_hat / d
+    # Calculate the average pairwise distance
+    average_distance = sum_distances / num_subsequences
+
+    return average_distance / abs(pair_distance)
 
 def find_all_occur(ts, motifs, window):
   motif_copy = motifs

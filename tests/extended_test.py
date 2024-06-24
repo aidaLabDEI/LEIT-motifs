@@ -47,7 +47,7 @@ def main():
         os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
         os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
         os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
-        os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
+       # os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
     ]
 
     results = pd.DataFrame(columns=['Dataset', 'Time elapsed', 'RC1', 'K', 'L', 'w', 'r', 'dist_computed'])
@@ -117,7 +117,7 @@ def main():
 
         #print("Dataset", number)
         #print("Peak memory usage:", peak / 10**9, "GB")
-    '''
+
     # Test for different K, L and r values independently
     Ks = [4, 8, 12, 16]
     Ls = []#[10, 50, 100, 150, 200, 400]
@@ -175,10 +175,10 @@ def main():
                     temp_df = pd.DataFrame([{ 'Dataset': number, 'Time elapsed': end, 'RC1': np.nan, 'K': 8, 'L': 100, 'w': windows[number], 'r': r, 'dist_computed': num_dist}])
                     results = results._append(temp_df, ignore_index=True)
         print("Extended test for dataset", number, "finished")
-
-    # Failure test    
     '''
-    Fail = pd.DataFrame(columns=['Dataset', 'Prob','Motif1', 'Motif2', 'Motif3'])
+    # Failure test    
+
+    Fail = pd.DataFrame(columns=['Dataset', 'Prob','Motif1', 'Motif2', 'Motif3', 'Motif4', 'Motif5', 'Motif6', 'Motif7', 'Motif8', 'Motif9'])
     failure_probs = [0.8, 0.5, 0.2]
     motif_found = []
     for number, path in enumerate(paths):
@@ -201,12 +201,12 @@ def main():
 
         for failure_prob in failure_probs:
             start = time.process_time()
-            for i in range(3):
+            for i in range(9):
                 motifs, num_dist = pmotif_find2(d, windows[number], 1, dimensionality[number], r_vals_computed[number], dimensionality[number]/d.shape[1], 100, 8, failure_prob)
                 motifs = motifs.queue
                 motif_found.append(motifs[0][1][1])
             end = (time.process_time() - start)/3
-            temp_df = pd.DataFrame([{ 'Dataset': number, 'Prob': failure_prob, 'Motif1': motif_found[0], 'Motif2': motif_found[1], 'Motif3': motif_found[2]}])
+            temp_df = pd.DataFrame([{ 'Dataset': number, 'Prob': failure_prob, 'Motif1': motif_found[0], 'Motif2': motif_found[1], 'Motif3': motif_found[2], 'Motif4': motif_found[3], 'Motif5': motif_found[4], 'Motif6': motif_found[5], 'Motif7': motif_found[6], 'Motif8': motif_found[7], 'Motif9': motif_found[8]}])
             Fail = Fail._append(temp_df, ignore_index=True)
             print("Dataset", number, "finished")
             motif_found.clear()  
@@ -215,6 +215,7 @@ def main():
         os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
         os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat')
     ]
+    '''
     # Noise dimensions test
     Noise = pd.DataFrame(columns=['Dataset', 'Noise','Motif1', 'Motif2', 'Motif3'])
     noise_dim = [10, 50, 100]
@@ -254,8 +255,8 @@ def main():
             motif_found.clear()  
     '''
 
-    #Fail.to_csv('Failures.csv', index=False)  
-    results.to_csv('results_run6.csv', index=False)
+    Fail.to_csv('Failures2.csv', index=False)  
+    #results.to_csv('results_run6.csv', index=False)
     #Noise.to_csv('Noise.csv', index=False)
 
 if __name__ == '__main__':

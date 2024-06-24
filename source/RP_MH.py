@@ -34,7 +34,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
   window = subsequences.w
   top = queue.PriorityQueue(k+1)
   random_gen = np.random.default_rng()
-  time_el = 0
+  #time_el = 0
 
   # Extract the repetition we are working with, cut at the index
   pj_ts = hash_mat[:,j,:,:-i] if not i==0 else hash_mat[:,j,:,:]
@@ -52,7 +52,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
     for ik, signature in enumerate(MinHash.generator(pj_ts, num_perm=dimensionality, seed=minhash_seed)):
       minhash_signatures.append(signature)
       session.insert(ik, signature)
-  time_el += time.process_time() - start_time
+  #time_el += time.process_time() - start_time
   # Find collisions
   for j_index, minhash_sig in enumerate(minhash_signatures):
     collisions = lsh.query(minhash_sig)
@@ -128,7 +128,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
             top.get(block=False)
 
   # Return top k collisions
-  return top, dist_comp, time_el
+  return top, dist_comp#, time_el
 
 def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensionality: int, bin_width: int, 
           lsh_threshold: float, L: int=200, K: int=8, fail_thresh:float=0.01) -> tuple[queue.PriorityQueue, int]:
@@ -203,12 +203,12 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
     def worker(i,j, K,L, r, motif_dimensionality, dimensions, k):
        # pr = cProfile.Profile()
        # pr.enable()
-        global stopped_event, dist_comp, b, s, top, failure_thresh, time_tot
-        top_i, dist_comp_i, time_el = minhash_cycle(i, j, windowed_ts, hash_mat, k, lsh_threshold)
+        global stopped_event, dist_comp, b, s, top, failure_thresh#, time_tot
+        top_i, dist_comp_i = minhash_cycle(i, j, windowed_ts, hash_mat, k, lsh_threshold)
         element = None
         length = 0
         with lock:
-            time_tot += time_el
+            #time_tot += time_el
             top.queue.extend(top_i.queue)
             top.queue.sort(reverse=True)
             length = len(top.queue)  
@@ -255,5 +255,5 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
         # Cleanup shared memory
     shm_hash_mat.close()
     shm_hash_mat.unlink()
-    print ("Time elapsed: ", time_tot)
+    #print ("Time elapsed: ", time_tot)
     return top, dist_comp

@@ -97,5 +97,5 @@ if __name__ == "__main__":
 
 
     # Compute relative contrast 
-    rc1= relative_contrast(d, motifs[0][1][1], window_size)
+    rc1= relative_contrast(d, motifs[0], window_size, dimensionality)
     print("RC1:", rc1)

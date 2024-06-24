@@ -29,11 +29,11 @@ if __name__ == "__main__":
 
         print("Starting")
 
-       # start = time.process_time()
+        start = time.process_time()
         
         #for i in range(3):
         m = find_motifs_from_emd(data, 10, windows[number], 8, 16)
         
-       # end = (time.process_time() - start) / 3
+        end = (time.process_time() - start)
 
-        #print("Dataset", number, "time elapsed:", end, "seconds")
+        print("Dataset", number, "time elapsed:", end, "seconds")
