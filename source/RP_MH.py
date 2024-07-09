@@ -159,7 +159,7 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
     top = queue.PriorityQueue(maxsize=k+1)
     std_container = {}
     mean_container = {}
-    minhash_example = MinHashLSH(threshold=lsh_threshold, num_perm=motif_dimensionality)
+    minhash_example = MinHashLSH(threshold=lsh_threshold, num_perm=dimension)
     b  = minhash_example.b
     s = minhash_example.r
     del minhash_example

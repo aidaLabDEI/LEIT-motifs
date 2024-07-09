@@ -2,49 +2,17 @@ from base import *
 from multiprocessing import Pool
 import stumpy
 
-def relative_contrast(ts, pair, window, dimensionality):
+def relative_contrast(ts, window, dimensionality):
+  # Compute the multidimensional matrix profile
+  matrix_profile, mp_idx = stumpy.mstump(ts.T, m=window)
 
-    pair_indices = pair[1][1]
-    matching_dims = pair[1][2]
+  total_sum = np.sum(matrix_profile[:,dimensionality])
+  num = matrix_profile.shape[0]
 
+  d = np.min(matrix_profile[:,dimensionality])
 
-    dimensions = ts.shape[1]
-    num_subsequences = ts.shape[0] - window + 1
-    distances_matrix = np.zeros((num_subsequences, dimensions))
-    dist_pair = np.zeros((num_subsequences, dimensions))
-    sum_distances = 0.0
-
-    # Compute distances for each dimension
-    for i in range(num_subsequences):
-      distances = np.zeros((num_subsequences, dimensions))
-      for dim in range(dimensions):
-        series = ts[:, dim]
-
-        subseq = series[i:i+window]
-        distances[:,dim] = stumpy.mass(subseq ,ts[:, dim])
-      if i == pair_indices[0]:
-        dist_pair = distances.copy()
-
-      # Order the columns of the distance matrix
-      distances = np.sort(distances, axis=1)
-
-      # Remove the trivial matches, so the indices from i-window to i+window are removed on the first axis
-      start = max(0, i - window)
-      end = min(num_subsequences, i + window + 1)
-      distances[start:end, :] = np.inf
-      # Find the column that allows the smallest sum using dimensionality equal to the number of dimensions
-      sum_d = np.sum(distances[:,:dimensionality], axis=1)
-
-      sum_distances += np.min(sum_d)
-
-    dist_pair = dist_pair[pair_indices[1],:]
-
-    pair_distance = np.sum(dist_pair[matching_dims])
-
-    # Calculate the average pairwise distance
-    average_distance = sum_distances / num_subsequences
-
-    return average_distance / abs(pair_distance)
+  d_hat = total_sum / num
+  return d_hat / d
 
 def find_all_occur(ts, motifs, window):
   motif_copy = motifs

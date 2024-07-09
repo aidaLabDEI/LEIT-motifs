@@ -47,7 +47,7 @@ def main():
         os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
         os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
         os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
-       # os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
+        os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
     ]
 
     results = pd.DataFrame(columns=['Dataset', 'Time elapsed', 'RC1', 'K', 'L', 'w', 'r', 'dist_computed'])
@@ -55,17 +55,20 @@ def main():
     r_vals_computed = [2, 8, 16, 16]
     windows = [45, 70, 500, 1000]
     dimensionality = [4, 2, 4, 2]
-    '''
+
     # Base test for time elapsed
     for number, path in enumerate(paths):
 
         # Load the dataset
-        if number == 2:
-            data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[2], 0)
+        if number == 3:
+            data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[3], 0)
             d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C').T
-        elif number == 3:
+        elif number == 4:
             data = pd.read_csv(paths[number])
             data = data.drop(['Time','Unix', 'Issues'],axis=1)
+            d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
+        elif number == 2:
+            data = pd.read_csv(paths[number])
             d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
         else:
             data = pd.read_csv(paths[number], delim_whitespace= True)
@@ -74,22 +77,22 @@ def main():
 
         if number == 0:
                 # lauch a computation just to compile numba
-            pmotif_find2(d, 20, 1, 1, 2, 0.5, 1, 4)
+            pmotif_find2(d, 20, 1, 1, 2, 0.1, 1, 4)
         print("Starting")
         start = time.process_time()
         for i in range(3):
-            motifs, num_dist = pmotif_find2(d, windows[number], 1, dimensionality[number], r_vals_computed[number], 0.5, 100, 8)
+            motifs, num_dist = pmotif_find2(d, windows[number], 1, dimensionality[number], r_vals_computed[number], dimensionality[number]/d.shape[1], 100, 8)
         end = (time.process_time() - start)/3
         motifs = motifs.queue
 
-        rel_cont = relative_contrast(d, motifs[0][1][1], windows[number])
+        rel_cont = 0#relative_contrast(d, motifs[0][1][1], windows[number])
         temp_df = pd.DataFrame([{ 'Dataset': number, 'Time elapsed': end, 'RC1': rel_cont, 'K': 8, 'L': 100, 'w': windows[number], 'r': r_vals_computed[number], 'dist_computed': num_dist}])
         results = results._append(temp_df, ignore_index=True)
 
         print("Dataset", number, "finished")
     # Run the garbage collector
     gc.collect()
-
+    '''
     # Test for memory, run with mprof
     for number, path in enumerate(paths):
         gc.collect()
@@ -175,7 +178,7 @@ def main():
                     temp_df = pd.DataFrame([{ 'Dataset': number, 'Time elapsed': end, 'RC1': np.nan, 'K': 8, 'L': 100, 'w': windows[number], 'r': r, 'dist_computed': num_dist}])
                     results = results._append(temp_df, ignore_index=True)
         print("Extended test for dataset", number, "finished")
-    '''
+
     # Failure test    
 
     Fail = pd.DataFrame(columns=['Dataset', 'Prob','Motif1', 'Motif2', 'Motif3', 'Motif4', 'Motif5', 'Motif6', 'Motif7', 'Motif8', 'Motif9'])
@@ -215,7 +218,7 @@ def main():
         os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
         os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat')
     ]
-    '''
+
     # Noise dimensions test
     Noise = pd.DataFrame(columns=['Dataset', 'Noise','Motif1', 'Motif2', 'Motif3'])
     noise_dim = [10, 50, 100]
@@ -255,8 +258,8 @@ def main():
             motif_found.clear()  
     '''
 
-    Fail.to_csv('Failures2.csv', index=False)  
-    #results.to_csv('results_run6.csv', index=False)
+    #Fail.to_csv('Failures2.csv', index=False)  
+    results.to_csv('results_run7.csv', index=False)
     #Noise.to_csv('Noise.csv', index=False)
 
 if __name__ == '__main__':

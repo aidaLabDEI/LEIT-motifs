@@ -47,7 +47,7 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy())
     
 
-    r = 16#find_width_discr(d, window_size, K)
+    r = 8#find_width_discr(d, window_size, K)
     print("Bin width:", r)
 
     thresh = dimensionality/d.shape[1]
@@ -95,7 +95,6 @@ if __name__ == "__main__":
     #plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.show()
 
-
     # Compute relative contrast 
-    rc1= relative_contrast(d, motifs[0], window_size, dimensionality)
+    rc1= relative_contrast(d, window_size, dimensionality)
     print("RC1:", rc1)
