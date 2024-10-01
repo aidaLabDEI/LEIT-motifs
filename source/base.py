@@ -136,7 +136,7 @@ def process_chunk(time_series, ranges, window, rp, shm_name_hash_mat, shm_shape_
   std_container = {}
 
   for idx_ts, idx in enumerate(ranges):
-    subsequence = time_series[idx_ts:idx_ts+window].T
+    subsequence = np.ascontiguousarray(time_series[idx_ts:idx_ts+window].T)
 
     mean_container[idx] = np.mean(subsequence, axis=1)
     std_held = np.std(subsequence, axis=1)

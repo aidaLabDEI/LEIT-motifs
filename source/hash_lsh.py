@@ -1,7 +1,7 @@
 import numpy as np
 from numba import jit, prange
 import time
-'''
+
 class RandomProjection:
     def __init__(self, dim, r, K, L, random_state=None):
         self.dim = dim
@@ -13,11 +13,11 @@ class RandomProjection:
         K_half = K // 2
         
         # Generate sqrt(L) sets of K/2 random vectors and values for tensoring
-        self.a_l = np.random.randn(sqrt_L, K_half, dim)  
-        self.b_l = np.random.uniform(0, r, (sqrt_L, K_half))
+        self.a_l = np.ascontiguousarray(np.random.randn(sqrt_L, K_half, dim)) 
+        self.b_l = np.ascontiguousarray(np.random.uniform(0, r, (sqrt_L, K_half)))
         
-        self.a_r = np.random.randn(sqrt_L, K_half, dim)  
-        self.b_r = np.random.uniform(0, r, (sqrt_L, K_half))
+        self.a_r = np.ascontiguousarray(np.random.randn(sqrt_L, K_half, dim))
+        self.b_r = np.ascontiguousarray(np.random.uniform(0, r, (sqrt_L, K_half)))
     
     def hash_vector(self, data):
         return compute_hash(data, self.a_l, self.b_l, self.a_r, self.b_r, self.r, self.K, self.L)
@@ -35,10 +35,8 @@ def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
             projection_l = (np.dot(a_l[l_idx, i], data) + b_l[l_idx, i]) / r
             hash_left_all[l_idx, i] = np.floor(projection_l)
 
-    for r_idx in prange(sqrt_L):
-        for i in range(K_half):
-            projection_r = (np.dot(a_r[r_idx, i], data) + b_r[r_idx, i]) / r
-            hash_right_all[r_idx, i] = np.floor(projection_r)
+            projection_r = (np.dot(a_r[l_idx, i], data) + b_r[l_idx, i]) / r
+            hash_right_all[l_idx, i] = np.floor(projection_r)
     
     hash_values = np.empty((L, K), dtype=np.int8)
     
@@ -57,8 +55,8 @@ def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
 
 def euclidean_hash(data, rp):
     return compute_hash(data, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L)
-'''
 
+'''
 # No tensoring version
 class RandomProjection:
     def __init__(self, dim, r, K, L, random_state=None):
@@ -88,7 +86,7 @@ def compute_hash(data, a, b, r, K, L):
 
 def euclidean_hash(data, rp):
     return compute_hash(data, rp.a, rp.b, rp.r, rp.K, rp.L)
-
+'''
 if __name__ == "__main__":
     dim = 5000
     r = 8
