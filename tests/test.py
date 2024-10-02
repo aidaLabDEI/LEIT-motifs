@@ -47,8 +47,7 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy())
     
 
-    r = 8#find_width_discr(d, window_size, K)
-    print("Bin width:", r)
+    r = 16#find_width_discr(d, window_size, K)
 
     thresh = dimensionality/d.shape[1]
     # Start the timer

@@ -28,7 +28,6 @@ def find_matching_pairs(index, proj_hashes):
     return matches
 
 def eq_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
-        print("Cycle:", i, j)
         K = subsequences.K
         dimensionality = subsequences.dimensionality
         dimensionality_motifs = subsequences.d
@@ -164,7 +163,8 @@ def pmotif_find3(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     def worker(i,j, K,L, r, motif_dimensionality, dimensions, k):
       global stopped_event, top, dist_comp
-      if stopped_event.is_set(): return
+      with lock:
+        if stopped_event.is_set(): return
       top_i, dist_comp_i = eq_cycle(i,j,windowed_ts, hash_mat, k, lsh_threshold)
       with lock:
         top.queue.extend(top_i.queue)
@@ -178,11 +178,11 @@ def pmotif_find3(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                 return
 
     with ThreadPoolExecutor(max_workers= int(multiprocessing.cpu_count()) ) as executor:
-      futures = {executor.submit(worker, i,j, K,L, bin_width, motif_dimensionality, dimension, k): (i,j) for i in range(L) for j in range(K)}
+      futures = {executor.submit(worker, i,j, K,L, bin_width, motif_dimensionality, dimension, k): (i,j) for j in range(K) for i in range(L)}
       for future in as_completed(futures):
         if stopped_event.is_set():
-            executor.shutdown(wait=False, cancel_futures=True)
-            break
+             break
+      executor.shutdown(wait=False, cancel_futures=True)
     '''
     condition = True
     for i in range(L):
