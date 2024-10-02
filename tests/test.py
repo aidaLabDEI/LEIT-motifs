@@ -42,7 +42,7 @@ if __name__ == "__main__":
         data = pd.read_csv(paths[dataset])
         d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
     else:
-        data = pd.read_csv(paths[dataset], delim_whitespace= True)
+        data = pd.read_csv(paths[dataset], sep='\s+')
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy())
     
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     
     # Find the motifs
     #for _ in range(3):
-    motifs, num_dist = pmotif_find2(d, window_size, 1, dimensionality, r, thresh, L, K)
+    motifs, num_dist = pmotif_find3(d, window_size, 1, dimensionality, r, thresh, L, K)
 
 
     end = (time.process_time() - start)

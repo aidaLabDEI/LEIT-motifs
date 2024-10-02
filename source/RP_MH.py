@@ -11,6 +11,10 @@ from hash_lsh import RandomProjection
 from datasketch import MinHashLSH, MinHash
 import time
 
+@jit(nopython=True, cache=True)
+def count(hash_line1, hash_line2):
+    row = hash_line1 == hash_line2
+    return np.sum(np.all(row, axis=1))
 
 def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
   """
@@ -43,7 +47,6 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
   dist_comp= 0
 
   # Compute fingerprints
-  start_time = time.process_time()
   minhash_seed = random_gen.integers(0, 2**32 - 1)
   minhash_signatures = []
   lsh = MinHashLSH(threshold=lsh_threshold, num_perm=dimensionality)
@@ -159,10 +162,7 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
     top = queue.PriorityQueue(maxsize=k+1)
     std_container = {}
     mean_container = {}
-    minhash_example = MinHashLSH(threshold=lsh_threshold, num_perm=dimension)
-    b  = minhash_example.b
-    s = minhash_example.r
-    del minhash_example
+
     
     failure_thresh = fail_thresh
     index_hash = 0
