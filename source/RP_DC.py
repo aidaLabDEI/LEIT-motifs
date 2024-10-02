@@ -163,6 +163,7 @@ def pmotif_find3(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     def worker(i,j, K,L, r, motif_dimensionality, dimensions, k):
       global stopped_event, top, dist_comp
+      print("Worker", i, j)
       with lock:
         if stopped_event.is_set(): return
       top_i, dist_comp_i = eq_cycle(i,j,windowed_ts, hash_mat, k, lsh_threshold)
