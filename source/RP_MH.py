@@ -5,16 +5,10 @@ import numpy as np, queue, threading, multiprocessing
 import numpy.typing as npt
 from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from tqdm import tqdm
 import cProfile
 from hash_lsh import RandomProjection
 from datasketch import MinHashLSH, MinHash
 import time
-
-@jit(nopython=True, cache=True)
-def count(hash_line1, hash_line2):
-    row = hash_line1 == hash_line2
-    return np.sum(np.all(row, axis=1))
 
 def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
   """
@@ -49,10 +43,10 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
   # Compute fingerprints
   minhash_seed = random_gen.integers(0, 2**32 - 1)
   minhash_signatures = []
-  lsh = MinHashLSH(threshold=lsh_threshold, num_perm=dimensionality)
+  lsh = MinHashLSH(threshold=lsh_threshold, num_perm=dimensionality*2)
     
   with lsh.insertion_session() as session:
-    for ik, signature in enumerate(MinHash.generator(pj_ts, num_perm=dimensionality, seed=minhash_seed)):
+    for ik, signature in enumerate(MinHash.generator(pj_ts, num_perm=dimensionality*2, seed=minhash_seed)):
       minhash_signatures.append(signature)
       session.insert(ik, signature)
   #time_el += time.process_time() - start_time
@@ -72,6 +66,7 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
 
         # If they collide at the previous level, skip
         if not i == 0:
+          #comp = count(hash_mat[coll_0,j,:,:-i+1], hash_mat[coll_1,j,:,:-i+1])
           rows = hash_mat[coll_0,j,:,:-i+1] == hash_mat[coll_1,j,:,:-i+1]
           comp = np.sum(np.all(rows, axis=1))
           if comp >= dimensionality:
@@ -162,7 +157,10 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
     top = queue.PriorityQueue(maxsize=k+1)
     std_container = {}
     mean_container = {}
-
+    minhash_example = MinHashLSH(threshold=lsh_threshold, num_perm=dimension*2)
+    b  = minhash_example.b
+    s = minhash_example.r
+    del minhash_example
     
     failure_thresh = fail_thresh
     index_hash = 0
@@ -193,7 +191,6 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
 
     windowed_ts = WindowedTS(time_series, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
-    #print("Hashing finished")
     lock = threading.Lock()
 
     global stopped_event
@@ -212,7 +209,6 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
             top.queue.extend(top_i.queue)
             top.queue.sort(reverse=True)
             length = len(top.queue)  
-
             for id, elem in enumerate(top.queue):
                 for elem2 in top.queue[id+1:]:
 
@@ -231,21 +227,16 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
             top.queue = top.queue[:k]
             dist_comp += dist_comp_i
             if length != 0:
-              element = top.queue[0]
-
-        if length == 0:
-              pass
-        else:
-              ss_val = stop(element, motif_dimensionality/dimensions, b,s, i, j, failure_thresh, K, L, r, motif_dimensionality)
-             # print("Stop:", ss_val, length)
-              if length >= k and ss_val:
-               # pr.disable()
-                #pr.print_stats(sort="tottime")
-                stopped_event.set()
+                element = top.queue[0]
+                ss_val = stop(element, motif_dimensionality/dimensions, b,s, i, j, failure_thresh, K, L, r, motif_dimensionality)
+                #print("Stop:", ss_val, length)
+                if length >= k and ss_val:
+                # pr.disable()
+                  #pr.print_stats(sort="tottime")
+                  stopped_event.set()
 
     with ThreadPoolExecutor(max_workers= int(multiprocessing.cpu_count()) ) as executor:
         futures = [executor.submit(worker, i, j, K, L, bin_width, motif_dimensionality, dimension, k) for i in range(K) for j in range(L)]
-        #with tqdm(total=L*K, desc="Iteration") as pbar:
         for future in as_completed(futures):
                # pbar.update()
                 if stopped_event.is_set():  # Check if the stop event is set

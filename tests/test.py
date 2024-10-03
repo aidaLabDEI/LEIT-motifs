@@ -17,6 +17,7 @@ if __name__ == "__main__":
     # 0: FOETAL_ECG.dat
     # 1: evaporator.dat
     # 2: oikolab_weather_dataset.tsf
+    # 3: RUTH.csv
     if len(sys.argv) < 6:
         print("Usage: python test.py <dataset> <window_size> <dimensionality_motif> <K> <L>")
         sys.exit(1)
@@ -47,7 +48,7 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy())
     
 
-    r = 16#find_width_discr(d, window_size, K)
+    r = 8#find_width_discr(d, window_size, K)
 
     thresh = dimensionality/d.shape[1]
     # Start the timer
@@ -56,7 +57,7 @@ if __name__ == "__main__":
     
     # Find the motifs
     #for _ in range(3):
-    motifs, num_dist = pmotif_find3(d, window_size, 1, dimensionality, r, thresh, L, K)
+    motifs, num_dist = pmotif_find2(d, window_size, 1, dimensionality, r, thresh, L, K)
 
 
     end = (time.process_time() - start)
