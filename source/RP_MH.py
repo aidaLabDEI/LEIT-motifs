@@ -5,10 +5,8 @@ import numpy as np, queue, threading, multiprocessing
 import numpy.typing as npt
 from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import cProfile
 from hash_lsh import RandomProjection
 from datasketch import MinHashLSH, MinHash
-import time
 
 def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
   """
@@ -236,7 +234,7 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
                   stopped_event.set()
 
     with ThreadPoolExecutor(max_workers= int(multiprocessing.cpu_count()) ) as executor:
-        futures = [executor.submit(worker, i, j, K, L, bin_width, motif_dimensionality, dimension, k) for i in range(K) for j in range(L)]
+        futures = [executor.submit(worker, i, j, K, L, bin_width, motif_dimensionality, dimension, k)  for j in range(L) for i in range(K)]
         for future in as_completed(futures):
                # pbar.update()
                 if stopped_event.is_set():  # Check if the stop event is set

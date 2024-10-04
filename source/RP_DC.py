@@ -2,19 +2,12 @@ from base import *
 from find_bin_width import *
 from stop import stop3
 import numpy as np
-import pandas as pd
 import queue, threading, multiprocessing, itertools
 from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from tqdm import tqdm
 from hash_lsh import RandomProjection, euclidean_hash
 from numba import jit
-import cProfile
 
-@jit(nopython=True, cache=True, parallel=True)
-def count(hash_line1, hash_line2):
-    row = hash_line1 == hash_line2
-    return np.sum(np.all(row, axis=1))
 
 def find_matching_pairs(index, proj_hashes):
     dictionary = {}
@@ -61,9 +54,8 @@ def eq_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
                             add = True
                         # If we already computed this couple skip
                             if not i == 0:
-                              #rows = hash_mat[coll_0,j,:,:-i+1] == hash_mat[coll_1,j,:,:-i+1]
-                              #comp = np.sum(np.all(rows, axis=1))
-                              comp = count(hash_mat[coll_0,j,:,:-i+1], hash_mat[coll_1,j,:,:-i+1])
+                              rows = hash_mat[coll_0,j,:,:-i+1] == hash_mat[coll_1,j,:,:-i+1]
+                              comp = np.sum(np.all(rows, axis=1))
                               if comp >= dimensionality:
                                 #print("Skipped")
                                 add = False
@@ -154,7 +146,6 @@ def pmotif_find3(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     windowed_ts = WindowedTS(time_series, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
-    print("Hashing finished")
     lock = threading.Lock()
 
     global stopped_event
@@ -163,7 +154,6 @@ def pmotif_find3(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     def worker(i,j, K,L, r, motif_dimensionality, dimensions, k):
       global stopped_event, top, dist_comp
-      print("Worker", i, j)
       with lock:
         if stopped_event.is_set(): return
       top_i, dist_comp_i = eq_cycle(i,j,windowed_ts, hash_mat, k, lsh_threshold)

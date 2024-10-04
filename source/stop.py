@@ -1,13 +1,23 @@
 from scipy.stats import norm
 import numpy as np
+from numba import jit
 
-
+@jit(nopython=True, nogil=True)
+def second_term(first, r, d):
+    second_term = -2 / (np.sqrt(2 * np.pi) * r / d) * (1 - np.exp(-r**2 / (2 * d**2)))
+    return first + second_term
 
 def p(d, r):
     first_term = 1 - 2 * norm.cdf(-r / d)
-    second_term = -2 / (np.sqrt(2 * np.pi) * r / d) * (1 - np.exp(-r**2 / (2 * d**2)))
-    return first_term + second_term
+    result = second_term(first_term, r, d)
+    return result
 
+@jit(nopython=True, nogil=True)
+def probability(d, i, j, b, s, jacc, K, L):
+  if i == K:
+    return (np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(jacc,s),b))
+  else:
+    return (np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(d,(i+1*dim)),L-j))* np.power((1-np.power(np.power(jacc,s),b)),2)
 
 def stop(collision, jacc, b, s, i, j, threshold, K, L, r, dim):
   '''
@@ -42,11 +52,14 @@ def stop(collision, jacc, b, s, i, j, threshold, K, L, r, dim):
   d = p(abs(collision[1][3]), r)
 
   # Check the condition
+  return probability(d, i, j, b, s, jacc, K, L) <= threshold
 
+@jit(nopython=True, nogil=True)
+def probability3(d, i, j, K, L, dim):
   if i == K:
-    return (np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(jacc,s),b)) <= threshold
+    return (np.power(1-np.power(d,(i*dim)),j))
   else:
-    return (np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(d,(i+1*dim)),L-j))* np.power((1-np.power(np.power(jacc,s),b)),2) <= threshold
+    return (np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(d,(i+1*dim)),L-j))
 
 def stop3(collision, i, j, threshold, K, L, r, dim):
   '''
@@ -81,10 +94,7 @@ def stop3(collision, i, j, threshold, K, L, r, dim):
   d = p(abs(collision[1][3]), r)
 
   # Check the condition
-
-  if i == K:
-    print((np.power(1-np.power(d,(i*dim)),j)) <= threshold)
-    return (np.power(1-np.power(d,(i*dim)),j)) <= threshold
-  else:
-    print((np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(d,(i+1*dim)),L-j)) <= threshold)
-    return (np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(d,(i+1*dim)),L-j)) <= threshold
+  return probability3(d, i, j, K, L, dim) <= threshold
+  
+if __name__ == "__main__":
+  print(p(1, 1))

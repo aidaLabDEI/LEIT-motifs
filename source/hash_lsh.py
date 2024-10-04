@@ -22,7 +22,7 @@ class RandomProjection:
     def hash_vector(self, data):
         return compute_hash(data, self.a_l, self.b_l, self.a_r, self.b_r, self.r, self.K, self.L)
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True, nogil=True)
 def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
     sqrt_L = int(np.sqrt(L))
     K_half = K // 2
@@ -96,8 +96,9 @@ if __name__ == "__main__":
 
 
     timei = time.process_time()
-    for i in range(10000):
-        hashed = euclidean_hash(data, rp)
-    print("Time elapsed: ", time.process_time() - timei)
+    for j in range(5):
+        for i in range(10000):
+            hashed = euclidean_hash(data, rp)
+    print("Time elapsed: ", (time.process_time() - timei)/5)
     #print(hashed)
 
