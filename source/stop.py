@@ -2,7 +2,8 @@ from scipy.stats import norm
 import numpy as np
 from numba import jit
 
-@jit(nopython=True, nogil=True)
+
+@jit(nopython=True, fastmath=True)
 def second_term(first, r, d):
     second_term = -2 / (np.sqrt(2 * np.pi) * r / d) * (1 - np.exp(-r**2 / (2 * d**2)))
     return first + second_term
@@ -12,12 +13,13 @@ def p(d, r):
     result = second_term(first_term, r, d)
     return result
 
-@jit(nopython=True, nogil=True)
-def probability(d, i, j, b, s, jacc, K, L):
+@jit(nopython=True, fastmath=True)
+def probability(d, i, j, b, s, jacc, K, L, dim):
   if i == K:
     return (np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(jacc,s),b))
   else:
     return (np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(d,(i+1*dim)),L-j))* np.power((1-np.power(np.power(jacc,s),b)),2)
+
 
 def stop(collision, jacc, b, s, i, j, threshold, K, L, r, dim):
   '''
@@ -52,7 +54,7 @@ def stop(collision, jacc, b, s, i, j, threshold, K, L, r, dim):
   d = p(abs(collision[1][3]), r)
 
   # Check the condition
-  return probability(d, i, j, b, s, jacc, K, L) <= threshold
+  return probability(d, i, j, b, s, jacc, K, L, dim) <= threshold
 
 @jit(nopython=True, nogil=True)
 def probability3(d, i, j, K, L, dim):
@@ -70,8 +72,8 @@ def stop3(collision, i, j, threshold, K, L, r, dim):
     -----
      collision: list
       the element with max priority in the motif queue;
-     jacc: list
-      a vector that indicates which dimensions have a matching hash;
+     jacc: float
+      the jaccard similarity between the dimensions;
      b: int
        number of bands for the MinHash;
      s: int
@@ -98,3 +100,5 @@ def stop3(collision, i, j, threshold, K, L, r, dim):
   
 if __name__ == "__main__":
   print(p(1, 1))
+
+  print(stop([1, 5], 0.5, 1, 1, 1, 1, 0.5, 1, 1, 1, 1))
