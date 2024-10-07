@@ -204,6 +204,7 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
        # pr = cProfile.Profile()
        # pr.enable()
         global stopped_event, dist_comp, b, s, top, failure_thresh#, time_tot
+        if stopped_event.is_set(): return
         top_i, dist_comp_i = minhash_cycle(i, j, windowed_ts, hash_mat, k, lsh_threshold)
         element = None
         length = 0

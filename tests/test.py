@@ -8,7 +8,7 @@ import time, pandas as pd, numpy as np, queue
 from data_loader import convert_tsf_to_dataframe
 from base import z_normalized_euclidean_distance
 from find_bin_width import find_width_discr
-#from extra import relative_contrast
+from extra import relative_contrast
 import matplotlib.pyplot as plt
 
 import tracemalloc
@@ -61,12 +61,12 @@ if __name__ == "__main__":
     start = time.process_time()
     
     # Find the motifs
-    #for _ in range(3):
-    motifs, num_dist = pmotif_find2(d, window_size, 1, dimensionality, r, thresh, L, K)
+    for _ in range(3):
+        motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
 
 
     end = (time.process_time() - start)
-    print("Time elapsed: ", end)
+    print("Time elapsed: ", end/3)
     print("Distance computations:", num_dist)
     #snapshot = tracemalloc.take_snapshot()
     #top_stats = snapshot.statistics('lineno')
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     for i, dimension in enumerate(X.columns):
         axs[i].plot(X[dimension], label=dimension)
         axs[i].set_xlabel("Time")
-        axs[i].set_ylabel(f"V - {dimension}")
+        axs[i].set_ylabel(data.columns[dimension])
         #axs[i].legend()
 
 
@@ -103,5 +103,5 @@ if __name__ == "__main__":
     else:   
         plt.show()
         # Compute relative contrast 
-        rc1= relative_contrast(d, window_size, dimensionality)
-        print("RC1:", rc1)
+        #rc1= relative_contrast(d, window_size, dimensionality)
+        #print("RC1:", rc1)
