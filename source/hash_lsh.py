@@ -3,7 +3,7 @@ from numba import jit, prange
 import time
 
 class RandomProjection:
-    def __init__(self, dim, r, K, L, random_state=None):
+    def __init__(self, dim: int, r: int, K: int, L: int, random_state=None):
         self.dim = dim
         self.r = r
         self.K = K
@@ -22,7 +22,7 @@ class RandomProjection:
     def hash_vector(self, data):
         return compute_hash(data, self.a_l, self.b_l, self.a_r, self.b_r, self.r, self.K, self.L)
 
-@jit(nopython=True, cache=True, nogil=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
     sqrt_L = int(np.sqrt(L))
     K_half = K // 2
