@@ -2,4 +2,5 @@
 /source/__pycache__
 /.vscode
 *.pyc
+*.code-workspace
 Datasets/CLEAN_House1.csv

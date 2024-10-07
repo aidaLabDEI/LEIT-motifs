@@ -6,8 +6,9 @@ from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from hash_lsh import RandomProjection, euclidean_hash
 from numba import jit
+from stop import stop3
 
-def find_motifs_graphs(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold=None, L, K, fail_thresh=0.8):
+def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
     global dist_comp, dimension, b, s, top, failure_thresh, time_tot
     time_tot = 0
     random_gen = np.random.default_rng()
@@ -54,7 +55,7 @@ def find_motifs_graphs(time_series, window, k, motif_dimensionality, bin_width, 
     stopped_event = threading.Event()
     stopped_event.clear()
 
-    for i in range(K), j in range(L):
+    for i, j in itertools.product(range(K), range(L)):
         counter = dict()
         # for each subsequence compare with the subsequences that follow
         # if they match increase the counter of their pair 
@@ -62,19 +63,32 @@ def find_motifs_graphs(time_series, window, k, motif_dimensionality, bin_width, 
             if i == 0:
                 current = hash_mat[f,j,:,:]
             else:
-                current  = hash_mat[f,j,:,-i]
-            for k in range(i + 1, n - window + 1):
+                current = hash_mat[f,j,:,-i]
+            for l in range(i + 1, n - window + 1):
                 if i == 0:
-                    eq = np.all(current == hash_mat[k,j,:,:])
+                    eq = np.sum(np.all(current == hash_mat[l,j,:,:], axis=1))
                 else:
-                    eq = np.all(current == hash_mat[k,j,:,-i])
-                if eq:
+                    eq = np.sum(np.all(current == hash_mat[l,j,:,-i], axis=1))
+                if eq > 0:
                     counter.setdefault((f,j), 0)
-                    counter[(f,j)] += 1
+                    counter[(f,j)] += eq
+        print(counter)
     # Find the max entry in the counter
-    maximum_pair = max(counter, key=counter.get())
+        maximum_pair = max(counter, key=counter.get)
+        print(max(counter.values()))
     # Find the set of dimensions with the minimal distance
-        
+        dist_comp += 1
+        curr_dist, dim, stop_dist= z_normalized_euclidean_distance(windowed_ts.sub(maximum_pair[0]), windowed_ts.sub(maximum_pair[1]),
+                                            np.arange(dimension), windowed_ts.mean(maximum_pair[0]), windowed_ts.std(maximum_pair[0]),
+                                             windowed_ts.mean(maximum_pair[1]), windowed_ts.std(maximum_pair[1]), motif_dimensionality)
+        top.put((-curr_dist, [1, maximum_pair, [dim], stop_dist]))
+
+        if len(top.queue) > k :
+            top.get(block=False)
+
+        if stop3(top.queue[0], i, j, fail_thresh, K, L, bin_width, motif_dimensionality):
+            break
+    
 
 
-    return
+    return top, dist_comp
