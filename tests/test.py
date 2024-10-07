@@ -8,7 +8,7 @@ import time, pandas as pd, numpy as np, queue
 from data_loader import convert_tsf_to_dataframe
 from base import z_normalized_euclidean_distance
 from find_bin_width import find_width_discr
-from extra import relative_contrast
+#from extra import relative_contrast
 import matplotlib.pyplot as plt
 
 import tracemalloc
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     else:
         device = 0
 
-    paths = ["Datasets\FOETAL_ECG.dat", "Datasets\evaporator.dat", "Datasets\oikolab_weather_dataset.tsf", "Datasets\RUTH.csv", "Datasets\CLEAN_House1.csv"]
+    paths = ["Datasets/FOETAL_ECG.dat", "Datasets/evaporator.dat", "Datasets/oikolab_weather_dataset.tsf", "Datasets/RUTH.csv", "Datasets/CLEAN_House1.csv"]
     d = None
 
     # Load the dataset
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     
     # Find the motifs
     #for _ in range(3):
-    motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
+    motifs, num_dist = pmotif_find2(d, window_size, 1, dimensionality, r, thresh, L, K)
 
 
     end = (time.process_time() - start)
