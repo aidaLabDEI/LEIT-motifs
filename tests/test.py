@@ -59,11 +59,9 @@ if __name__ == "__main__":
     # Start the timer
     #tracemalloc.start()
     start = time.process_time()
-    
+    #d = d[:300]
     # Find the motifs
-    d = d[:100]
     motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
-
 
     end = (time.process_time() - start)
     print("Time elapsed: ", end)

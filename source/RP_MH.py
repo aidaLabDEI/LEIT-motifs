@@ -150,8 +150,7 @@ def pmotif_find2(time_series: npt.ArrayLike, window: int, k: int, motif_dimensio
     tuple[queue.PriorityQueue, int]: A tuple containing the priority queue of top motifs and the number of distance computations performed.
     '''
 
-    global dist_comp, dimension, b, s, top, failure_thresh, time_tot
-    time_tot = 0
+    global dist_comp, dimension, b, s, top, failure_thresh
     random_gen = np.random.default_rng()
   # Data
     dimension = time_series.shape[1]

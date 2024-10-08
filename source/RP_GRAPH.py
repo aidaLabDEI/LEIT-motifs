@@ -23,20 +23,20 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
         # Let's assume that ordering has the lexigraphical order of the dimensions
         for curr_dim in range(dimensionality):
             ordering_dim = ordering[curr_dim,:,j]
+            ordered_view = hash_mat_curr[ordering_dim,curr_dim,:]
             # Take the subsequent elements of the ordering and check if their hash is the same
-            for elem_idx, elem1 in enumerate(ordering_dim):
-                for elem2 in ordering_dim[elem_idx+1:]:
+            for idx, elem1 in enumerate(ordered_view):
+                for idx2, elem2 in enumerate(ordered_view[idx+1:]):
                     # No trivial match
-                    if (abs(elem1 - elem2) <= window):
+                    if (abs(ordering_dim[idx] - ordering_dim[idx2]) <= window):
                         continue
                     # If same hash, increase the counter, see the next
-                    if hash_mat_curr[elem1,curr_dim] == hash_mat_curr[elem2,curr_dim]:
-                        counter.setdefault((elem1, elem2), 0)
-                        counter[(elem1, elem2)] += 1
+                    if (elem1 == elem2).all():
+                        counter.setdefault((idx, idx2), 0)
+                        counter[(idx, idx2)] += 1
                     # Else skip because we know that the ordering ensures that the subsequences are different
                     else:
                         break
-
         '''
         # for each subsequence compare with the subsequences that follow
         # if they match increase the counter of their pair 
@@ -76,7 +76,7 @@ def worker(i, j, windowed_ts, hash_mat, ordering, k, stop_i, failure_thresh):
         return top_temp.queue, dist_comp_temp, i, j
 
 def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
-    global dist_comp, dimension, top, failure_thresh, time_tot
+    global dimension, top, failure_thresh, time_tot
     time_tot = 0
     random_gen = np.random.default_rng()
   # Data
@@ -118,14 +118,14 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     # Create ordering
     ordering = np.zeros((dimension, n - window + 1, L), dtype=int)
-    '''
+
     for rep in range(L):
         for curr_dim in range(dimension):
-            print(hash_mat[:, rep, curr_dim, :])
-            print(np.sort(hash_mat[:, rep, curr_dim, :]))
-            ordering[curr_dim,:,rep] = np.argsort(hash_mat[:, rep, curr_dim, :])
-    print(ordering)
-    '''
+            # Order hash[:,rep,dim,:] using as key the array of the last dimension
+            hash_mat_curr = hash_mat[:,rep,curr_dim,:]
+            ordering[curr_dim,:,rep] = np.lexsort(hash_mat_curr.T[::-1])
+
+    
     lock = threading.Lock()
 
     global stopped_event
@@ -150,8 +150,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                     stopped_event.set()
                 if stopped_event.is_set():  # Check if the stop event is set
                     executor.shutdown(wait=False, cancel_futures=True)
-                    break
-
+                    break   
     shm_hash_mat.close()
     shm_hash_mat.unlink()
     return top, dist_comp
