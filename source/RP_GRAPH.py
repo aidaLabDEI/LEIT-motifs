@@ -28,12 +28,12 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
             for idx, elem1 in enumerate(ordered_view):
                 for idx2, elem2 in enumerate(ordered_view[idx+1:]):
                     # No trivial match
-                    if (abs(ordering_dim[idx] - ordering_dim[idx2]) <= window):
+                    if (abs(ordering_dim[idx] - ordering_dim[idx+idx2]) <= window):
                         continue
                     # If same hash, increase the counter, see the next
                     if (elem1 == elem2).all():
-                        counter.setdefault((idx, idx2), 0)
-                        counter[(idx, idx2)] += 1
+                        counter.setdefault((ordering_dim[idx], ordering_dim[idx+idx2]), 0)
+                        counter[ordering_dim[idx], ordering_dim[idx+idx2]] += 1
                     # Else skip because we know that the ordering ensures that the subsequences are different
                     else:
                         break

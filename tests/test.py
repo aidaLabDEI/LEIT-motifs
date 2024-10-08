@@ -76,6 +76,7 @@ if __name__ == "__main__":
     # Plot
     #motifs = queue.PriorityQueue()
     copy = motifs.queue
+    print(copy)
     motifs = copy
     #motifs = find_all_occur(extract, motifs, window_size)
     colors = ["red", "green", "blue", "pink", "cyan", "yellow", "orange", "gray", "purple"]
