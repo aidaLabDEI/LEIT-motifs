@@ -33,7 +33,7 @@ def find_width_discr(ts: npt.ArrayLike, window: int, K: int) -> int:
     num_subsequences = n - window + 1
 
     # Compute the FFT for all subsequences in the time series
-    ts_fft = np.empty((num_subsequences, window, d), dtype=np.complex_)
+    ts_fft = np.empty((num_subsequences, window, d), dtype=np.complex128)
     for j in range(num_subsequences):
         for k in range(d):
             ts_fft[j, :, k] = fft(ts[j:j + window, k])
