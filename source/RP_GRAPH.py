@@ -8,7 +8,7 @@ from hash_lsh import RandomProjection, euclidean_hash
 from numba import jit
 from stop import stop3
 
-def cycle(i, j, subsequences, hash_mat, k, fail_thresh):
+def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
         dist_comp = 0
         top = queue.PriorityQueue()
         window = subsequences.w
@@ -19,6 +19,25 @@ def cycle(i, j, subsequences, hash_mat, k, fail_thresh):
         K = subsequences.K 
         bin_width = subsequences.r
         counter = dict()
+        hash_mat_curr = hash_mat[:,j,:,:-i] if i != 0 else hash_mat[:,j,:,:]
+        # Let's assume that ordering has the lexigraphical order of the dimensions
+        for curr_dim in range(dimensionality):
+            ordering_dim = ordering[curr_dim,:,j]
+            # Take the subsequent elements of the ordering and check if their hash is the same
+            for elem_idx, elem1 in enumerate(ordering_dim):
+                for elem2 in ordering_dim[elem_idx+1:]:
+                    # No trivial match
+                    if (abs(elem1 - elem2) <= window):
+                        continue
+                    # If same hash, increase the counter, see the next
+                    if hash_mat_curr[elem1,curr_dim] == hash_mat_curr[elem2,curr_dim]:
+                        counter.setdefault((elem1, elem2), 0)
+                        counter[(elem1, elem2)] += 1
+                    # Else skip because we know that the ordering ensures that the subsequences are different
+                    else:
+                        break
+
+        '''
         # for each subsequence compare with the subsequences that follow
         # if they match increase the counter of their pair 
         for f in range(n - window + 1):
@@ -34,6 +53,7 @@ def cycle(i, j, subsequences, hash_mat, k, fail_thresh):
                 if eq > 0:
                     counter.setdefault((f,l), 0)
                     counter[(f,l)] += eq
+        '''
     # Get all entries whose counter is above or equal the motif dimensionality
         counter = {pair: v for pair, v in counter.items() if v >= motif_dimensionality}
     # Find the set of dimensions with the minimal distance
@@ -48,10 +68,10 @@ def cycle(i, j, subsequences, hash_mat, k, fail_thresh):
             top.queue = top.queue[:k]
         return top, dist_comp
 
-def worker(i, j, windowed_ts, hash_mat, k, stop_i, failure_thresh):
+def worker(i, j, windowed_ts, hash_mat, ordering, k, stop_i, failure_thresh):
         if stop_i:
             return
-        top_temp, dist_comp_temp = cycle(i, j, windowed_ts, hash_mat, k, failure_thresh)
+        top_temp, dist_comp_temp = cycle(i, j, windowed_ts, hash_mat, ordering, k, failure_thresh)
         
         return top_temp.queue, dist_comp_temp, i, j
 
@@ -96,6 +116,16 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     windowed_ts = WindowedTS(time_series, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
+    # Create ordering
+    ordering = np.zeros((dimension, n - window + 1, L), dtype=int)
+    '''
+    for rep in range(L):
+        for curr_dim in range(dimension):
+            print(hash_mat[:, rep, curr_dim, :])
+            print(np.sort(hash_mat[:, rep, curr_dim, :]))
+            ordering[curr_dim,:,rep] = np.argsort(hash_mat[:, rep, curr_dim, :])
+    print(ordering)
+    '''
     lock = threading.Lock()
 
     global stopped_event
@@ -103,8 +133,8 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
     stopped_event.clear()
 
 
-    with ProcessPoolExecutor(max_workers=int(multiprocessing.cpu_count()/2)) as executor:
-        futures = [executor.submit(worker, i, j, windowed_ts, hash_mat, k, stopped_event.is_set(), fail_thresh) for i, j in itertools.product(range(K), range(L))]
+    with ProcessPoolExecutor(max_workers=1) as executor:
+        futures = [executor.submit(worker, i, j, windowed_ts, hash_mat, ordering, k, stopped_event.is_set(), fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             result = future.result()
             if result is not None:

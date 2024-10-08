@@ -55,18 +55,18 @@ if __name__ == "__main__":
 
     r = 8#find_width_discr(d, window_size, K)
 
-    thresh = dimensionality/d.shape[1]
+    thresh = min(dimensionality/d.shape[1], 0.8)
     # Start the timer
     #tracemalloc.start()
     start = time.process_time()
     
     # Find the motifs
-    for _ in range(3):
-        motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
+    d = d[:100]
+    motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
 
 
     end = (time.process_time() - start)
-    print("Time elapsed: ", end/3)
+    print("Time elapsed: ", end)
     print("Distance computations:", num_dist)
     #snapshot = tracemalloc.take_snapshot()
     #top_stats = snapshot.statistics('lineno')
