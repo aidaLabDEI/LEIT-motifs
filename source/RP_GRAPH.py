@@ -3,7 +3,7 @@ from find_bin_width import *
 import numpy as np
 import queue, threading, itertools
 from multiprocessing import Pool, cpu_count
-from concurrent.futures import as_completed, ProcessPoolExecutor
+from concurrent.futures import as_completed, ProcessPoolExecutor, ThreadPoolExecutor
 from hash_lsh import RandomProjection, euclidean_hash
 from stop import stop3
 
@@ -18,7 +18,7 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
         K = subsequences.K 
         bin_width = subsequences.r
         counter = dict()
-        '''
+        
         hash_mat_curr = hash_mat[:,j,:,:-i] if i != 0 else hash_mat[:,j,:,:]
         # Let's assume that ordering has the lexigraphical order of the dimensions
         for curr_dim in range(dimensionality):
@@ -28,7 +28,7 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
             for idx, elem1 in enumerate(ordered_view):
                 for idx2, elem2 in enumerate(ordered_view[idx+1:]):
                     sub_idx1 = ordering_dim[idx]
-                    sub_idx2 = ordering_dim[idx+idx2]
+                    sub_idx2 = ordering_dim[idx+idx2+1]
                     # No trivial match
                     if (abs(sub_idx1 - sub_idx2) < window):
                         continue
@@ -55,7 +55,7 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
                 if eq > 0:
                     counter.setdefault((f,l), 0)
                     counter[(f,l)] += eq
-        
+        '''
     # Get all entries whose counter is above or equal the motif dimensionality
         counter = {pair: v for pair, v in counter.items() if v >= motif_dimensionality}
     # Find the set of dimensions with the minimal distance
@@ -82,7 +82,18 @@ def worker(i, j, windowed_ts, hash_mat, ordering, k, stop_i, failure_thresh):
             return
         top_temp, dist_comp_temp = cycle(i, j, windowed_ts, hash_mat, ordering, k, failure_thresh)
 
-        return top_temp.queue, dist_comp_temp, i, j
+        return list(top_temp.queue), dist_comp_temp, i, j
+
+def order_hash(hash_mat, ordering_name, shape, l, dimension):
+    existing_order = shared_memory.SharedMemory(name=ordering_name)
+    ordering = np.ndarray(shape, dtype=np.int32, buffer=existing_order.buf)
+
+    for curr_dim in range(dimension):
+        # Order hash[:,rep,dim,:] using as key the array of the last dimension
+        hash_mat_curr = hash_mat[:,l,curr_dim,:]
+        ordering[curr_dim,:,l] = np.lexsort(hash_mat_curr.T[::-1])
+    return
+
 
 def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
     global dimension, failure_thresh, time_tot
@@ -110,6 +121,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
     chunks = [(time_series[ranges[0]:ranges[-1]+window], ranges, window, rp) for ranges in np.array_split(np.arange(n - window + 1), num_chunks)]
 
     shm_hash_mat, hash_mat = create_shared_array((n-window+1, L, dimension, K), dtype=np.int8)
+    shm_ordering, ordering = create_shared_array((dimension, n - window + 1, L), dtype=np.int32)
 
     with Pool(processes=int(cpu_count())) as pool:
         results = []
@@ -123,32 +135,29 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
             std_container.update(std_temp)
             mean_container.update(mean_temp)
 
+        for rep in range(L):
+           pool.apply_async(order_hash, (hash_mat, shm_ordering.name, ordering.shape, rep, dimension))
+
+
+
     windowed_ts = WindowedTS(time_series, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
-
-    # Create ordering
-    ordering = np.zeros((dimension, n - window + 1, L), dtype=int)
-    '''
-    for rep in range(L):
+    for l in range(L):   
         for curr_dim in range(dimension):
-            # Order hash[:,rep,dim,:] using as key the array of the last dimension
-            hash_mat_curr = hash_mat[:,rep,curr_dim,:]
-            ordering[curr_dim,:,rep] = np.lexsort(hash_mat_curr.T[::-1])
-    '''
-    
-    lock = threading.Lock()
-
+        # Order hash[:,rep,dim,:] using as key the array of the last dimension
+            hash_mat_curr = hash_mat[:,l,curr_dim,:]
+            ordering[curr_dim,:,l] = np.lexsort(hash_mat_curr.T[::-1])
+    print(ordering)
     global stopped_event
     stopped_event = threading.Event()
     stopped_event.clear()
 
 
-    with ProcessPoolExecutor(max_workers=cpu_count()//2) as executor:
+    with ThreadPoolExecutor(max_workers=cpu_count()//2) as executor:
         futures = [executor.submit(worker, i, j, windowed_ts, hash_mat, ordering, k, stopped_event.is_set(), fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
-            result = future.result()
-            top_temp, dist_comp_temp, i, j = result
+            top_temp, dist_comp_temp, i, j = future.result()
             if dist_comp_temp == 0: continue
-
+            print("Temop",top_temp)
             dist_comp += dist_comp_temp
             for element in top_temp:
                 #Check is there's already an overlapping sequence, in that case keep the best match
@@ -164,17 +173,19 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                             top.put(element)
                         else:
                             continue
-
                 top.put(element)
                 if len(top.queue) > k:
                     top.get()
 
             stop_val = stop3(top.queue[0], K-i, j, failure_thresh, K, L, bin_width, motif_dimensionality)
+            print("Stop val", stop_val)
             if (stop_val and len(top.queue) >= k):
                     stopped_event.set()
-                    executor.shutdown(wait=True, cancel_futures=True)
+                    executor.shutdown(wait=False, cancel_futures=True)
                     break
-    print("Out")
+
     shm_hash_mat.close()
+    shm_ordering.close()
     shm_hash_mat.unlink()
+    shm_ordering.unlink()
     return top, dist_comp

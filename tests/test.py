@@ -56,7 +56,7 @@ if __name__ == "__main__":
     r = 8#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
-    #d = d[:300]
+    
     # Start the timer
     #tracemalloc.start()
     start = time.process_time()
@@ -75,6 +75,7 @@ if __name__ == "__main__":
 
     # Plot
     #motifs = queue.PriorityQueue()
+    print(motifs.queue)
     copy = motifs.queue
     motifs = copy
     #motifs = find_all_occur(extract, motifs, window_size)
@@ -82,7 +83,7 @@ if __name__ == "__main__":
     fig, axs = plt.subplots(d.shape[1], 1)
     X = pd.DataFrame(d)
     for i, dimension in enumerate(X.columns):
-        axs[i].plot(X[dimension], label=dimension)
+        axs[i].plot(X[dimension], label=dimension, linewidth= 1.2, color='#6263e0')
         axs[i].set_xlabel("Time")
         axs[i].set_ylabel(data.columns[dimension])
         #axs[i].legend()
@@ -90,7 +91,8 @@ if __name__ == "__main__":
             # Highlight the motifs in all dimensions
             for m in motif[1][1]:
                 if i in motif[1][2][0]:
-                    axs[i].axvspan(m, m + window_size, color=colors[idx], alpha=0.3)
+                    axs[i].plot(X[dimension].iloc[m:m+window_size], color=colors[idx], linewidth=1.8, alpha=0.7)
+                    #axs[i].axvspan(m, m + window_size, color=colors[idx], alpha=0.3)
 
     plt.suptitle("MultiDimensional Timeseries with Motifs Highlighted")
     #plt.tight_layout(rect=[0, 0, 1, 0.96])
