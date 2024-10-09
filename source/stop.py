@@ -16,9 +16,9 @@ def p(d, r):
 @jit(nopython=True, fastmath=True)
 def probability(d, i, j, b, s, jacc, K, L, dim):
   if i == K:
-    return (np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(jacc,s),b))
+    return (np.power(1-np.power(d,(K*dim)),j))*(np.power(1-np.power(jacc,s),b))
   else:
-    return (np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(d,(i+1*dim)),L-j))* np.power((1-np.power(np.power(jacc,s),b)),2)
+    return (np.power(1-np.power(d,((K-i)*dim)),j))*(np.power(1-np.power(d,((K-i+1)*dim)),L-j))* np.power((1-np.power(np.power(jacc,s),b)),2)
 
 
 def stop(collision, jacc, b, s, i, j, threshold, K, L, r, dim):

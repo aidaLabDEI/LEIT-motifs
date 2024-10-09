@@ -1,11 +1,10 @@
 from base import *
 from find_bin_width import *
 import numpy as np
-import queue, threading, multiprocessing, itertools
-from multiprocessing import Pool
-from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
+import queue, threading, itertools
+from multiprocessing import Pool, cpu_count
+from concurrent.futures import as_completed, ProcessPoolExecutor
 from hash_lsh import RandomProjection, euclidean_hash
-from numba import jit
 from stop import stop3
 
 def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
@@ -19,6 +18,7 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
         K = subsequences.K 
         bin_width = subsequences.r
         counter = dict()
+        '''
         hash_mat_curr = hash_mat[:,j,:,:-i] if i != 0 else hash_mat[:,j,:,:]
         # Let's assume that ordering has the lexigraphical order of the dimensions
         for curr_dim in range(dimensionality):
@@ -27,13 +27,15 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
             # Take the subsequent elements of the ordering and check if their hash is the same
             for idx, elem1 in enumerate(ordered_view):
                 for idx2, elem2 in enumerate(ordered_view[idx+1:]):
+                    sub_idx1 = ordering_dim[idx]
+                    sub_idx2 = ordering_dim[idx+idx2]
                     # No trivial match
-                    if (abs(ordering_dim[idx] - ordering_dim[idx+idx2]) <= window):
+                    if (abs(sub_idx1 - sub_idx2) < window):
                         continue
                     # If same hash, increase the counter, see the next
                     if (elem1 == elem2).all():
-                        counter.setdefault((ordering_dim[idx], ordering_dim[idx+idx2]), 0)
-                        counter[ordering_dim[idx], ordering_dim[idx+idx2]] += 1
+                        counter.setdefault((sub_idx1, sub_idx2), 0)
+                        counter[sub_idx1, sub_idx2] += 1
                     # Else skip because we know that the ordering ensures that the subsequences are different
                     else:
                         break
@@ -44,24 +46,31 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
             if i == 0:
                 current = hash_mat[f,j,:,:]
             else:
-                current = hash_mat[f,j,:,-i]
+                current = hash_mat[f,j,:,:-i]
             for l in range(f + window, n - window + 1):
                 if i == 0:
                     eq = np.sum(np.all(current == hash_mat[l,j,:,:], axis=1))
                 else:
-                    eq = np.sum(np.all(current == hash_mat[l,j,:,-i], axis=1))
+                    eq = np.sum(np.all(current == hash_mat[l,j,:,:-i], axis=1))
                 if eq > 0:
                     counter.setdefault((f,l), 0)
                     counter[(f,l)] += eq
-        '''
+        
     # Get all entries whose counter is above or equal the motif dimensionality
         counter = {pair: v for pair, v in counter.items() if v >= motif_dimensionality}
     # Find the set of dimensions with the minimal distance
         for maximum_pair in counter.keys():
+            coll_0, coll_1 = maximum_pair
+            # Iƒ we already seen it in a key of greater length, skip
+            if not i == 0:
+                rows = hash_mat[coll_0,j,:,:-i+1] == hash_mat[coll_1,j,:,:-i+1]
+                comp = np.sum(np.all(rows, axis=1))
+                if comp >= motif_dimensionality:
+                    continue            
             dist_comp += 1
-            curr_dist, dim, stop_dist= z_normalized_euclidean_distance(subsequences.sub(maximum_pair[0]), subsequences.sub(maximum_pair[1]),
-                                                np.arange(dimensionality), subsequences.mean(maximum_pair[0]), subsequences.std(maximum_pair[0]),
-                                                subsequences.mean(maximum_pair[1]), subsequences.std(maximum_pair[1]), motif_dimensionality)
+            curr_dist, dim, stop_dist= z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
+                                                np.arange(dimensionality), subsequences.mean(coll_0), subsequences.std(coll_0),
+                                                subsequences.mean(coll_1), subsequences.std(coll_1), motif_dimensionality)
             top.put((-curr_dist, [dist_comp, maximum_pair, [dim], stop_dist]))
 
         if len(top.queue) > k :
@@ -72,11 +81,11 @@ def worker(i, j, windowed_ts, hash_mat, ordering, k, stop_i, failure_thresh):
         if stop_i:
             return
         top_temp, dist_comp_temp = cycle(i, j, windowed_ts, hash_mat, ordering, k, failure_thresh)
-        
+
         return top_temp.queue, dist_comp_temp, i, j
 
 def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
-    global dimension, top, failure_thresh, time_tot
+    global dimension, failure_thresh, time_tot
     time_tot = 0
     random_gen = np.random.default_rng()
   # Data
@@ -102,7 +111,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     shm_hash_mat, hash_mat = create_shared_array((n-window+1, L, dimension, K), dtype=np.int8)
 
-    with Pool(processes=int(multiprocessing.cpu_count())) as pool:
+    with Pool(processes=int(cpu_count())) as pool:
         results = []
 
         for chunk in chunks:
@@ -118,13 +127,13 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     # Create ordering
     ordering = np.zeros((dimension, n - window + 1, L), dtype=int)
-
+    '''
     for rep in range(L):
         for curr_dim in range(dimension):
             # Order hash[:,rep,dim,:] using as key the array of the last dimension
             hash_mat_curr = hash_mat[:,rep,curr_dim,:]
             ordering[curr_dim,:,rep] = np.lexsort(hash_mat_curr.T[::-1])
-
+    '''
     
     lock = threading.Lock()
 
@@ -133,24 +142,39 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
     stopped_event.clear()
 
 
-    with ProcessPoolExecutor(max_workers=1) as executor:
+    with ProcessPoolExecutor(max_workers=cpu_count()//2) as executor:
         futures = [executor.submit(worker, i, j, windowed_ts, hash_mat, ordering, k, stopped_event.is_set(), fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             result = future.result()
-            if result is not None:
-                top_temp, dist_comp_temp, i, j = result
-                if dist_comp_temp == 0:
-                    continue
-                dist_comp += dist_comp_temp
-                for elem in top_temp:
-                    top.put(elem)
-                    if len(top.queue) > k:
-                        top.get()
-                if stop3(top.queue[0], i, j, failure_thresh, K, L, bin_width, motif_dimensionality):
+            top_temp, dist_comp_temp, i, j = result
+            if dist_comp_temp == 0: continue
+
+            dist_comp += dist_comp_temp
+            for element in top_temp:
+                #Check is there's already an overlapping sequence, in that case keep the best match
+                for stored in top.queue:
+                    indices_1 = element[1][1]
+                    indices_2 = stored[1][1]
+                    if (abs(indices_1[0] - indices_2[0]) < window or
+                        abs(indices_1[1] - indices_2[1]) < window or
+                        abs(indices_1[0] - indices_2[1]) < window or
+                        abs(indices_1[1] - indices_2[0]) < window):
+                        if element[0] > stored[0]:
+                            top.queue.remove(stored)
+                            top.put(element)
+                        else:
+                            continue
+
+                top.put(element)
+                if len(top.queue) > k:
+                    top.get()
+
+            stop_val = stop3(top.queue[0], K-i, j, failure_thresh, K, L, bin_width, motif_dimensionality)
+            if (stop_val and len(top.queue) >= k):
                     stopped_event.set()
-                if stopped_event.is_set():  # Check if the stop event is set
-                    executor.shutdown(wait=False, cancel_futures=True)
-                    break   
+                    executor.shutdown(wait=True, cancel_futures=True)
+                    break
+    print("Out")
     shm_hash_mat.close()
     shm_hash_mat.unlink()
     return top, dist_comp

@@ -56,10 +56,10 @@ if __name__ == "__main__":
     r = 8#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
+    #d = d[:300]
     # Start the timer
     #tracemalloc.start()
     start = time.process_time()
-    #d = d[:300]
     # Find the motifs
     motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
 
@@ -76,7 +76,6 @@ if __name__ == "__main__":
     # Plot
     #motifs = queue.PriorityQueue()
     copy = motifs.queue
-    print(copy)
     motifs = copy
     #motifs = find_all_occur(extract, motifs, window_size)
     colors = ["red", "green", "blue", "pink", "cyan", "yellow", "orange", "gray", "purple"]
@@ -87,8 +86,6 @@ if __name__ == "__main__":
         axs[i].set_xlabel("Time")
         axs[i].set_ylabel(data.columns[dimension])
         #axs[i].legend()
-
-
         for idx, motif in enumerate(motifs):
             # Highlight the motifs in all dimensions
             for m in motif[1][1]:
@@ -98,7 +95,7 @@ if __name__ == "__main__":
     plt.suptitle("MultiDimensional Timeseries with Motifs Highlighted")
     #plt.tight_layout(rect=[0, 0, 1, 0.96])
     if device == 1:
-        plt.savefig("motifs.pdf", format='pdf')
+        plt.savefig("motifs.svg", format='svg')
     else:   
         plt.show()
         # Compute relative contrast 
