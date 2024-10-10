@@ -8,7 +8,7 @@ import time, pandas as pd, numpy as np, queue
 from data_loader import convert_tsf_to_dataframe
 from base import z_normalized_euclidean_distance
 from find_bin_width import find_width_discr
-from extra import relative_contrast
+#from extra import relative_contrast
 import matplotlib.pyplot as plt
 
 import tracemalloc
