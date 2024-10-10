@@ -146,18 +146,20 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
         # Order hash[:,rep,dim,:] using as key the array of the last dimension
             hash_mat_curr = hash_mat[:,l,curr_dim,:]
             ordering[curr_dim,:,l] = np.lexsort(hash_mat_curr.T[::-1])
-    print(ordering)
+    #print(ordering)
     global stopped_event
     stopped_event = threading.Event()
     stopped_event.clear()
 
+    stop_val = False
+    stop_count = 0
+    stop_elem = None
 
-    with ThreadPoolExecutor(max_workers=cpu_count()//2) as executor:
+    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
         futures = [executor.submit(worker, i, j, windowed_ts, hash_mat, ordering, k, stopped_event.is_set(), fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             top_temp, dist_comp_temp, i, j = future.result()
             if dist_comp_temp == 0: continue
-            print("Temop",top_temp)
             dist_comp += dist_comp_temp
             for element in top_temp:
                 #Check is there's already an overlapping sequence, in that case keep the best match
@@ -176,9 +178,15 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                 top.put(element)
                 if len(top.queue) > k:
                     top.get()
-
-            stop_val = stop3(top.queue[0], K-i, j, failure_thresh, K, L, bin_width, motif_dimensionality)
-            print("Stop val", stop_val)
+                
+            # If the top element of the queue is the same for 10 iterations return
+            if stop_elem == top.queue[0]:
+                stop_count += 1
+            else:
+                stop_count = 0
+                stop_elem = top.queue[0]
+            if stop_count == 20:
+                stop_val = True
             if (stop_val and len(top.queue) >= k):
                     stopped_event.set()
                     executor.shutdown(wait=False, cancel_futures=True)
