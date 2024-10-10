@@ -61,6 +61,8 @@ if __name__ == "__main__":
     #tracemalloc.start()
     start = time.process_time()
     # Find the motifs
+    #for i in range(5):
+    #d = d[:300]
     motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
 
     end = (time.process_time() - start)

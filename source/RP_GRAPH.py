@@ -5,9 +5,13 @@ import queue, threading, itertools
 from multiprocessing import Pool, cpu_count
 from concurrent.futures import as_completed, ProcessPoolExecutor, ThreadPoolExecutor
 from hash_lsh import RandomProjection, euclidean_hash
+import cProfile
 from stop import stop3
 
 def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
+        #pr = cProfile.Profile()
+        #pr.enable()
+
         dist_comp = 0
         top = queue.PriorityQueue()
         window = subsequences.w
@@ -17,6 +21,7 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
         L = subsequences.L
         K = subsequences.K 
         bin_width = subsequences.r
+        dimensions = np.arange(dimensionality)
         counter = dict()
         
         hash_mat_curr = hash_mat[:,j,:,:-i] if i != 0 else hash_mat[:,j,:,:]
@@ -57,11 +62,20 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
                     counter[(f,l)] += eq
         '''
     # Get all entries whose counter is above or equal the motif dimensionality
-        counter = {pair: v for pair, v in counter.items() if v >= motif_dimensionality}
+        v_max = max(list(counter.values()))
+        counter_extr = [pair for pair, v in counter.items() if v >= v_max]
+        #counter_extr = [pair for pair, v in counter.items() if v >= motif_dimensionality]
+    # If counter is empty pick the ones with the max counter
+        '''
+        if len(counter_extr) == 0:
+            max_count = max([v for _, v in counter])
+            counter_extr = [pair for pair, v in counter if v == max_count]
+        '''
     # Find the set of dimensions with the minimal distance
-        for maximum_pair in counter.keys():
+        for maximum_pair in counter_extr:
             coll_0, coll_1 = maximum_pair
             # Iƒ we already seen it in a key of greater length, skip
+            
             if not i == 0:
                 rows = hash_mat[coll_0,j,:,:-i+1] == hash_mat[coll_1,j,:,:-i+1]
                 comp = np.sum(np.all(rows, axis=1))
@@ -69,15 +83,21 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
                     continue            
             dist_comp += 1
             curr_dist, dim, stop_dist= z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
-                                                np.arange(dimensionality), subsequences.mean(coll_0), subsequences.std(coll_0),
+                                                dimensions, subsequences.mean(coll_0), subsequences.std(coll_0),
                                                 subsequences.mean(coll_1), subsequences.std(coll_1), motif_dimensionality)
             top.put((-curr_dist, [dist_comp, maximum_pair, [dim], stop_dist]))
 
         if len(top.queue) > k :
             top.queue = top.queue[:k]
+        '''
+        pr.disable()
+        if i == 0 and j == 1:
+            pr.print_stats(sort='cumtime')
+        '''
         return top, dist_comp
 
 def worker(i, j, windowed_ts, hash_mat, ordering, k, stop_i, failure_thresh):
+
         if stop_i:
             return
         top_temp, dist_comp_temp = cycle(i, j, windowed_ts, hash_mat, ordering, k, failure_thresh)
@@ -173,7 +193,6 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                 if add: top.put(element)
                 if len(top.queue) > k:
                     top.get()
-                
             # If the top element of the queue is the same for 10 iterations return
             if stop_elem == top.queue[0]:
                 stop_count += 1
