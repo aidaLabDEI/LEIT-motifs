@@ -131,7 +131,6 @@ def process_chunk(time_series, ranges, window, rp, shm_name_hash_mat, shm_shape_
   existing_shm_hash_mat = shared_memory.SharedMemory(name=shm_name_hash_mat)
 
   hash_mat = np.ndarray(shm_shape_hash_mat, dtype=np.int8, buffer=existing_shm_hash_mat.buf)
-
   mean_container = {}
   std_container = {}
 

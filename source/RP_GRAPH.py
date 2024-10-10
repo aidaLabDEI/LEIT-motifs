@@ -30,7 +30,7 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
                     sub_idx1 = ordering_dim[idx]
                     sub_idx2 = ordering_dim[idx+idx2+1]
                     # No trivial match
-                    if (abs(sub_idx1 - sub_idx2) < window):
+                    if (abs(sub_idx1 - sub_idx2) <= window):
                         continue
                     # If same hash, increase the counter, see the next
                     if (elem1 == elem2).all():
@@ -84,21 +84,15 @@ def worker(i, j, windowed_ts, hash_mat, ordering, k, stop_i, failure_thresh):
 
         return list(top_temp.queue), dist_comp_temp, i, j
 
-def order_hash(hash_mat, ordering_name, shape, l, dimension):
-    existing_order = shared_memory.SharedMemory(name=ordering_name)
-    ordering = np.ndarray(shape, dtype=np.int32, buffer=existing_order.buf)
-
+def order_hash(hash_mat, l, dimension):
     for curr_dim in range(dimension):
         # Order hash[:,rep,dim,:] using as key the array of the last dimension
-        hash_mat_curr = hash_mat[:,l,curr_dim,:]
-        ordering[curr_dim,:,l] = np.lexsort(hash_mat_curr.T[::-1])
-    return
+        hash_mat_curr = hash_mat[:,curr_dim,:]
+        ordering = np.lexsort(hash_mat_curr.T[::-1])
+    return ordering, l
 
 
 def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
-    global dimension, failure_thresh, time_tot
-    time_tot = 0
-    random_gen = np.random.default_rng()
   # Data
     dimension = time_series.shape[1]
     n = time_series.shape[0]
@@ -108,8 +102,6 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     
     failure_thresh = fail_thresh
-    index_hash = 0
-
     dist_comp = 0
   # Hasher
     rp = RandomProjection(window, bin_width, K, L) #[]
@@ -121,10 +113,11 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
     chunks = [(time_series[ranges[0]:ranges[-1]+window], ranges, window, rp) for ranges in np.array_split(np.arange(n - window + 1), num_chunks)]
 
     shm_hash_mat, hash_mat = create_shared_array((n-window+1, L, dimension, K), dtype=np.int8)
-    shm_ordering, ordering = create_shared_array((dimension, n - window + 1, L), dtype=np.int32)
+    ordering = np.ndarray((dimension, n - window + 1, L), dtype=np.int32)
 
     with Pool(processes=int(cpu_count())) as pool:
         results = []
+        ord_results = []
 
         for chunk in chunks:
             result = pool.apply_async(process_chunk, (*chunk, shm_hash_mat.name, hash_mat.shape, L, dimension, K))
@@ -136,17 +129,16 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
             mean_container.update(mean_temp)
 
         for rep in range(L):
-           pool.apply_async(order_hash, (hash_mat, shm_ordering.name, ordering.shape, rep, dimension))
-
+          result = pool.apply_async(order_hash, (hash_mat[:,rep,:,:], rep, dimension))
+          ord_results.append(result)
+        
+        for result in ord_results:
+            ordering_temp, rep = result.get()
+            ordering[:,:,rep] = ordering_temp
 
 
     windowed_ts = WindowedTS(time_series, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
-    for l in range(L):   
-        for curr_dim in range(dimension):
-        # Order hash[:,rep,dim,:] using as key the array of the last dimension
-            hash_mat_curr = hash_mat[:,l,curr_dim,:]
-            ordering[curr_dim,:,l] = np.lexsort(hash_mat_curr.T[::-1])
-    #print(ordering)
+
     global stopped_event
     stopped_event = threading.Event()
     stopped_event.clear()
@@ -162,20 +154,23 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
             if dist_comp_temp == 0: continue
             dist_comp += dist_comp_temp
             for element in top_temp:
+                add = True
                 #Check is there's already an overlapping sequence, in that case keep the best match
                 for stored in top.queue:
-                    indices_1 = element[1][1]
-                    indices_2 = stored[1][1]
-                    if (abs(indices_1[0] - indices_2[0]) < window or
-                        abs(indices_1[1] - indices_2[1]) < window or
-                        abs(indices_1[0] - indices_2[1]) < window or
-                        abs(indices_1[1] - indices_2[0]) < window):
+                    indices_1_0 = element[1][1][0]
+                    indices_1_1 = element[1][1][1]
+                    indices_2_0 = stored[1][1][0]
+                    indices_2_1 = stored[1][1][1]
+                    if ((abs(indices_1_0 - indices_2_0) < window) or 
+                        (abs(indices_1_0 - indices_2_1) < window) or 
+                        (abs(indices_1_1 - indices_2_0) < window) or 
+                        (abs(indices_1_1 - indices_2_1) < window)):
                         if element[0] > stored[0]:
                             top.queue.remove(stored)
-                            top.put(element)
                         else:
+                            add = False
                             continue
-                top.put(element)
+                if add: top.put(element)
                 if len(top.queue) > k:
                     top.get()
                 
@@ -193,7 +188,5 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                     break
 
     shm_hash_mat.close()
-    shm_ordering.close()
     shm_hash_mat.unlink()
-    shm_ordering.unlink()
     return top, dist_comp
