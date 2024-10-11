@@ -1,5 +1,6 @@
 import numpy as np
 from numba import jit, prange
+import numba as nb
 import time
 
 class RandomProjection:
@@ -92,7 +93,7 @@ if __name__ == "__main__":
     r = 8
     K = 8  # Length of the hash
     rp = RandomProjection(dim, r, K, 100)
-    data = np.random.rand(dim)
+    data = np.ascontiguousarray(np.random.rand(dim))
 
 
     timei = time.process_time()
