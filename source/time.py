@@ -2,7 +2,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import itertools
 import numpy as np
 import time
-from numba import jit
+from numba import jit, prange
 
 if __name__ == "__main__":
 
@@ -12,5 +12,5 @@ if __name__ == "__main__":
 
     init = time.time()
     for i in range(10000):
-        f = np.array_equal(random_numbers, random_numbers2)
+        f = (random_numbers == random_numbers2).all()
     print("Time elapsed: ", time.time() - init)

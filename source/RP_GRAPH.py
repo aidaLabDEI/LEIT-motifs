@@ -9,8 +9,8 @@ import cProfile
 from stop import stop3
 
 def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
-        #pr = cProfile.Profile()
-        #pr.enable()
+        pr = cProfile.Profile()
+        pr.enable()
 
         dist_comp = 0
         top = queue.PriorityQueue()
@@ -89,11 +89,11 @@ def cycle(i, j, subsequences, hash_mat, ordering, k, fail_thresh):
 
         if len(top.queue) > k :
             top.queue = top.queue[:k]
-        '''
+        
         pr.disable()
         if i == 0 and j == 1:
             pr.print_stats(sort='cumtime')
-        '''
+        
         return top, dist_comp
 
 def worker(i, j, windowed_ts, hash_mat, ordering, k, stop_i, failure_thresh):
