@@ -3,7 +3,7 @@ import numpy as np
 from numba import jit
 
 
-@jit(nopython=True, fastmath=True)
+#@jit(nopython=True, fastmath=True)
 def second_term(first, r, d):
     second_term = -2 / (np.sqrt(2 * np.pi) * r / d) * (1 - np.exp(-r**2 / (2 * d**2)))
     return first + second_term
@@ -56,12 +56,15 @@ def stop(collision, jacc, b, s, i, j, threshold, K, L, r, dim):
   # Check the condition
   return probability(d, i, j, b, s, jacc, K, L, dim) <= threshold
 
-@jit(nopython=True, nogil=True)
+
 def probability3(d, i, j, K, L, dim):
+  i = K - i
   if i == K:
-    return (np.power(1-np.power(d,(i*dim)),j))
+    print(np.power(1-np.power(d,(K*dim)),j))
+    return (np.power(1-np.power(d,((K)*dim)),j))
   else:
-    return (np.power(1-np.power(d,(i*dim)),j))*(np.power(1-np.power(d,(i+1*dim)),L-j))
+    print(np.power(1-np.power(d,((i)*dim)),j))*(np.power(1-np.power(d,((i+1)*dim)),L-j))
+    return (np.power(1-np.power(d,((i)*dim)),j))*(np.power(1-np.power(d,((i+1)*dim)),L-j))
 
 def stop3(collision, i, j, threshold, K, L, r, dim):
   '''
@@ -93,7 +96,7 @@ def stop3(collision, i, j, threshold, K, L, r, dim):
   # jacc is the vector with bool that indicate where teè dimensions match
   #jacc = sum(jacc)/len(jacc)
   # d is p(d) for the euclidean LSH
-  d = p(abs(collision[1][3]), r)
+  d = p(abs(collision[0]), r)
 
   # Check the condition
   return probability3(d, i, j, K, L, dim) <= threshold

@@ -48,7 +48,7 @@ if __name__ == "__main__":
         data = pd.read_csv(paths[dataset])
         d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
     else:
-        data = pd.read_csv(paths[dataset], sep='\s+')
+        data = pd.read_csv(paths[dataset], sep=r'\s+')
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy())
     
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     motifs = copy
     #motifs = find_all_occur(extract, motifs, window_size)
     colors = ["red", "green", "blue", "pink", "cyan", "yellow", "orange", "gray", "purple"]
-    fig, axs = plt.subplots(d.shape[1], 1)
+    fig, axs = plt.subplots(d.shape[1], 1, sharex=True)
     X = pd.DataFrame(d)
     for i, dimension in enumerate(X.columns):
         axs[i].plot(X[dimension], label=dimension, linewidth= 1.2, color='#6263e0')
