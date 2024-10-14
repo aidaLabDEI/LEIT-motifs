@@ -88,6 +88,8 @@ def order_hash(hash_mat, l, dimension):
 
 
 def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
+    pr = cProfile.Profile()
+    pr.enable()
   # Data
     dimension = time_series.shape[1]
     n = time_series.shape[0]
@@ -138,7 +140,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
     stop_count = 0
     stop_elem = None
     counter_tot = dict()
-    with ThreadPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers= cpu_count() // 2) as executor:
         futures = [executor.submit(worker, i, j, windowed_ts, hash_mat, ordering, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             top_temp, dist_comp_temp, i, j, counter = future.result()
@@ -146,7 +148,14 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
             #for key, value in counter.items():
              #   counter_tot.setdefault(key, 0)
               #  counter_tot[key] += value
-            if dist_comp_temp == 0: continue
+            if dist_comp_temp == 0: 
+                stop_count += 1
+                if stop_count >= 20:
+                    stop_val = True
+                if (stop_val and len(top.queue) >= k):
+                    executor.shutdown(wait=True, cancel_futures=True)   
+                    break
+                continue
             dist_comp += dist_comp_temp
             for element in top_temp:
                 add = True
@@ -177,7 +186,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
             if stop_count >= 20:
                 stop_val = True
             if (stop_val and len(top.queue) >= k):
-                    executor.shutdown(wait=False, cancel_futures=True)   
+                    executor.shutdown(wait=True, cancel_futures=True)   
                     break
                     
 
@@ -240,6 +249,8 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
         # Show the interactive plot
         fig.write_html("graph.html")
     
+    pr.disable()
+    pr.print_stats(sort='cumtime')
     shm_hash_mat.close()
     shm_hash_mat.unlink()
     return top, dist_comp

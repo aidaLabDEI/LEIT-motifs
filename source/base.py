@@ -2,7 +2,7 @@ import numpy as np, pandas as pd
 from multiprocessing import shared_memory
 from numba import jit
 import numba as nb
-from hash_lsh import RandomProjection, euclidean_hash
+from hash_lsh import RandomProjection, compute_hash
 
 
 class WindowedTS:
@@ -143,7 +143,7 @@ def process_chunk(time_series, ranges, window, rp, shm_name_hash_mat, shm_shape_
     std_container[idx] = np.where(std_held == 0, 0.00001, std_held)
 
     subsequence_n = (subsequence - mean_container[idx][:, np.newaxis]) / std_container[idx][:, np.newaxis]
-    hashed_sub = np.apply_along_axis(euclidean_hash, 1, subsequence_n, rp)
+    hashed_sub = np.apply_along_axis(compute_hash, 1, subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L)
     hashed_sub = np.swapaxes(hashed_sub, 0, 1)
     hash_mat[idx] = hashed_sub
   return std_container, mean_container
