@@ -53,7 +53,7 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy())
     
 
-    r = 8#find_width_discr(d, window_size, K)
+    r = 16#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
     
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     for i, dimension in enumerate(X.columns):
         axs[i].plot(X[dimension], label=dimension, linewidth= 1.2, color='#6263e0')
         axs[i].set_xlabel("Time")
-        axs[i].set_ylabel(data.columns[dimension])
+        axs[i].set_ylabel("Dimension "+ str(dimension))
         #axs[i].legend()
         for idx, motif in enumerate(motifs):
             # Highlight the motifs in all dimensions
