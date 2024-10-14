@@ -7,7 +7,7 @@ from concurrent.futures import as_completed, ProcessPoolExecutor, ThreadPoolExec
 from hash_lsh import RandomProjection, euclidean_hash
 import cProfile
 from stop import stop3
-import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
+#import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
 
 def worker(i, j, subsequences, hash_mat, ordering, k, stop_i, failure_thresh):
         #if i == 0 and j == 1:
@@ -25,7 +25,7 @@ def worker(i, j, subsequences, hash_mat, ordering, k, stop_i, failure_thresh):
         L = subsequences.L
         K = subsequences.K 
         bin_width = subsequences.r
-        dimensions = np.arange(dimensionality)
+        dimensions = np.arange(dimensionality, dtype=np.int32)
         counter = dict()
         
         hash_mat_curr = hash_mat[:,j,:,:-i] if i != 0 else hash_mat[:,j,:,:]
