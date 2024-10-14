@@ -88,8 +88,8 @@ def order_hash(hash_mat, l, dimension):
 
 
 def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
-    pr = cProfile.Profile()
-    pr.enable()
+    #pr = cProfile.Profile()
+    #pr.enable()
   # Data
     dimension = time_series.shape[1]
     n = time_series.shape[0]
@@ -249,8 +249,8 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
         # Show the interactive plot
         fig.write_html("graph.html")
     
-    pr.disable()
-    pr.print_stats(sort='cumtime')
+    #pr.disable()
+    #pr.print_stats(sort='cumtime')
     shm_hash_mat.close()
     shm_hash_mat.unlink()
     return top, dist_comp
