@@ -12,7 +12,7 @@ from stop import stop3
 def worker(i, j, subsequences, hash_mat, ordering, k, stop_i, failure_thresh):
         #if i == 0 and j == 1:
          #   pr = cProfile.Profile()
-          #  pr.enable()
+         #   pr.enable()
         if stop_i:
             return
         #top_temp, dist_comp_temp = cycle(i, j, windowed_ts, hash_mat, ordering, k, failure_thresh)
@@ -69,15 +69,15 @@ def worker(i, j, subsequences, hash_mat, ordering, k, stop_i, failure_thresh):
                                                 subsequences.mean(coll_1), subsequences.std(coll_1), motif_dimensionality)
             top.put((-curr_dist, [dist_comp, maximum_pair, [dim], stop_dist]))
 
-        if len(top.queue) > k :
+        if dist_comp > k :
             top.queue = top.queue[:k]
 
         
-        #if i == 0 and j == 1:
-           # pr.disable()
-            #pr.print_stats(sort='cumtime')
+       # if i == 0 and j == 1:
+        #    pr.disable()
+         #   pr.print_stats(sort='cumtime')
 
-        return list(top.queue), dist_comp, i, j, counter
+        return top.queue, dist_comp, i, j, counter
 
 def order_hash(hash_mat, l, dimension):
     for curr_dim in range(dimension):
@@ -131,7 +131,6 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
             ordering_temp, rep = result.get()
             ordering[:,:,rep] = ordering_temp
 
-
     windowed_ts = WindowedTS(time_series, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
 
@@ -139,14 +138,14 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
     stop_count = 0
     stop_elem = None
     counter_tot = dict()
-    with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
+    with ThreadPoolExecutor() as executor:
         futures = [executor.submit(worker, i, j, windowed_ts, hash_mat, ordering, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             top_temp, dist_comp_temp, i, j, counter = future.result()
             # Sum the counter values in the total counter
-            for key, value in counter.items():
-                counter_tot.setdefault(key, 0)
-                counter_tot[key] += value
+            #for key, value in counter.items():
+             #   counter_tot.setdefault(key, 0)
+              #  counter_tot[key] += value
             if dist_comp_temp == 0: continue
             dist_comp += dist_comp_temp
             for element in top_temp:
@@ -178,8 +177,10 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
             if stop_count >= 20:
                 stop_val = True
             if (stop_val and len(top.queue) >= k):
-                    executor.shutdown(wait=True, cancel_futures=True)
+                    executor.shutdown(wait=False, cancel_futures=True)   
                     break
+                    
+
     if False:
         # Imagine counter_tot as an edge list with weights, plot the graph with the weights as the edge weights of the top
         # elements
@@ -239,7 +240,6 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
         # Show the interactive plot
         fig.write_html("graph.html")
     
-    print("Returning")
     shm_hash_mat.close()
     shm_hash_mat.unlink()
     return top, dist_comp
