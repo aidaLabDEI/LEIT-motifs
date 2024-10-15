@@ -6,7 +6,7 @@ from multiprocessing import Pool, cpu_count
 from concurrent.futures import as_completed, ProcessPoolExecutor, ThreadPoolExecutor
 from hash_lsh import RandomProjection, euclidean_hash
 import cProfile
-from stop import stop3
+from stop import stopgraph
 #import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
 
 def worker(i, j, subsequences, hash_mat, ordering, k, stop_i, failure_thresh):
@@ -52,14 +52,16 @@ def worker(i, j, subsequences, hash_mat, ordering, k, stop_i, failure_thresh):
         #v_max = max(list(counter.values()))
         #counter_extr = [pair for pair, v in counter.items() if v >= v_max]
         counter_extr = [pair for pair, v in counter.items() if v >= motif_dimensionality]
-
     # Find the set of dimensions with the minimal distance
         for maximum_pair in counter_extr:
             coll_0, coll_1 = maximum_pair
             # Iƒ we already seen it in a key of greater length, skip
             
             if not i == 0:
-                rows = hash_mat[coll_0,j,:,:-i+1] == hash_mat[coll_1,j,:,:-i+1]
+                if i == 1:
+                    rows = hash_mat[coll_0,j,:,:] == hash_mat[coll_1,j,:,:]
+                else:
+                    rows = hash_mat[coll_0,j,:,:-i+1] == hash_mat[coll_1,j,:,:-i+1]
                 comp = np.sum(np.all(rows, axis=1))
                 if comp >= motif_dimensionality:
                     continue            
@@ -88,8 +90,8 @@ def order_hash(hash_mat, l, dimension):
 
 
 def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
-    pr = cProfile.Profile()
-    pr.enable()
+    #pr = cProfile.Profile()
+    #pr.enable()
   # Data
     dimension = time_series.shape[1]
     n = time_series.shape[0]
@@ -144,18 +146,15 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
         futures = [executor.submit(worker, i, j, windowed_ts, hash_mat, ordering, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             top_temp, dist_comp_temp, i, j, counter = future.result()
+
             # Sum the counter values in the total counter
             #for key, value in counter.items():
              #   counter_tot.setdefault(key, 0)
               #  counter_tot[key] += value
-            if dist_comp_temp == 0: 
-                stop_count += 1
-                if stop_count >= 20:
-                    stop_val = True
-                if (stop_val and len(top.queue) >= k):
-                    executor.shutdown(wait=True, cancel_futures=True)   
-                    break
-                continue
+            #if dist_comp_temp == 0: 
+                #stop_count += 1
+                #if stop_count >= 20:
+                #continue
             dist_comp += dist_comp_temp
             for element in top_temp:
                 add = True
@@ -178,6 +177,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                 if len(top.queue) > k:
                     top.get()
             # If the top element of the queue is the same for 10 iterations return
+            '''
             if stop_elem == top.queue[0]:
                 stop_count += 1
             else:
@@ -188,7 +188,13 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
             if (stop_val and len(top.queue) >= k):
                     executor.shutdown(wait=True, cancel_futures=True)   
                     break
-                    
+            '''   
+            if not top.empty():
+                stop_val = stopgraph(top.queue[0], i, j, fail_thresh, K, L, bin_width, motif_dimensionality)
+                if (stop_val and len(top.queue) >= k):
+                        executor.shutdown(wait=True, cancel_futures=True)   
+                        break
+                 
 
     if False:
         # Imagine counter_tot as an edge list with weights, plot the graph with the weights as the edge weights of the top
@@ -249,8 +255,8 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
         # Show the interactive plot
         fig.write_html("graph.html")
     
-    pr.disable()
-    pr.print_stats(sort='cumtime')
+   # pr.disable()
+    #pr.print_stats(sort='cumtime')
     shm_hash_mat.close()
     shm_hash_mat.unlink()
     return top, dist_comp

@@ -58,7 +58,7 @@ if __name__ == "__main__":
     thresh = min(dimensionality/d.shape[1], 0.8)
     
     # Start the timer
-    tracemalloc.start()
+    #tracemalloc.start()
     start = time.process_time()
     # Find the motifs
     #for i in range(5):
@@ -68,15 +68,15 @@ if __name__ == "__main__":
     end = (time.process_time() - start)
     print("Time elapsed: ", end)
     print("Distance computations:", num_dist)
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
+    #snapshot = tracemalloc.take_snapshot()
+    #top_stats = snapshot.statistics('lineno')
     
     #print("[ Top 10 memory-consuming lines ]")
     #for stat in top_stats[:10]:
      #   print(stat)
 
     # Plot
-    #motifs = queue.PriorityQueue()
+   # motifs = queue.PriorityQueue()
     print(motifs.queue)
     copy = motifs.queue
     motifs = copy
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     for i, dimension in enumerate(X.columns):
         axs[i].plot(X[dimension], label=dimension, linewidth= 1.2, color='#6263e0')
         axs[i].set_xlabel("Time")
-        axs[i].set_ylabel(data.columns[dimension])
+        axs[i].set_ylabel("Dimension " + str(dimension))
         #axs[i].legend()
         for idx, motif in enumerate(motifs):
             # Highlight the motifs in all dimensions

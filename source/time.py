@@ -6,11 +6,9 @@ from numba import jit, prange
 
 if __name__ == "__main__":
 
-    # Array of random numbers long 1000
-    random_numbers = np.random.rand(1000)
-    random_numbers2 = np.random.rand(1000)
+    #create a 3d matrix of random integers
+    matrix = np.random.randint(1, 10, (3, 3, 3))
+    print("Matrix:")
+    print(matrix)
 
-    init = time.time()
-    for i in range(10000):
-        f = (random_numbers == random_numbers2).all()
-    print("Time elapsed: ", time.time() - init)
+    print(matrix[:,1,:-2])

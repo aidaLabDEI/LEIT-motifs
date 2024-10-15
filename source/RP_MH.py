@@ -69,7 +69,10 @@ def minhash_cycle(i, j, subsequences, hash_mat, k, lsh_threshold):
 
         # If they collide at the previous level, skip
         if not i == 0:
-          rows = hash_mat[coll_0,j,:,:-i+1] == hash_mat[coll_1,j,:,:-i+1]
+          if i == 1:
+            rows = hash_mat[coll_0,j,:,:] == hash_mat[coll_1,j,:,:]
+          else:
+            rows = hash_mat[coll_0,j,:,:-i+1] == hash_mat[coll_1,j,:,:-i+1]
           comp = np.sum(np.all(rows, axis=1))
           if comp >= dimensionality:
             add = False

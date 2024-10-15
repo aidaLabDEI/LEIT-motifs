@@ -101,7 +101,42 @@ def stop3(collision, i, j, threshold, K, L, r, dim):
   # Check the condition
   return probability3(d, i, j, K, L, dim) <= threshold
   
-if __name__ == "__main__":
-  print(p(1, 1))
+def probabilitygraph(d, i, j, K, L, dim):
+  i = K - i
+  if i == K:
+    return (np.power(1-np.power(d,K),j*dim))
+  else:
+    return (np.power(1-np.power(d,((i))),dim*j))*(np.power(1-np.power(d,((i+1))),(L-j)*dim))
 
-  print(stop([1, 5], 0.5, 1, 1, 1, 1, 0.5, 1, 1, 1, 1))
+def stopgraph(collision, i, j, threshold, K, L, r, dim):
+  '''
+    Returns true if the probability of having missed a pair at distance d(collision)
+    is less or equal than the threshold
+
+    Parameters
+    -----
+     collision: list
+      the element with max priority in the motif queue;
+     i: int
+       number of actual concatenations for RP;
+     j: int
+       number of actual repetitions for RP;
+     threshold: float
+       failure probability
+
+    Returns
+    -----
+    true, if the condition is verified
+
+  '''
+  # jacc is the vector with bool that indicate where teè dimensions match
+  #jacc = sum(jacc)/len(jacc)
+  # d is p(d) for the euclidean LSH
+  d = p(abs(collision[0]), r)
+
+  # Check the condition
+  return probabilitygraph(d, i, j, K, L, dim) <= threshold
+
+if __name__ == "__main__":
+  print(((1-p(20,16)**(7))**(200)), (1-p(8,8)**8)**200)
+
