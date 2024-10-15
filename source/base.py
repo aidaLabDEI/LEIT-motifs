@@ -77,7 +77,7 @@ def z_normalized_euclidean_distance(ts1, ts2, indices, mean_ts1, std_ts1, mean_t
   sum = np.sum(squared_diff_sum)
   return sum, indices.astype(np.int8), np.max(squared_diff_sum)
 
-@jit(nb.types.Tuple((nb.float64, nb.int8[:], nb.float64[:]))(nb.float64[:,:], nb.float64[:,:], nb.int32[:], nb.float64[:], nb.float64[:], nb.float64[:], nb.float64[:], nb.int64), nopython=True, cache=True, fastmath=True)
+@jit(nb.types.Tuple((nb.float32, nb.int8[:], nb.float32[:]))(nb.float32[:,:], nb.float32[:,:], nb.int32[:], nb.float32[:], nb.float32[:], nb.float32[:], nb.float32[:], nb.int64), nopython=True, cache=True, fastmath=True)
 def z_normalized_euclidean_distanceg(ts1, ts2, indices, mean_ts1, std_ts1, mean_ts2, std_ts2, dimensionality=None):
   """
   Compute the z-normalized Euclidean distance between two subsequences, if a dimensionality is specified the algorithm
@@ -185,7 +185,7 @@ def process_chunk(time_series, ranges, window, rp, shm_name_hash_mat, shm_shape_
   std_container = {}
 
   for idx_ts, idx in enumerate(ranges):
-    subsequence = np.ascontiguousarray(time_series[idx_ts:idx_ts+window].T)
+    subsequence = np.ascontiguousarray(time_series[idx_ts:idx_ts+window].T, dtype=np.float32)
 
     mean_container[idx] = np.mean(subsequence, axis=1)
     std_held = np.std(subsequence, axis=1)

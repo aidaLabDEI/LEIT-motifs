@@ -14,11 +14,11 @@ class RandomProjection:
         K_half = K // 2
         
         # Generate sqrt(L) sets of K/2 random vectors and values for tensoring
-        self.a_l = np.ascontiguousarray(np.random.randn(sqrt_L, K_half, dim)) 
-        self.b_l = np.ascontiguousarray(np.random.uniform(0, r, (sqrt_L, K_half)))
+        self.a_l = np.ascontiguousarray(np.random.randn(sqrt_L, K_half, dim), dtype=np.float32) 
+        self.b_l = np.ascontiguousarray(np.random.uniform(0, r, (sqrt_L, K_half)), dtype=np.float32)
         
-        self.a_r = np.ascontiguousarray(np.random.randn(sqrt_L, K_half, dim))
-        self.b_r = np.ascontiguousarray(np.random.uniform(0, r, (sqrt_L, K_half)))
+        self.a_r = np.ascontiguousarray(np.random.randn(sqrt_L, K_half, dim), dtype=np.float32)
+        self.b_r = np.ascontiguousarray(np.random.uniform(0, r, (sqrt_L, K_half)), dtype=np.float32)
     
     def hash_vector(self, data):
         return compute_hash(data, self.a_l, self.b_l, self.a_r, self.b_r, self.r, self.K, self.L)
