@@ -104,9 +104,9 @@ def stop3(collision, i, j, threshold, K, L, r, dim):
 def probabilitygraph(d, i, j, K, L, dim):
   i = K - i
   if i == K:
-    return (np.power(1-np.power(d,K),j*dim))
+    return (np.power(1-np.power(d,K),j))
   else:
-    return (np.power(1-np.power(d,((i))),dim*j))*(np.power(1-np.power(d,((i+1))),(L-j)*dim))
+    return (np.power(1-np.power(d,((i))),j))*(np.power(1-np.power(d,((i+1))),(L-j)))
 
 def stopgraph(collision, i, j, threshold, K, L, r, dim):
   '''
@@ -132,11 +132,17 @@ def stopgraph(collision, i, j, threshold, K, L, r, dim):
   # jacc is the vector with bool that indicate where teè dimensions match
   #jacc = sum(jacc)/len(jacc)
   # d is p(d) for the euclidean LSH
-  d = p(abs(collision[0]), r)
+  ds = []
+  for elem in collision[1][3]:
+    ds.append(p(elem,r))
+  
+  prob = 1
+  for d in ds:
+    prob *= probabilitygraph(d, i, j, K, L, dim)
 
   # Check the condition
-  return probabilitygraph(d, i, j, K, L, dim) <= threshold
+  return prob <= threshold
 
 if __name__ == "__main__":
-  print(((1-p(20,16)**(7))**(200)), (1-p(8,8)**8)**200)
+  print(((1-p(20,24)**(8))**(400*8)), (1-p(20,16)**(8*3)**200))
 

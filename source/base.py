@@ -77,6 +77,55 @@ def z_normalized_euclidean_distance(ts1, ts2, indices, mean_ts1, std_ts1, mean_t
   sum = np.sum(squared_diff_sum)
   return sum, indices.astype(np.int8), np.max(squared_diff_sum)
 
+@jit(nb.types.Tuple((nb.float64, nb.int8[:], nb.float64[:]))(nb.float64[:,:], nb.float64[:,:], nb.int32[:], nb.float64[:], nb.float64[:], nb.float64[:], nb.float64[:], nb.int64), nopython=True, cache=True, fastmath=True)
+def z_normalized_euclidean_distanceg(ts1, ts2, indices, mean_ts1, std_ts1, mean_ts2, std_ts2, dimensionality=None):
+  """
+  Compute the z-normalized Euclidean distance between two subsequences, if a dimensionality is specified the algorithm
+  will find the set of dimensions that minimize the distance.
+
+  Parameters:
+  ts1 (ndarray): The first subsequence.
+  ts2 (ndarray): The second subsequence.
+  indices (ndarray): The indices of the dimensions to consider.
+  mean_ts1 (ndarray): The mean values of the first subsequence.
+  std_ts1 (ndarray): The standard deviation values of the first subsequence.
+  mean_ts2 (ndarray): The mean values of the second subsequence.
+  std_ts2 (ndarray): The standard deviation values of the second subsequence.
+  dimensionality (int, optional): The dimensionality of the result.
+
+  Returns:
+  tuple: A tuple containing the sum of the distances, the indices of the dimensions used, and the maximum distance.
+
+  Raises:
+  ValueError: If the subsequences have different dimensions.
+
+  """
+  # Ensure both time series have the same dimensions
+  if ts1.shape != ts2.shape:
+    raise ValueError("Time series must have the same dimensions.")
+
+  # Pick the dimensions used in this iteration
+  ts1 = ts1[indices]
+  ts2 = ts2[indices]
+
+  # Z-normalize each dimension separately
+  ts1_normalized = (ts1 - mean_ts1[indices, np.newaxis]) / std_ts1[indices, np.newaxis]
+  ts2_normalized = (ts2 - mean_ts2[indices, np.newaxis]) / std_ts2[indices, np.newaxis]
+
+  # Compute squared differences and sum them
+  squared_diff_sum = np.sqrt(np.sum(np.square(ts1_normalized - ts2_normalized), axis=1))
+
+  if dimensionality and dimensionality != len(indices):
+    min_indices = np.argsort(squared_diff_sum)
+    min_indices_corr = min_indices[:dimensionality]
+    sum = np.sum(squared_diff_sum[min_indices_corr])
+
+    return sum, min_indices_corr.astype(np.int8), squared_diff_sum[min_indices_corr]
+
+  sum = np.sum(squared_diff_sum)
+  return sum, indices.astype(np.int8), squared_diff_sum
+
+
 def find_collisions(lsh, query_signature):
   """
   Finds potential collisions in the LSH index for a given query signature.

@@ -1,9 +1,7 @@
 from base import *
-from find_bin_width import *
-import numpy as np
-import queue, threading, itertools
+import numpy as np, queue, itertools
 from multiprocessing import Pool, cpu_count
-from concurrent.futures import as_completed, ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import as_completed, ProcessPoolExecutor
 from hash_lsh import RandomProjection, euclidean_hash
 import cProfile
 from stop import stopgraph
@@ -66,7 +64,7 @@ def worker(i, j, subsequences, hash_mat, ordering, k, stop_i, failure_thresh):
                 if comp >= motif_dimensionality:
                     continue            
             dist_comp += 1
-            curr_dist, dim, stop_dist= z_normalized_euclidean_distance(subsequences.sub(coll_0), subsequences.sub(coll_1),
+            curr_dist, dim, stop_dist= z_normalized_euclidean_distanceg(subsequences.sub(coll_0), subsequences.sub(coll_1),
                                                 dimensions, subsequences.mean(coll_0), subsequences.std(coll_0),
                                                 subsequences.mean(coll_1), subsequences.std(coll_1), motif_dimensionality)
             top.put((-curr_dist, [dist_comp, maximum_pair, [dim], stop_dist]))
@@ -88,8 +86,7 @@ def order_hash(hash_mat, l, dimension):
         ordering = np.lexsort(hash_mat_curr.T[::-1])
     return ordering, l
 
-
-def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.8):
+def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.1):
     #pr = cProfile.Profile()
     #pr.enable()
   # Data
@@ -114,6 +111,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
     shm_hash_mat, hash_mat = create_shared_array((n-window+1, L, dimension, K), dtype=np.int8)
     ordering = np.ndarray((dimension, n - window + 1, L), dtype=np.int32)
 
+    # Hash the subsequences and order them lexigraphically
     with Pool(processes=int(cpu_count())) as pool:
         results = []
         ord_results = []
@@ -139,22 +137,14 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
 
     stop_val = False
-    stop_count = 0
-    stop_elem = None
     counter_tot = dict()
+
+    # Cycle for the hash repetitions and concatenations
     with ProcessPoolExecutor(max_workers= cpu_count() // 2) as executor:
         futures = [executor.submit(worker, i, j, windowed_ts, hash_mat, ordering, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             top_temp, dist_comp_temp, i, j, counter = future.result()
 
-            # Sum the counter values in the total counter
-            #for key, value in counter.items():
-             #   counter_tot.setdefault(key, 0)
-              #  counter_tot[key] += value
-            #if dist_comp_temp == 0: 
-                #stop_count += 1
-                #if stop_count >= 20:
-                #continue
             dist_comp += dist_comp_temp
             for element in top_temp:
                 add = True
@@ -195,7 +185,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                         executor.shutdown(wait=True, cancel_futures=True)   
                         break
                  
-
+    # Graph construction for visualization
     if False:
         # Imagine counter_tot as an edge list with weights, plot the graph with the weights as the edge weights of the top
         # elements

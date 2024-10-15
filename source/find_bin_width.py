@@ -1,14 +1,12 @@
 import numpy as np
 import numpy.typing as npt
 from numpy.fft import fft, ifft
-from numba import njit
 
 def z_normalize(ts: npt.ArrayLike) -> npt.ArrayLike:
     mean = np.mean(ts, axis=0)
     std = np.std(ts, axis=0)
     std[std == 0] = 1  # Avoid division by zero if standard deviation is zero
     return (ts - mean) / std
-
 
 def compute_dot_products_fft(ts_fft, sub_fft_conj, num_subsequences):
     dot_products = np.zeros(num_subsequences)
@@ -50,6 +48,6 @@ def find_width_discr(ts: npt.ArrayLike, window: int, K: int) -> int:
     all_dot_products = np.array(all_dot_products).flatten()
 
     # Find r such that the value of a certain percentile of the distribution is < r * 2^K
-    percentile_value = np.percentile(all_dot_products, 6)
+    percentile_value = np.percentile(all_dot_products, 10)
     r = abs(percentile_value / (2 ** K))
     return int(np.ceil(r))

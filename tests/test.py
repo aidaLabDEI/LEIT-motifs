@@ -53,7 +53,8 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy())
     
 
-    r = 16#find_width_discr(d, window_size, K)
+    r = 8#find_width_discr(d, window_size, K)
+    #print("Bin width:", r) 
 
     thresh = min(dimensionality/d.shape[1], 0.8)
     
