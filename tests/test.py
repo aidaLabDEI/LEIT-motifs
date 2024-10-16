@@ -10,6 +10,7 @@ from base import z_normalized_euclidean_distance
 from find_bin_width import find_width_discr
 #from extra import relative_contrast
 import matplotlib.pyplot as plt
+from scipy.signal import savgol_filter
 
 import tracemalloc
 if __name__ == "__main__":
@@ -39,6 +40,8 @@ if __name__ == "__main__":
     if dataset == 2:
         data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[2], 0)
         d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C', dtype=np.float32).T
+        # Apply a savgol filter to the data
+        d = savgol_filter(d, 1000, 2, axis=0)
     elif dataset == 4:
         data = pd.read_csv(paths[dataset])
         data = data.drop(['Time','Unix', 'Issues'],axis=1)
@@ -63,11 +66,11 @@ if __name__ == "__main__":
     start = time.process_time()
     # Find the motifs
     #for i in range(5):
-    motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
+    #motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
 
     end = (time.process_time() - start)
     print("Time elapsed: ", end)
-    print("Distance computations:", num_dist)
+   # print("Distance computations:", num_dist)
     #snapshot = tracemalloc.take_snapshot()
     #top_stats = snapshot.statistics('lineno')
     
@@ -76,7 +79,7 @@ if __name__ == "__main__":
      #   print(stat)
 
     # Plot
-   # motifs = queue.PriorityQueue()
+    motifs = queue.PriorityQueue()
     print(motifs.queue)
     copy = motifs.queue
     motifs = copy
