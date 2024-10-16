@@ -93,7 +93,7 @@ if __name__ == "__main__":
     r = 8
     K = 8  # Length of the hash
     rp = RandomProjection(dim, r, K, 100)
-    data = np.ascontiguousarray(np.random.rand(dim))
+    data = np.ascontiguousarray(np.random.rand(dim), dtype=np.float32)
 
 
     timei = time.process_time()

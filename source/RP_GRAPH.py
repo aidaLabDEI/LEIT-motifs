@@ -5,7 +5,7 @@ from concurrent.futures import as_completed, ProcessPoolExecutor
 from hash_lsh import RandomProjection, euclidean_hash
 import cProfile
 from stop import stopgraph
-#import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
+import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
 
 def worker(i, j, subsequences, hash_mat, ordering, k, stop_i, failure_thresh):
         #if i == 0 and j == 1:
@@ -140,11 +140,11 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
     counter_tot = dict()
 
     # Cycle for the hash repetitions and concatenations
-    with ProcessPoolExecutor(max_workers= cpu_count() // 2) as executor:
+    with ProcessPoolExecutor(max_workers= cpu_count()) as executor:
         futures = [executor.submit(worker, i, j, windowed_ts, hash_mat, ordering, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             top_temp, dist_comp_temp, i, j, counter = future.result()
-
+            counter_tot.update(counter)
             dist_comp += dist_comp_temp
             for element in top_temp:
                 add = True
@@ -186,7 +186,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                         break
                  
     # Graph construction for visualization
-    if False:
+    if True:
         # Imagine counter_tot as an edge list with weights, plot the graph with the weights as the edge weights of the top
         # elements
         G = nx.Graph()

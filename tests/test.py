@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # Load the dataset
     if dataset == 2:
         data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[2], 0)
-        d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C', dtype= np.float32).T
+        d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C', dtype=np.float32).T
     elif dataset == 4:
         data = pd.read_csv(paths[dataset])
         data = data.drop(['Time','Unix', 'Issues'],axis=1)
@@ -63,7 +63,6 @@ if __name__ == "__main__":
     start = time.process_time()
     # Find the motifs
     #for i in range(5):
-    #d = d[:300]
     motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
 
     end = (time.process_time() - start)
