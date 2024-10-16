@@ -41,7 +41,7 @@ if __name__ == "__main__":
         data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[2], 0)
         d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C', dtype=np.float32).T
         # Apply a savgol filter to the data
-        d = savgol_filter(d, 1000, 2, axis=0)
+        d = savgol_filter(d, 500, 3, axis=0)
     elif dataset == 4:
         data = pd.read_csv(paths[dataset])
         data = data.drop(['Time','Unix', 'Issues'],axis=1)
