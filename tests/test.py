@@ -56,9 +56,8 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     
 
-    r = find_width_discr(d, window_size, K)
-    print("Bin width:", r) 
-    exit()
+    r = 8#find_width_discr(d, window_size, K)
+
     thresh = min(dimensionality/d.shape[1], 0.8)
     
     # Start the timer
@@ -89,8 +88,9 @@ if __name__ == "__main__":
     X = pd.DataFrame(d)
     for i, dimension in enumerate(X.columns):
         axs[i].plot(X[dimension], label=dimension, linewidth= 1.2, color='#6263e0')
-        axs[i].set_xlabel("Time")
-        axs[i].set_ylabel("Dimension " + str(dimension))
+        axs[i].set_axis_off()
+        #axs[i].set_xlabel("Time")
+        #axs[i].set_ylabel("Dimension " + str(dimension))
         #axs[i].legend()
         for idx, motif in enumerate(motifs):
             # Highlight the motifs in all dimensions
@@ -98,8 +98,8 @@ if __name__ == "__main__":
                 if i in motif[1][2][0]:
                     axs[i].plot(X[dimension].iloc[m:m+window_size], color=colors[idx], linewidth=1.8, alpha=0.7)
                     #axs[i].axvspan(m, m + window_size, color=colors[idx], alpha=0.3)
-
-    plt.suptitle("MultiDimensional Timeseries with Motifs Highlighted")
+    #plt.axis('off')
+    #plt.suptitle("MultiDimensional Timeseries with Motifs Highlighted")
     #plt.tight_layout(rect=[0, 0, 1, 0.96])
     if device == 1:
         plt.savefig("motifs.svg", format='svg')
