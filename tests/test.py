@@ -4,6 +4,7 @@ sys.path.append('source')
 from RP_MH import pmotif_find2
 from RP_DC import pmotif_find3
 from RP_GRAPH import pmotif_findg
+from RPG_CF import pmotif_findauto
 import time, pandas as pd, numpy as np, queue
 from data_loader import convert_tsf_to_dataframe
 from base import z_normalized_euclidean_distance

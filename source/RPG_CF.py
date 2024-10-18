@@ -7,9 +7,11 @@ import cProfile
 from stop import stopgraph
 
 def conf_sampling(subsequences, i, num_conf, collisions, k):
-    collisions = {v for v, key in collisions if key > num_conf}
+    collisions = {v: key for v, key in collisions if key > subsequences.d}
+    dimensions = np.arange(subsequences.dimensionality)
+    motif_dimensionality = subsequences.d
     top = queue.PriorityQueue(k+1)
-    for elem in collisions:
+    for elem, _ in collisions:
             coll_0, coll_1 = elem
             curr_dist, dim, stop_dist= z_normalized_euclidean_distanceg(subsequences.sub(coll_0), subsequences.sub(coll_1),
                                                 dimensions, subsequences.mean(coll_0), subsequences.std(coll_0),
@@ -28,7 +30,7 @@ def order_hash(hash_mat, l, dimension):
         ordering = np.lexsort(hash_mat_curr.T[::-1])
     return ordering, l
 
-def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.1):
+def pmotif_findauto(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.1):
     #pr = cProfile.Profile()
     #pr.enable()
   # Data
@@ -79,7 +81,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
 
     stop_val = False
-    num_forests= np.ceil(np.log2(L))
+    num_forests= np.ceil(np.log2(L)).astype(np.int32)
     trees_per_forest = L // num_forests
 
     for j in range(trees_per_forest):
@@ -92,32 +94,36 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                 trees_ok = 0
                 for tree in range(j):
                     colls = 0
-                    tree_idx = None
+                    tree_idx = forest*trees_per_forest + tree
                     # !!!!!!! Need to add another cycle on the dimensions !!!!!!!
-
-                    search = hash_mat[:,tree_idx,:,:i+1]
-                    for idx, elem1 in enumerate(search):
-                        for idx2, elem2 in enumerate(search[idx+1:]):
-                            sub_idx1 = ordering_dim[idx]
-                            sub_idx2 = ordering_dim[idx+idx2+1]
-                            # No trivial match
-                            if (abs(sub_idx1 - sub_idx2) <= window):
-                                continue
-                            # If same hash, increase the counter, see the next
-                            if np.sum(np.all((elem1 == elem2), axis=1)) > motif_dimensionality:
-                                # Save also the collision so if needed we have them
-                                colls_dict.setdefault((sub_idx1, sub_idx2),0)
-                                colls_dict[(sub_idx1, sub_idx2)] += 1
-                                colls += 1
-                            else: break
-                    if colls <= max_allowed_collisions: trees_ok += 1
-                if trees_ok == j: forest_ok += 1
+                    for dim in range(dimension):
+                        search = hash_mat[:,tree_idx,dim,:i+1]
+                        ordering_dim = ordering[dim,:,tree_idx]
+                        search = search[ordering_dim,:]
+                        for idx, elem1 in enumerate(search):
+                            for idx2, elem2 in enumerate(search[idx+1:]):
+                                sub_idx1 = ordering_dim[idx]
+                                sub_idx2 = ordering_dim[idx+idx2+1]
+                                # No trivial match
+                                if (abs(sub_idx1 - sub_idx2) <= window):
+                                    continue
+                                # If same hash, increase the counter, see the next
+                                if np.all((elem1 == elem2)):
+                                    # Save also the collision so if needed we have them
+                                    colls_dict.setdefault((sub_idx1, sub_idx2),0)
+                                    colls_dict[(sub_idx1, sub_idx2)] += 1
+                                    colls += 1
+                                else: break
+                        if colls <= max_allowed_collisions: trees_ok += 1
+                if trees_ok == j: 
+                    forests_ok += 1 
             # If the forest can run confirmation sampling, we already have the collisions
-            if forest_ok >= num_forests // 2 : 
-                fin, result = conf_sampling(windowed_ts, i, num_forests//4, colls_dict)
+            if forests_ok >= num_forests // 2 : 
+                fin, result = conf_sampling(windowed_ts, i, num_forests//4, colls_dict, k)
                 if fin: return result
+                else:
+                    continue
                 # Skip to next j
-                break
             
 
 
