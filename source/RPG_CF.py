@@ -21,8 +21,8 @@ def conf_sampling(subsequences, i, num_conf, collisions, k):
             top.put((-curr_dist, [dist_comp, elem, [dim], stop_dist]))
             if len(top.queue) > k: top.get()
     
-    if top.empty(): return False, None
-    else:           return True, top
+    if top.empty(): return False, None, None
+    else:           return True, top, dist_comp
 
 
 def order_hash(hash_mat, l, dimension):
@@ -87,7 +87,6 @@ def pmotif_findauto(time_series, window, k, motif_dimensionality, bin_width, lsh
     trees_per_forest = L // num_forests
 
     for j in range(1,trees_per_forest):
-        print(j)
         colls_dict = {}
         # FInd the smallest i: the first j trees have at most 10ij collisions
         for i in range(K-1):
@@ -117,16 +116,18 @@ def pmotif_findauto(time_series, window, k, motif_dimensionality, bin_width, lsh
                                     colls_dict[sub_idx1, sub_idx2] += 1
                                     colls += 1
                                 else: break
+                                # We know this tree can't contribute so stop
                             if colls > max_allowed_collisions: break
-
-                        print(colls, max_allowed_collisions)
+                        # If a tree misses, skip this iteration
                         if colls <= max_allowed_collisions: trees_ok += 1
+                        else: break
                 if trees_ok == j: 
                     forests_ok += 1 
             # If the forest can run confirmation sampling, we already have the collisions
-            if forests_ok >= num_forests // 2 : 
-                fin, result = conf_sampling(windowed_ts, i, num_forests//4, colls_dict, k)
-                if fin: return result, 0
+            print(forests_ok, num_forests//4)
+            if forests_ok >= num_forests // 4 : 
+                fin, result, dist = conf_sampling(windowed_ts, i, num_forests//4, colls_dict, k)
+                if fin: return result, dist
                 else:
                     continue
                 # Skip to next j
