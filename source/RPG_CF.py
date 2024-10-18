@@ -7,16 +7,18 @@ import cProfile
 from stop import stopgraph
 
 def conf_sampling(subsequences, i, num_conf, collisions, k):
-    collisions = {v: key for v, key in collisions if key > subsequences.d}
+    collisions = {v: key for v, key in collisions.items() if key >= subsequences.d}
     dimensions = np.arange(subsequences.dimensionality)
     motif_dimensionality = subsequences.d
     top = queue.PriorityQueue(k+1)
-    for elem, _ in collisions:
+    dist_comp = 0
+    for elem in collisions:
+            dist_comp +=1
             coll_0, coll_1 = elem
             curr_dist, dim, stop_dist= z_normalized_euclidean_distanceg(subsequences.sub(coll_0), subsequences.sub(coll_1),
                                                 dimensions, subsequences.mean(coll_0), subsequences.std(coll_0),
                                                 subsequences.mean(coll_1), subsequences.std(coll_1), motif_dimensionality)
-            top.put((-curr_dist, [dist_comp, maximum_pair, [dim], stop_dist]))
+            top.put((-curr_dist, [dist_comp, elem, [dim], stop_dist]))
             if len(top.queue) > k: top.get()
     
     if top.empty(): return False, None
@@ -84,18 +86,19 @@ def pmotif_findauto(time_series, window, k, motif_dimensionality, bin_width, lsh
     num_forests= np.ceil(np.log2(L)).astype(np.int32)
     trees_per_forest = L // num_forests
 
-    for j in range(trees_per_forest):
+    for j in range(1,trees_per_forest):
+        print(j)
         colls_dict = {}
         # FInd the smallest i: the first j trees have at most 10ij collisions
-        for i in range(K):
-            max_allowed_collisions = 10*(i+1)*(j+1)
+        for i in range(K-1):
+            max_allowed_collisions = 10*(i+1)*(j+1)*dimension
             forests_ok = 0
             for forest in range(num_forests):
                 trees_ok = 0
                 for tree in range(j):
                     colls = 0
                     tree_idx = forest*trees_per_forest + tree
-                    # !!!!!!! Need to add another cycle on the dimensions !!!!!!!
+                    # !!!!!!! Cycle on the dimensions, check the max collisions !!!!!!!
                     for dim in range(dimension):
                         search = hash_mat[:,tree_idx,dim,:i+1]
                         ordering_dim = ordering[dim,:,tree_idx]
@@ -111,16 +114,19 @@ def pmotif_findauto(time_series, window, k, motif_dimensionality, bin_width, lsh
                                 if np.all((elem1 == elem2)):
                                     # Save also the collision so if needed we have them
                                     colls_dict.setdefault((sub_idx1, sub_idx2),0)
-                                    colls_dict[(sub_idx1, sub_idx2)] += 1
+                                    colls_dict[sub_idx1, sub_idx2] += 1
                                     colls += 1
                                 else: break
+                            if colls > max_allowed_collisions: break
+
+                        print(colls, max_allowed_collisions)
                         if colls <= max_allowed_collisions: trees_ok += 1
                 if trees_ok == j: 
                     forests_ok += 1 
             # If the forest can run confirmation sampling, we already have the collisions
             if forests_ok >= num_forests // 2 : 
                 fin, result = conf_sampling(windowed_ts, i, num_forests//4, colls_dict, k)
-                if fin: return result
+                if fin: return result, 0
                 else:
                     continue
                 # Skip to next j
