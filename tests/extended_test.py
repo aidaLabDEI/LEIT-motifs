@@ -114,9 +114,9 @@ def main():
         gc.collect()
         for r in rs:
             start = time.process_time()
-            for i in range(3):
+            for i in range(1):
                 motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r, dimensionality[number_r]/d.shape[1], 200, 8)
-            end = (time.process_time() - start)/3
+            end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': 8, 'L': 200, 'w': windows[number_r], 'r': r, 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
         gc.collect()
