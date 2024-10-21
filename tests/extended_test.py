@@ -5,8 +5,6 @@ import time, pandas as pd, numpy as np, queue
 sys.path.append(os.path.join(os.path.dirname(__file__), 'external_dependencies'))
 from data_loader import convert_tsf_to_dataframe
 from base import z_normalized_euclidean_distance
-from find_bin_width import find_width_discr
-from extra import relative_contrast
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter 
 import gc
