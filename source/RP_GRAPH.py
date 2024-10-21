@@ -186,7 +186,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                         break
                  
     # Graph construction for visualization
-    if True:
+    if False:
         # Imagine counter_tot as an edge list with weights, plot the graph with the weights as the edge weights of the top
         # elements
         G = nx.Graph()
