@@ -59,21 +59,21 @@ def main():
 
 
         # Load the dataset
-        if dataset == 2:
-            data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[2], 0)
+        if number == 2:
+            data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(path, 0)
             d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C', dtype=np.float32).T
             # Apply a savgol filter to the data
             d = savgol_filter(d, 300, 2, axis=0)
-        elif dataset == 4:
-            data = pd.read_csv(paths[dataset])
+        elif number == 4:
+            data = pd.read_csv(path)
             data = data.drop(['Time','Unix', 'Issues'],axis=1)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
             d = d[:100000,:]
-        elif dataset == 3 or dataset == 5 or dataset == 6:
-            data = pd.read_csv(paths[dataset])
-            d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32) if dataset == 3 else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
+        elif number == 3 or number == 5 or number == 6:
+            data = pd.read_csv(path)
+            d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32) if number == 3 else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
         else:
-            data = pd.read_csv(paths[dataset], sep=r'\s+')
+            data = pd.read_csv(path, sep=r'\s+')
             data = data.drop(data.columns[[0]], axis=1)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
 
