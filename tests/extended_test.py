@@ -98,17 +98,17 @@ def main():
         # Testing on hashing
         for K in Ks:
             start = time.process_time()
-            for i in range(3):
+            for i in range(1):
                 motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], dimensionality[number_r]/d.shape[1], 200, K)
-            end = (time.process_time() - start)/3
+            end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': K, 'L': 200, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
         gc.collect()
         for L in Ls:
             start = time.process_time()
-            for i in range(3):
+            for i in range(1):
                 motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], dimensionality[number_r]/d.shape[1], L, 8)
-            end = (time.process_time() - start)/3
+            end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': 8, 'L': L, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
         gc.collect()
