@@ -77,7 +77,7 @@ def main():
             data = data.drop(data.columns[[0]], axis=1)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
 
-        if number == 0:
+        if number_r == 0:
                 # lauch a computation just to compile numba
             pmotif_findg(d, 50, 1, 8, 8, 0, 10, 8)
         print("Starting")

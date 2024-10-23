@@ -66,7 +66,7 @@ if __name__ == "__main__":
     start = time.process_time()
     # Find the motifs
     #for i in range(5):
-    motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
+    motifs, num_dist = pmotif_findg(d, window_size, 3, dimensionality, r, thresh, L, K)
 
     end = (time.process_time() - start)
     print("Time elapsed: ", end)
@@ -84,10 +84,13 @@ if __name__ == "__main__":
     copy = motifs.queue
     motifs = copy
     #motifs = find_all_occur(extract, motifs, window_size)
-    colors = ["red", "green", "blue", "pink", "cyan", "yellow", "orange", "gray", "purple"]
-    fig, axs = plt.subplots(d.shape[1], 1, sharex=True)
+    colors = ["red", "green", "pink", "pink", "cyan", "yellow", "orange", "gray", "purple"]
+    fig, axs = plt.subplots(d.shape[1]-2, 1, sharex=True)
     X = pd.DataFrame(d)
     for i, dimension in enumerate(X.columns):
+        if i == 0 or i == 1:
+            continue
+        i = i - 2
         axs[i].plot(X[dimension], label=dimension, linewidth= 1.2, color='#6263e0')
         axs[i].set_axis_off()
         #axs[i].set_xlabel("Time")
@@ -96,7 +99,7 @@ if __name__ == "__main__":
         for idx, motif in enumerate(motifs):
             # Highlight the motifs in all dimensions
             for m in motif[1][1]:
-                if i in motif[1][2][0]:
+                if i+2 in motif[1][2][0]:
                     axs[i].plot(X[dimension].iloc[m:m+window_size], color=colors[idx], linewidth=1.8, alpha=0.7)
                     #axs[i].axvspan(m, m + window_size, color=colors[idx], alpha=0.3)
     #plt.axis('off')

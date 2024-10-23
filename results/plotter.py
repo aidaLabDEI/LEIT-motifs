@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt, pandas as pd, numpy as np, os, sys, seaborn as sns
 
 if __name__ == "__main__":
-    names = ["potentials", "evaporator", "RUTH", "weather"]
+    names = ["potentials", "evaporator", "RUTH", "weather", "whales"]
 
     # !!!K plots
     data = pd.read_csv( "results/K_results.csv")
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         axs[i].fill_between(r_data['r'], r_data['dist_computed'], color="coral", alpha=0.4)
         axs[i].plot(r_data['r'], r_data['dist_computed'], color="firebrick", alpha=0.6, linewidth =1.2, marker='o')
         axs[i].set_title(names[i])
-    sns.despine(offset=1, trim=True)
+    sns.despine(offset=1, trim=False)
     sns.set_context("paper")
     fig.supxlabel("discretization parameter r")
     fig.supylabel("Distances computed")
