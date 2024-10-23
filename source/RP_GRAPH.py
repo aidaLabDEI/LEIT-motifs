@@ -16,7 +16,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering, k, stop_i, failure_thres
             return
         #top_temp, dist_comp_temp = cycle(i, j, windowed_ts, hash_mat, ordering, k, failure_thresh)
         dist_comp = 0
-        top = queue.PriorityQueue()
+        top = queue.PriorityQueue(k+1)
         window = subsequences.w
         n = subsequences.num_sub
         dimensionality = subsequences.dimensionality
@@ -71,10 +71,10 @@ def worker(i, j, subsequences, hash_mat_name, ordering, k, stop_i, failure_thres
                                                 dimensions, subsequences.mean(coll_0), subsequences.std(coll_0),
                                                 subsequences.mean(coll_1), subsequences.std(coll_1), motif_dimensionality)
             top.put((-curr_dist, [dist_comp, maximum_pair, [dim], stop_dist]))
-
-        if dist_comp > k :
-            top.queue = top.queue[:k]
-
+            if top.qsize() > k:
+                top.get()
+                
+        existing_arr.close()
         
        # if i == 0 and j == 1:
         #    pr.disable()
@@ -168,7 +168,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                 if add: top.put(element)
                 if len(top.queue) > k:
                     top.get()
-            # If the top element of the queue is the same for 10 iterations return
+            # Confirmation sampling version
             '''
             if stop_elem == top.queue[0]:
                 stop_count += 1
