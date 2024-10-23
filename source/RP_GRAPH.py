@@ -80,7 +80,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering, k, stop_i, failure_thres
        # if i == 0 and j == 1:
         #    pr.disable()
          #   pr.print_stats(sort='cumtime')
-
+        print(top.queue)
         return top.queue, dist_comp, i, j, counter
 
 def order_hash(hash_mat, l, dimension):
