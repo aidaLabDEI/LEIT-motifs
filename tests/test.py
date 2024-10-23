@@ -62,21 +62,21 @@ if __name__ == "__main__":
     thresh = min(dimensionality/d.shape[1], 0.8)
     
     # Start the timer
-    #tracemalloc.start()
+    tracemalloc.start()
     start = time.process_time()
     # Find the motifs
     #for i in range(5):
-    motifs, num_dist = pmotif_findg(d, window_size, 3, dimensionality, r, thresh, L, K)
+    motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
 
     end = (time.process_time() - start)
     print("Time elapsed: ", end)
     print("Distance computations:", num_dist)
-    #snapshot = tracemalloc.take_snapshot()
-    #top_stats = snapshot.statistics('lineno')
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics('lineno')
     
-    #print("[ Top 10 memory-consuming lines ]")
-    #for stat in top_stats[:10]:
-     #   print(stat)
+    print("[ Top 10 memory-consuming lines ]")
+    for stat in top_stats[:10]:
+        print(stat)
 
     # Plot
     #motifs = queue.PriorityQueue()

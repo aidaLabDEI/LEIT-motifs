@@ -82,19 +82,19 @@ def main():
             pmotif_findg(d, 50, 1, 8, 8, 0, 10, 8)
         print("Starting")
         print(d.shape)
-        
+        '''
         start = time.process_time()
         for i in range(3):
             motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], 0.5, 200, 8)
         end = (time.process_time() - start)/3
         motifs = motifs.queue
-
+        
         rel_cont = 0#relative_contrast(d, motifs[0][1][1], windows[number])
         temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': rel_cont, 'K': 8, 'L': 200, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
         results = results._append(temp_df, ignore_index=True)
         results.to_csv("p1"+str(number_r), index=False)
         #gc.collect()
-        
+        '''
         Ks = [4, 8, 12, 16]
         Ls = [10, 50, 100, 150, 200, 400]
         rs = [2, 8, 16, 32]
@@ -103,9 +103,9 @@ def main():
         
         for K in Ks:
             start = time.process_time()
-            for i in range(1):
-                motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], 0.5, 200, K)
-            end = (time.process_time() - start)
+            #for i in range(1):
+            motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], 0.5, 200, K)
+            #end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': K, 'L': 200, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
         #gc.collect()
@@ -114,18 +114,18 @@ def main():
         
         for L in Ls:
             start = time.process_time()
-            for i in range(1):
-                motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], 0.5, L, 8)
-            end = (time.process_time() - start)
+            #for i in range(1):
+            motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], 0.5, L, 8)
+            #end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': 8, 'L': L, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
         #gc.collect()
         print("L fin")
         for r in rs:
             start = time.process_time()
-            for i in range(1):
-                motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r, 0.5, 200, 8)
-            end = (time.process_time() - start)
+            #for i in range(1):
+            motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r, 0.5, 200, 8)
+            #end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': 8, 'L': 200, 'w': windows[number_r], 'r': r, 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
         #gc.collect()
