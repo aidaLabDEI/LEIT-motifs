@@ -44,7 +44,7 @@ def main():
     paths = [
         #os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
         #os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
-        os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
+        #os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
         os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
     ]
 
@@ -54,7 +54,7 @@ def main():
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
-        number_r = number + 2
+        number_r = number + 3
         results = pd.DataFrame(columns=['Dataset', 'Time elapsed', 'RC1', 'K', 'L', 'w', 'r', 'dist_computed'])
 
 
@@ -121,6 +121,8 @@ def main():
             results = results._append(temp_df, ignore_index=True) 
         #gc.collect()
         print("L fin")
+        results.to_csv("r_partial_dataset"+str(number_r), index=False)
+        '''
         for r in rs:
             start = time.process_time()
             for i in range(1):
@@ -131,6 +133,7 @@ def main():
         #gc.collect()
 
         results.to_csv("r_dataset"+str(number_r),index=False)
+        '''
         print("Dataset", number_r, "finished")
 
     '''
