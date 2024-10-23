@@ -44,7 +44,7 @@ def main():
     paths = [
         #os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
         #os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
-        os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
+        #os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
         os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
     ]
 
@@ -54,7 +54,7 @@ def main():
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
-        number_r = number + 2
+        number_r = number + 3
         results = pd.DataFrame(columns=['Dataset', 'Time elapsed', 'RC1', 'K', 'L', 'w', 'r', 'dist_computed'])
 
 
@@ -77,10 +77,12 @@ def main():
             data = data.drop(data.columns[[0]], axis=1)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
 
-        if number == 0:
+        if number_r == 0:
                 # lauch a computation just to compile numba
             pmotif_findg(d, 50, 1, 8, 8, 0, 10, 8)
         print("Starting")
+        print(d.shape)
+        
         start = time.process_time()
         for i in range(3):
             motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], dimensionality[number_r]/d.shape[1], 200, 8)
@@ -90,12 +92,15 @@ def main():
         rel_cont = 0#relative_contrast(d, motifs[0][1][1], windows[number])
         temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': rel_cont, 'K': 8, 'L': 200, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
         results = results._append(temp_df, ignore_index=True)
-        gc.collect()
+        results.to_csv("p1"+str(number_r), index=False)
+        #gc.collect()
+        
         Ks = [4, 8, 12, 16]
         Ls = [10, 50, 100, 150, 200, 400]
         rs = [2, 8, 16, 32]
-
+        
         # Testing on hashing
+        
         for K in Ks:
             start = time.process_time()
             for i in range(1):
@@ -103,7 +108,10 @@ def main():
             end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': K, 'L': 200, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
-        gc.collect()
+        #gc.collect()
+        
+        print("K fin")
+        
         for L in Ls:
             start = time.process_time()
             for i in range(1):
@@ -111,7 +119,8 @@ def main():
             end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': 8, 'L': L, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
-        gc.collect()
+        #gc.collect()
+        print("L fin")
         for r in rs:
             start = time.process_time()
             for i in range(1):
@@ -119,7 +128,7 @@ def main():
             end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': 8, 'L': 200, 'w': windows[number_r], 'r': r, 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
-        gc.collect()
+        #gc.collect()
 
 
 
