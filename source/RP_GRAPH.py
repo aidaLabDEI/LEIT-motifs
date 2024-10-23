@@ -114,7 +114,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
     ordering = np.ndarray((dimension, n - window + 1, L), dtype=np.int32)
 
     # Hash the subsequences and order them lexigraphically
-    with Pool(processes=int(cpu_count())) as pool:
+    with Pool(processes=cpu_count()//2, maxtasksperchild=4) as pool:
         results = []
         ord_results = []
 
