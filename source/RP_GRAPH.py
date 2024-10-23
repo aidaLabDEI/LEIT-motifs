@@ -8,8 +8,8 @@ from stop import stopgraph
 import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
 
 def worker(i, j, subsequences, hash_mat_name, ordering, k, stop_i, failure_thresh):
-        existing_arr = shared_memory.SharedMemory(name=hash_mat_name)
         print(i, j)
+        existing_arr = shared_memory.SharedMemory(name=hash_mat_name)
         #if i == 0 and j == 1:
          #   pr = cProfile.Profile()
          #   pr.enable()
