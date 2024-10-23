@@ -7,7 +7,9 @@ import cProfile
 from stop import stopgraph
 import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
 
-def worker(i, j, subsequences, hash_mat, ordering, k, stop_i, failure_thresh):
+def worker(i, j, subsequences, hash_mat_name, ordering, k, stop_i, failure_thresh):
+        existing_arr = shared_memory.SharedMemory(name=hash_mat_name)
+        print(i, j)
         #if i == 0 and j == 1:
          #   pr = cProfile.Profile()
          #   pr.enable()
@@ -25,7 +27,9 @@ def worker(i, j, subsequences, hash_mat, ordering, k, stop_i, failure_thresh):
         bin_width = subsequences.r
         dimensions = np.arange(dimensionality, dtype=np.int32)
         counter = dict()
-        
+
+        hash_mat = np.ndarray((n-window+1,L,dimensionality,K), dtype=np.int8, buffer=existing_arr.buf)
+
         hash_mat_curr = hash_mat[:,j,:,:-i] if i != 0 else hash_mat[:,j,:,:]
         # Let's assume that ordering has the lexigraphical order of the dimensions
         for curr_dim in range(dimensionality):
@@ -141,7 +145,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     # Cycle for the hash repetitions and concatenations
     with ProcessPoolExecutor(max_workers= cpu_count()) as executor:
-        futures = [executor.submit(worker, i, j, windowed_ts, hash_mat, ordering, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
+        futures = [executor.submit(worker, i, j, windowed_ts,  shm_hash_mat.name, ordering, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             top_temp, dist_comp_temp, i, j, counter = future.result()
             counter_tot.update(counter)
