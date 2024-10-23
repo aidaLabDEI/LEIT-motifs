@@ -73,7 +73,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering, k, stop_i, failure_thres
             top.put((-curr_dist, [dist_comp, maximum_pair, [dim], stop_dist]))
             if top.qsize() > k:
                 top.get()
-                
+
         existing_arr.close()
         
        # if i == 0 and j == 1:
@@ -182,8 +182,6 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
                     break
             '''   
             if not top.empty():
-                print("not empty")
-                print(top.queue[0])
                 stop_val = stopgraph(top.queue[0], i, j, fail_thresh, K, L, bin_width, motif_dimensionality)
                 if (stop_val and len(top.queue) >= k):
                         executor.shutdown(wait=True, cancel_futures=True)   

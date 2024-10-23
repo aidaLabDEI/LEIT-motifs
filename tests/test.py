@@ -71,12 +71,10 @@ if __name__ == "__main__":
     end = (time.process_time() - start)
     print("Time elapsed: ", end)
     print("Distance computations:", num_dist)
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
-    
-    print("[ Top 10 memory-consuming lines ]")
-    for stat in top_stats[:10]:
-        print(stat)
+    size, peak = tracemalloc.get_traced_memory()
+
+    print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
+
 
     # Plot
     #motifs = queue.PriorityQueue()
