@@ -108,7 +108,7 @@ def main():
             end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': K, 'L': 200, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
-        #gc.collect()
+            gc.collect()
         
         print("K fin")
         
@@ -119,10 +119,10 @@ def main():
             end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': 8, 'L': L, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
-        #gc.collect()
+            gc.collect()
         print("L fin")
         results.to_csv("r_partial_dataset"+str(number_r), index=False)
-        '''
+        
         for r in rs:
             start = time.process_time()
             for i in range(1):
@@ -130,10 +130,10 @@ def main():
             end = (time.process_time() - start)
             temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': 8, 'L': 200, 'w': windows[number_r], 'r': r, 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
-        #gc.collect()
+            gc.collect()
 
         results.to_csv("r_dataset"+str(number_r),index=False)
-        '''
+    
         print("Dataset", number_r, "finished")
 
     '''
@@ -248,6 +248,6 @@ def main():
     #Noise.to_csv('Noise.csv', index=False)
 
 if __name__ == '__main__':
-    from multiprocessing import freeze_support
-    freeze_support()
+    #from multiprocessing import freeze_support
+    #freeze_support()
     main()
