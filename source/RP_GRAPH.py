@@ -8,8 +8,7 @@ import cProfile
 from stop import stopgraph
 import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
 
-def worker(i, j, subsequences, hash_mat_name, ordering, k, stop_i, failure_thresh):
-        existing_arr = shared_memory.SharedMemory(name=hash_mat_name)
+def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_thresh):     
         #if i == 0 and j == 1:
          #   pr = cProfile.Profile()
          #   pr.enable()
@@ -27,8 +26,10 @@ def worker(i, j, subsequences, hash_mat_name, ordering, k, stop_i, failure_thres
         bin_width = subsequences.r
         dimensions = np.arange(dimensionality, dtype=np.int32)
         counter = dict()
-
+        existing_arr = shared_memory.SharedMemory(name=hash_mat_name)
+        existing_ord = shared_memory.SharedMemory(name=ordering_name)
         hash_mat = np.ndarray((n-window+1,L,dimensionality,K), dtype=np.int8, buffer=existing_arr.buf)
+        ordering = np.ndarray((dimensionality, n-window+1, L), dtype=np.int32, buffer=existing_ord.buf)
 
         hash_mat_curr = hash_mat[:,j,:,:-i] if i != 0 else hash_mat[:,j,:,:]
         # Let's assume that ordering has the lexigraphical order of the dimensions
@@ -74,13 +75,13 @@ def worker(i, j, subsequences, hash_mat_name, ordering, k, stop_i, failure_thres
             top.put((-curr_dist, [dist_comp, maximum_pair, [dim], stop_dist]))
             if top.qsize() > k:
                 top.get()
-
-        existing_arr.close()
         
+        existing_arr.close()
+        existing_ord.close()
        # if i == 0 and j == 1:
         #    pr.disable()
          #   pr.print_stats(sort='cumtime')
-        return top.queue, dist_comp, i, j, counter
+        return top.queue, dist_comp, i, j#, counter
 
 def order_hash(hash_mat, l, dimension):
     for curr_dim in range(dimension):
@@ -113,10 +114,11 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
     chunks = [(time_series[ranges[0]:ranges[-1]+window], ranges, window, rp) for ranges in np.array_split(np.arange(n - window + 1), num_chunks)]
 
     shm_hash_mat, hash_mat = create_shared_array((n-window+1, L, dimension, K), dtype=np.int8)
-    ordering = np.ndarray((dimension, n - window + 1, L), dtype=np.int32)
+    shm_ordering, ordering = create_shared_array((dimension, n-window+1, L), dtype=np.int32) 
+    #ordering = np.ndarray((dimension, n - window + 1, L), dtype=np.int32)
 
     # Hash the subsequences and order them lexigraphically
-    with Pool(processes=cpu_count()//2, maxtasksperchild=4) as pool:
+    with Pool() as pool:
         results = []
         ord_results = []
 
@@ -139,16 +141,17 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
 
     windowed_ts = WindowedTS(time_series, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
-
     stop_val = False
-    counter_tot = dict()
+    #counter_tot = dict()
 
     # Cycle for the hash repetitions and concatenations
-    with ProcessPoolExecutor(max_workers= cpu_count()//2,max_tasks_per_child=2) as executor:
-        futures = [executor.submit(worker, i, j, windowed_ts,  shm_hash_mat.name, ordering, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
+    with ProcessPoolExecutor() as executor:
+        futures = [executor.submit(worker, i, j, windowed_ts, shm_hash_mat.name, shm_ordering.name, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
-            top_temp, dist_comp_temp, i, j, counter = future.result()
-            counter_tot.update(counter)
+            #top_temp, dist_comp_temp, i, j, counter = future.result()
+            top_temp, dist_comp_temp, i, j = future.result()
+
+            #counter_tot.update(counter)
             dist_comp += dist_comp_temp
             for element in top_temp:
                 add = True
@@ -185,6 +188,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
             '''   
             if not top.empty():
                 stop_val = stopgraph(top.queue[0], i, j, fail_thresh, K, L, bin_width, motif_dimensionality)
+                print(stop_val)
                 if (stop_val and len(top.queue) >= k):
                         executor.shutdown(wait=True, cancel_futures=True)   
                         break
