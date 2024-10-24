@@ -44,8 +44,8 @@ def main():
     paths = [
         #os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
         #os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
-        #os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
-        os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
+        os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
+        #os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
     ]
 
     r_vals_computed = [8, 8, 32, 32]
@@ -54,7 +54,7 @@ def main():
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
-        number_r = number + 3
+        number_r = number + 2
         results = pd.DataFrame(columns=['Dataset', 'Time elapsed', 'RC1', 'K', 'L', 'w', 'r', 'dist_computed'])
 
 
@@ -100,7 +100,7 @@ def main():
         rs = [2, 8, 16, 32]
         
         # Testing on hashing
-        
+        '''
         for K in Ks:
             start = time.process_time()
             for i in range(1):
@@ -122,7 +122,7 @@ def main():
             gc.collect()
         print("L fin")
         results.to_csv("r_partial_dataset"+str(number_r), index=False)
-        
+        '''
         for r in rs:
             start = time.process_time()
             for i in range(1):

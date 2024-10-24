@@ -188,7 +188,7 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
             '''   
             if not top.empty():
                 stop_val = stopgraph(top.queue[0], i, j, fail_thresh, K, L, bin_width, motif_dimensionality)
-                print(stop_val)
+                #print(stop_val)
                 if (stop_val and len(top.queue) >= k):
                         executor.shutdown(wait=True, cancel_futures=True)   
                         break

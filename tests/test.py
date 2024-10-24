@@ -57,7 +57,7 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     
-    r = 8#find_width_discr(d, window_size, K)
+    r = 32#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
     

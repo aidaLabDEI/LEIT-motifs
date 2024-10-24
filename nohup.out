@@ -1,2 +1,11 @@
+/home/monaco/.local/share/uv/python/cpython-3.12.6-linux-x86_64-gnu/lib/python3.12/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 2 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
 Starting
-(100057, 8)
+(14858, 32)
+Starting
+(14858, 32)
+/home/monaco/bt_analysis/code/LEIT-motifs/tests/extended_test.py:132: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  results = results._append(temp_df, ignore_index=True)
+Dataset 2 finished
+/home/monaco/.local/share/uv/python/cpython-3.12.6-linux-x86_64-gnu/lib/python3.12/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 4 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
