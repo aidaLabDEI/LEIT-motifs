@@ -52,8 +52,7 @@ if __name__ == "__main__":
     elif dataset == 3 or dataset == 5 or dataset == 6:
         data = pd.read_csv(paths[dataset])
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32) if dataset == 3 else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
-        print(d.shape)
-        exit()
+        
     else:
         data = pd.read_csv(paths[dataset], sep=r'\s+')
         data = data.drop(data.columns[[0]], axis=1)
