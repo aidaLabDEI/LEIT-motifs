@@ -35,7 +35,7 @@ if __name__ == "__main__":
         device = 0
 
     paths = ["Datasets/FOETAL_ECG.dat", "Datasets/evaporator.dat", "Datasets/oikolab_weather_dataset.tsf", "Datasets/RUTH.csv", "Datasets/CLEAN_House1.csv",
-                "Datasets/powerts.csv", "Datasets/earthquake.csv"]
+                "Datasets/whales.csv", "Datasets/earthquake.csv"]
     d = None
 
     # Load the dataset
@@ -52,6 +52,8 @@ if __name__ == "__main__":
     elif dataset == 3 or dataset == 5 or dataset == 6:
         data = pd.read_csv(paths[dataset])
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32) if dataset == 3 else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
+        print(d.shape)
+        exit()
     else:
         data = pd.read_csv(paths[dataset], sep=r'\s+')
         data = data.drop(data.columns[[0]], axis=1)
@@ -60,6 +62,7 @@ if __name__ == "__main__":
     r = 32#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
+    
     
     # Start the timer
     tracemalloc.start()

@@ -8,7 +8,7 @@ dt_end = UTCDateTime("2014-06-04T00:00:00")
 #client = Client()
 #st = client.timeseries("IU", "ANMO", "00", "BHZ", dt, dt_end)
 #st.taper(0.05)
-st = read("Datasets/HHN.mseed")
+st = read("Datasets/IrpiniaEarthquake/ACCHNZ.mseed")
 
 st.plot(color='purple', tick_format='%I:%M %p', starttime = st[0].stats.starttime, endtime = st[0].stats.endtime)
 #st[0].spectrogram(log=True)
@@ -20,7 +20,7 @@ fs = 1 / tr.stats.delta
 # Compute the spectrogram
 frequencies, times, Sxx = spectrogram(data, fs)
 n_bands = 32
-min_freq = 0.01  # Minimum frequency of interest
+min_freq = 1  # Minimum frequency of interest
 max_freq = 20  # Maximum frequency of interest
 
 # Create 32 frequency bands between min_freq and max_freq

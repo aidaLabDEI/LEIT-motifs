@@ -4,3 +4,5 @@
 *.pyc
 *.code-workspace
 Datasets/CLEAN_House1.csv
+Datasets/*.csv
+Datasets/IrpiniaEarthquake/

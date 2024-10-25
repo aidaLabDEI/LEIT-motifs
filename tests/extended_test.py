@@ -46,6 +46,8 @@ def main():
         #os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
         #os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
         os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
+        os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
+        os.path.join(current_dir, '..', 'Datasets', 'whales.csv'),
     ]
 
     r_vals_computed = [8, 8, 32, 32]

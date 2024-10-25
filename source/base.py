@@ -195,4 +195,6 @@ def process_chunk(time_series, ranges, window, rp, shm_name_hash_mat, shm_shape_
     hashed_sub = np.apply_along_axis(compute_hash, 1, subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L)
     hashed_sub = np.swapaxes(hashed_sub, 0, 1)
     hash_mat[idx] = hashed_sub
+
+  existing_shm_hash_mat.close()
   return std_container, mean_container
