@@ -257,4 +257,6 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
     #pr.print_stats(sort='cumtime')
     shm_hash_mat.close()
     shm_hash_mat.unlink()
+    shm_ordering.close()
+    shm_ordering.unlink()
     return top, dist_comp

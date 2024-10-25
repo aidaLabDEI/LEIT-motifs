@@ -42,7 +42,7 @@ if __name__ == "__main__":
     plt.show()
 
     # !!!r plots
-    data = pd.read_csv( "results/r_results.csv")
+    data = pd.read_csv( "results/R_results.csv")
     # FInd the different values in the first column
     ds_values = data['Dataset'].unique()
 
