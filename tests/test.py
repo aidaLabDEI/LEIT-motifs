@@ -53,7 +53,7 @@ if __name__ == "__main__":
         data = pd.read_csv(paths[dataset])
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32) if dataset == 3 else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
         print(d.shape)
-        exit()
+        exit() 
     else:
         data = pd.read_csv(paths[dataset], sep=r'\s+')
         data = data.drop(data.columns[[0]], axis=1)
@@ -86,12 +86,9 @@ if __name__ == "__main__":
     motifs = copy
     #motifs = find_all_occur(extract, motifs, window_size)
     colors = ["red", "green", "pink", "pink", "cyan", "yellow", "orange", "gray", "purple"]
-    fig, axs = plt.subplots(d.shape[1]-2, 1, sharex=True)
+    fig, axs = plt.subplots(d.shape[1], 1, sharex=True)
     X = pd.DataFrame(d)
     for i, dimension in enumerate(X.columns):
-        if i == 0 or i == 1:
-            continue
-        i = i - 2
         axs[i].plot(X[dimension], label=dimension, linewidth= 1.2, color='#6263e0')
         axs[i].set_axis_off()
         #axs[i].set_xlabel("Time")
@@ -100,7 +97,7 @@ if __name__ == "__main__":
         for idx, motif in enumerate(motifs):
             # Highlight the motifs in all dimensions
             for m in motif[1][1]:
-                if i+2 in motif[1][2][0]:
+                if i in motif[1][2][0]:
                     axs[i].plot(X[dimension].iloc[m:m+window_size], color=colors[idx], linewidth=1.8, alpha=0.7)
                     #axs[i].axvspan(m, m + window_size, color=colors[idx], alpha=0.3)
     #plt.axis('off')
