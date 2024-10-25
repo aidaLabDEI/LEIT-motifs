@@ -44,8 +44,8 @@ def main():
     paths = [
         #os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
         #os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
-        os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
-        #os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
+        #os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
+        os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
     ]
 
     r_vals_computed = [8, 8, 32, 32]
@@ -54,7 +54,7 @@ def main():
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
-        number_r = number + 2
+        number_r = number + 3
         results = pd.DataFrame(columns=['Dataset', 'Time elapsed', 'RC1', 'K', 'L', 'w', 'r', 'dist_computed'])
 
 
@@ -82,7 +82,7 @@ def main():
             pmotif_findg(d, 50, 1, 8, 8, 0, 10, 8)
         print("Starting")
         print(d.shape)
-        '''
+    
         start = time.process_time()
         for i in range(3):
             motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], 0.5, 200, 8)
@@ -93,14 +93,14 @@ def main():
         temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': rel_cont, 'K': 8, 'L': 200, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
         results = results._append(temp_df, ignore_index=True)
         results.to_csv("p1"+str(number_r), index=False)
-        #gc.collect()
-        '''
+        gc.collect()
+        
         Ks = [4, 8, 12, 16]
         Ls = [10, 50, 100, 150, 200, 400]
         rs = [2, 8, 16, 32]
         
         # Testing on hashing
-        '''
+        
         for K in Ks:
             start = time.process_time()
             for i in range(1):
@@ -122,7 +122,7 @@ def main():
             gc.collect()
         print("L fin")
         results.to_csv("r_partial_dataset"+str(number_r), index=False)
-        '''
+        
         for r in rs:
             start = time.process_time()
             for i in range(1):
