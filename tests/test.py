@@ -7,7 +7,7 @@ from RP_GRAPH import pmotif_findg
 from RPG_CF import pmotif_findauto
 import time, pandas as pd, numpy as np, queue
 from data_loader import convert_tsf_to_dataframe
-from base import z_normalized_euclidean_distance
+from base import z_normalized_euclidean_distance, create_shared_array
 from find_bin_width import find_width_discr
 #from extra import relative_contrast
 import matplotlib.pyplot as plt
@@ -61,14 +61,17 @@ if __name__ == "__main__":
     r = 32#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
-    
-    
+    dimensions = d.shape[1]
+    n = d.shape[0]
+    shm_ts, ts = create_shared_array((n, dimensions), np.float32)
+    ts[:] = d
+
     # Start the timer
     tracemalloc.start()
     start = time.process_time()
     # Find the motifs
     #for i in range(5):
-    motifs, num_dist = pmotif_findg(d, window_size, 1, dimensionality, r, thresh, L, K)
+    motifs, num_dist = pmotif_findg(shm_ts.name, d.shape[0], d.shape[1], window_size, 1, dimensionality, r, thresh, L, K)
 
     end = (time.process_time() - start)
     print("Time elapsed: ", end)

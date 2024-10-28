@@ -24,6 +24,8 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
         L = subsequences.L
         K = subsequences.K 
         bin_width = subsequences.r
+        ex_time_series = shared_memory.SharedMemory(name=subsequences.subsequences)
+        time_series = np.ndarray((n,dimensionality), dtype=np.float32, buffer=ex_time_series.buf)
         dimensions = np.arange(dimensionality, dtype=np.int32)
         counter = dict()
         existing_arr = shared_memory.SharedMemory(name=hash_mat_name)
@@ -70,15 +72,17 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
                 if comp >= motif_dimensionality:
                     continue            
             dist_comp += 1
-            curr_dist, dim, stop_dist= z_normalized_euclidean_distanceg(subsequences.sub(coll_0), subsequences.sub(coll_1),
+            curr_dist, dim, stop_dist= z_normalized_euclidean_distanceg(time_series[coll_0:coll_0+window].T, time_series[coll_1:coll_1+window].T,
                                                 dimensions, subsequences.mean(coll_0), subsequences.std(coll_0),
                                                 subsequences.mean(coll_1), subsequences.std(coll_1), motif_dimensionality)
             top.put((-curr_dist, [dist_comp, maximum_pair, [dim], stop_dist]))
             if top.qsize() > k:
                 top.get()
-        
+
+        ex_time_series.close()
         existing_arr.close()
         existing_ord.close()
+        del time_series, hash_mat, ordering
        # if i == 0 and j == 1:
         #    pr.disable()
          #   pr.print_stats(sort='cumtime')
@@ -91,13 +95,12 @@ def order_hash(hash_mat, l, dimension):
         ordering = np.lexsort(hash_mat_curr.T[::-1])
     return ordering, l
 
-def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.1):
+def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.1):
     #pr = cProfile.Profile()
     #pr.enable()
-
+    time_series_data = shared_memory.SharedMemory(name=time_series_name)
+    time_series = np.ndarray((n,dimension), dtype=np.float32, buffer=time_series_data.buf)
   # Data
-    dimension = time_series.shape[1]
-    n = time_series.shape[0]
     top = queue.PriorityQueue(maxsize=k+1)
     std_container = {}
     mean_container = {}
@@ -140,7 +143,9 @@ def pmotif_findg(time_series, window, k, motif_dimensionality, bin_width, lsh_th
             ordering_temp, rep = result.get()
             ordering[:,:,rep] = ordering_temp
 
-    windowed_ts = WindowedTS(time_series, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
+    time_series_data.close()
+    del time_series
+    windowed_ts = WindowedTS(time_series_name, n, dimension, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
     stop_val = False
     #counter_tot = dict()

@@ -6,13 +6,13 @@ from hash_lsh import RandomProjection, compute_hash
 
 
 class WindowedTS:
-  def __init__(self, subsequences, window: int, rolling_avg, rolling_std, L: int, K: int, motif_dimensionality: int, bin_width: int):
+  def __init__(self, subsequences, n, d, window: int, rolling_avg, rolling_std, L: int, K: int, motif_dimensionality: int, bin_width: int):
     self.subsequences = subsequences
     self.w = window
     self.avgs = rolling_avg
     self.stds = rolling_std
-    self.dimensionality = len(subsequences[0])
-    self.num_sub = len(subsequences)
+    self.dimensionality = d
+    self.num_sub = n
     self.L = L
     self.K = K
     self.d = motif_dimensionality
@@ -141,7 +141,7 @@ def find_collisions(lsh, query_signature):
 
   return result
 
-def create_shared_array(shape, dtype=np.float64):
+def create_shared_array(shape, dtype=np.float32):
   """
   Create a shared memory array with the given shape and data type.
 
