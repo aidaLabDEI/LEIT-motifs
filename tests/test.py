@@ -65,20 +65,25 @@ if __name__ == "__main__":
     n = d.shape[0]
     shm_ts, ts = create_shared_array((n, dimensions), np.float32)
     ts[:] = d
-
+    del d
     # Start the timer
     tracemalloc.start()
     start = time.process_time()
     # Find the motifs
     #for i in range(5):
-    motifs, num_dist = pmotif_findg(shm_ts.name, d.shape[0], d.shape[1], window_size, 1, dimensionality, r, thresh, L, K)
+    motifs, num_dist = pmotif_findg(shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K)
 
     end = (time.process_time() - start)
     print("Time elapsed: ", end)
     print("Distance computations:", num_dist)
     size, peak = tracemalloc.get_traced_memory()
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics('lineno')
+
 
     print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
+    for stat in top_stats[:10]:
+        print(stat)
 
 
     # Plot
@@ -88,8 +93,8 @@ if __name__ == "__main__":
     motifs = copy
     #motifs = find_all_occur(extract, motifs, window_size)
     colors = ["red", "green", "pink", "pink", "cyan", "yellow", "orange", "gray", "purple"]
-    fig, axs = plt.subplots(d.shape[1], 1, sharex=True)
-    X = pd.DataFrame(d)
+    fig, axs = plt.subplots(dimensions, 1, sharex=True)
+    X = pd.DataFrame(ts)
     for i, dimension in enumerate(X.columns):
         axs[i].plot(X[dimension], label=dimension, linewidth= 1.2, color='#6263e0')
         axs[i].set_axis_off()
@@ -112,3 +117,7 @@ if __name__ == "__main__":
         # Compute relative contrast 
         #rc1= relative_contrast(d, window_size, dimensionality)
         #print("RC1:", rc1)
+    
+    # Free the shared memory
+    shm_ts.close()
+    shm_ts.unlink()
