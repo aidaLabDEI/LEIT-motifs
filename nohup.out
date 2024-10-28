@@ -1,0 +1,8 @@
+Time elapsed:  1679.0833964629999
+Distance computations: 51791
+Current memory usage is 1.083234MB; Peak was 394.631992MB
+[(-52.367271423339844, [9, (np.int32(676), np.int32(26741)), [array([5, 0], dtype=int8)], array([16.390945, 35.976326], dtype=float32)])]
+Time elapsed:  1029.076119989
+Distance computations: 2469
+Current memory usage is 1.067508MB; Peak was 394.631135MB
+[(-54.1461181640625, [333, (np.int32(38828), np.int32(74108)), [array([5, 0], dtype=int8)], array([19.03362, 35.1125 ], dtype=float32)])]
