@@ -55,6 +55,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
         #v_max = max(list(counter.values()))
         #counter_extr = [pair for pair, v in counter.items() if v >= v_max]
         counter_extr = [pair for pair, v in counter.items() if v >= motif_dimensionality]
+        del counter
     # Find the set of dimensions with the minimal distance
         for maximum_pair in counter_extr:
             coll_0, coll_1 = maximum_pair
