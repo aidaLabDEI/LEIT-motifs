@@ -151,7 +151,7 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
     #counter_tot = dict()
 
     # Cycle for the hash repetitions and concatenations
-    with ProcessPoolExecutor(max_workers=cpu_count()//2) as executor:
+    with ProcessPoolExecutor(max_workers=cpu_count()//2, max_tasks_per_child = 4) as executor:
         futures = [executor.submit(worker, i, j, windowed_ts, shm_hash_mat.name, shm_ordering.name, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             #top_temp, dist_comp_temp, i, j, counter = future.result()
