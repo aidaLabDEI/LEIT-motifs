@@ -8,7 +8,7 @@ dt_end = UTCDateTime("2014-06-04T00:00:00")
 #client = Client()
 #st = client.timeseries("IU", "ANMO", "00", "BHZ", dt, dt_end)
 #st.taper(0.05)
-st = read("Datasets/IrpiniaEarthquake/ACCHNZ.mseed")
+st = read("Datasets/quake.mseed")
 
 st.plot(color='purple', tick_format='%I:%M %p', starttime = st[0].stats.starttime, endtime = st[0].stats.endtime)
 #st[0].spectrogram(log=True)

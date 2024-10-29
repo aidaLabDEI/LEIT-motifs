@@ -57,6 +57,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
         #v_max = max(list(counter.values()))
         #counter_extr = [pair for pair, v in counter.items() if v >= v_max]
         counter_extr = [pair for pair, v in counter.items() if v >= motif_dimensionality]
+        print(len(counter_extr))
         del counter
     # Find the set of dimensions with the minimal distance
         for maximum_pair in counter_extr:
@@ -89,10 +90,11 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
         return top.queue, dist_comp, i, j#, counter
 
 def order_hash(hash_mat, l, dimension):
+    ordering = np.zeros((dimension, hash_mat.shape[0]), dtype=np.int32)
     for curr_dim in range(dimension):
         # Order hash[:,rep,dim,:] using as key the array of the last dimension
         hash_mat_curr = hash_mat[:,curr_dim,:]
-        ordering = np.lexsort(hash_mat_curr.T[::-1])
+        ordering[curr_dim,:] = np.lexsort(hash_mat_curr.T[::-1])
     return ordering, l
 
 def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.1):
@@ -143,10 +145,8 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
             ordering_temp, rep = result.get()
             ordering[:,:,rep] = ordering_temp
 
-    time_series_data.close()
-    del time_series
-    windowed_ts = WindowedTS(time_series_name, n, dimension, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
 
+    windowed_ts = WindowedTS(time_series_name, n, dimension, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
     stop_val = False
     #counter_tot = dict()
 
@@ -265,4 +265,5 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
     shm_hash_mat.unlink()
     shm_ordering.close()
     shm_ordering.unlink()
+    time_series_data.close()
     return top, dist_comp
