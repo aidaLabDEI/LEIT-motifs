@@ -8,7 +8,7 @@ import cProfile
 from stop import stopgraph
 import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
 
-def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_thresh):     
+def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_thresh):   
         #if i == 0 and j == 1:
          #   pr = cProfile.Profile()
          #   pr.enable()
@@ -38,6 +38,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
         for curr_dim in range(dimensionality):
             ordering_dim = ordering[curr_dim,:,j]
             ordered_view = hash_mat_curr[ordering_dim,curr_dim,:]
+            print( hash_mat_curr.base,ordering_dim.base, ordered_view.base)
             # Take the subsequent elements of the ordering and check if their hash is the same
             for idx, elem1 in enumerate(ordered_view):
                 for idx2, elem2 in enumerate(ordered_view[idx+1:]):
@@ -56,6 +57,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
     # Get all entries whose counter is above or equal the motif dimensionality
         #v_max = max(list(counter.values()))
         #counter_extr = [pair for pair, v in counter.items() if v >= v_max]
+        print(i,j, len(counter))
         counter_extr = [pair for pair, v in counter.items() if v >= motif_dimensionality]
         del counter
     # Find the set of dimensions with the minimal distance
@@ -151,7 +153,7 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
     #counter_tot = dict()
 
     # Cycle for the hash repetitions and concatenations
-    with ProcessPoolExecutor(max_workers=cpu_count()//2, max_tasks_per_child = 4) as executor:
+    with ProcessPoolExecutor(max_workers=2, max_tasks_per_child = 4) as executor:
         futures = [executor.submit(worker, i, j, windowed_ts, shm_hash_mat.name, shm_ordering.name, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             #top_temp, dist_comp_temp, i, j, counter = future.result()

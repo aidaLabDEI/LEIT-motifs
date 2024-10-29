@@ -8,10 +8,10 @@ dt_end = UTCDateTime("2014-06-04T00:00:00")
 #client = Client()
 #st = client.timeseries("IU", "ANMO", "00", "BHZ", dt, dt_end)
 #st.taper(0.05)
-st = read("Datasets/IrpiniaEarthquake/ACCHNZ.mseed")
+st = read("Datasets/quake.mseed")
 
-st.plot(color='purple', tick_format='%I:%M %p', starttime = st[0].stats.starttime, endtime = st[0].stats.endtime)
-#st[0].spectrogram(log=True)
+st.plot(color='purple', tick_format='%I:%M %p', starttime = st[0].stats.starttime, endtime = st[0].stats.endtime, outfile='quak.png')
+st[0].spectrogram(log=True, outfile='spectrogram.png')
 
 tr = st[0]
 data = tr.data
@@ -42,8 +42,8 @@ plt.xlabel('Time (s)')
 plt.ylabel('Energy')
 plt.title('Energy in 32 Frequency Bands Over Time')
 plt.tight_layout()
-plt.show()
+plt.savefig("Datasets/energy.svg", format='svg')
 
-df = pd.DataFrame(band_energies)
-df.to_csv("Datasets/earthquake.csv", header=False, index=False)
+#df = pd.DataFrame(band_energies)
+#df.to_csv("Datasets/earthquake.csv", header=False, index=False)
 
