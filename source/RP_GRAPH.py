@@ -8,7 +8,8 @@ import cProfile
 from stop import stopgraph
 import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
 
-def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_thresh):   
+def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_thresh):  
+        print(i,j) 
         #if i == 0 and j == 1:
          #   pr = cProfile.Profile()
          #   pr.enable()
@@ -32,13 +33,12 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
         existing_ord = shared_memory.SharedMemory(name=ordering_name)
         hash_mat = np.ndarray((n-window+1,L,dimensionality,K), dtype=np.int8, buffer=existing_arr.buf)
         ordering = np.ndarray((dimensionality, n-window+1, L), dtype=np.int32, buffer=existing_ord.buf)
-
+        print("current j", j)
         hash_mat_curr = hash_mat[:,j,:,:-i] if i != 0 else hash_mat[:,j,:,:]
         # Let's assume that ordering has the lexigraphical order of the dimensions
         for curr_dim in range(dimensionality):
             ordering_dim = ordering[curr_dim,:,j]
             ordered_view = hash_mat_curr[ordering_dim,curr_dim,:]
-            print( hash_mat_curr.base,ordering_dim.base, ordered_view.base)
             # Take the subsequent elements of the ordering and check if their hash is the same
             for idx, elem1 in enumerate(ordered_view):
                 for idx2, elem2 in enumerate(ordered_view[idx+1:]):
@@ -57,9 +57,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
     # Get all entries whose counter is above or equal the motif dimensionality
         #v_max = max(list(counter.values()))
         #counter_extr = [pair for pair, v in counter.items() if v >= v_max]
-        print(i,j, len(counter))
         counter_extr = [pair for pair, v in counter.items() if v >= motif_dimensionality]
-        print(len(counter_extr))
         del counter
     # Find the set of dimensions with the minimal distance
         for maximum_pair in counter_extr:
@@ -198,6 +196,7 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
                 stop_val = stopgraph(top.queue[0], i, j, fail_thresh, K, L, bin_width, motif_dimensionality)
                 #print(stop_val)
                 if (stop_val and len(top.queue) >= k):
+                        print("Stopping")
                         executor.shutdown(wait=True, cancel_futures=True)   
                         break
                  

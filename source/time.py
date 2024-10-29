@@ -5,6 +5,5 @@ import time
 from numba import jit, prange
 
 if __name__ == "__main__":
-    data = pd.read_csv("Datasets/whales.csv")
-    d = np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
-    print(d.shape)
+    for i,j in itertools.product(range(8), range(10)):
+        print(i,j)
