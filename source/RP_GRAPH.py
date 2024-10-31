@@ -7,6 +7,7 @@ from hash_lsh import RandomProjection, euclidean_hash
 import cProfile
 from stop import stopgraph
 import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
+from scipy.sparse import dok_matrix
 
 def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_thresh):  
         #if i == 0 and j == 1:
@@ -27,7 +28,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
         ex_time_series = shared_memory.SharedMemory(name=subsequences.subsequences)
         time_series = np.ndarray((n,dimensionality), dtype=np.float32, buffer=ex_time_series.buf)
         dimensions = np.arange(dimensionality, dtype=np.int32)
-        counter = dict()
+        counter = dok_matrix((n-window+1, n-window+1), dtype=np.uint8)
         existing_arr = shared_memory.SharedMemory(name=hash_mat_name.name)
         existing_ord = shared_memory.SharedMemory(name=ordering_name.name)
         hash_mat = np.ndarray((n-window+1, dimensionality,K), dtype=np.int8, buffer=existing_arr.buf)
@@ -48,13 +49,11 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
                         continue
                     # If same hash, increase the counter, see the next
                     if (elem1 == elem2).all():
-                        counter.setdefault((sub_idx1, sub_idx2), 0)
                         counter[sub_idx1, sub_idx2] += 1
                     # Else skip because we know that the ordering ensures that all the subsequences are different
                     else:
                         break
     # Get all entries whose counter is above or equal the motif dimensionality
-        v_max = max(list(counter.values()))
         #counter_extr = [pair for pair, v in counter.items() if v >= v_max]
         counter_extr = [pair for pair, v in counter.items() if v >= motif_dimensionality]
         del counter
