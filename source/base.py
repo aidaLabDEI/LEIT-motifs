@@ -198,3 +198,49 @@ def process_chunk(time_series, ranges, window, rp, shm_name_hash_mat, shm_shape_
 
   existing_shm_hash_mat.close()
   return std_container, mean_container
+
+def process_chunk_graph(time_series, ranges, window, rp, hash_names, L, dimension, n, K):
+    """
+    Process a chunk of time series data.
+
+    Args:
+      time_series (numpy.ndarray): The time series chunk.
+      ranges (list): The indices of the original time series data to process.
+      window (int): The size of the window.
+      rp (float): The random projection hasher.
+      shm_name_hash_mat (str): The name of the shared memory for the hash matrix.
+      shm_shape_hash_mat (tuple): The shape of the shared memory for the hash matrix.
+      shm_name_subsequences (str): The name of the shared memory for the subsequences.
+      shm_shape_subsequences (tuple): The shape of the shared memory for the subsequences.
+      L (int): The length of the subsequences.
+      dimension (int): The dimension of the time series data.
+      K (int): The number of hash functions.
+
+    Returns:
+      tuple: A tuple containing the standard deviation container and the mean container.
+   """
+
+  #Open all the shared memory objects
+    shm_hashes = [shared_memory.SharedMemory(name=hash_name.name) for hash_name in hash_names]
+    hash_arrs = [np.ndarray((n-window+1,dimension, K), dtype=np.int8, buffer=shm.buf) for shm in shm_hashes]
+    
+    mean_container = {}
+    std_container = {}
+
+    for idx_ts, idx in enumerate(ranges):
+      subsequence = np.ascontiguousarray(time_series[idx_ts:idx_ts+window].T, dtype=np.float32)
+
+      mean_container[idx] = np.mean(subsequence, axis=1)
+      std_held = np.std(subsequence, axis=1)
+      std_container[idx] = np.where(std_held == 0, 0.00001, std_held)
+
+      subsequence_n = (subsequence - mean_container[idx][:, np.newaxis]) / std_container[idx][:, np.newaxis]
+      hashed_sub = np.apply_along_axis(compute_hash, 1, subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L)
+      hashed_sub = np.swapaxes(hashed_sub, 0, 1)
+
+      for rep in range(L):
+        hash_arrs[rep][idx] = hashed_sub[rep]
+
+    for shm in shm_hashes:
+      shm.close()
+    return std_container, mean_container

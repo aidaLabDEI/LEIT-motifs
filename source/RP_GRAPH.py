@@ -9,7 +9,6 @@ from stop import stopgraph
 import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
 
 def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_thresh):  
-        print(i,j) 
         #if i == 0 and j == 1:
          #   pr = cProfile.Profile()
          #   pr.enable()
@@ -29,19 +28,19 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
         time_series = np.ndarray((n,dimensionality), dtype=np.float32, buffer=ex_time_series.buf)
         dimensions = np.arange(dimensionality, dtype=np.int32)
         counter = dict()
-        existing_arr = shared_memory.SharedMemory(name=hash_mat_name)
-        existing_ord = shared_memory.SharedMemory(name=ordering_name)
-        hash_mat = np.ndarray((n-window+1,L,dimensionality,K), dtype=np.int8, buffer=existing_arr.buf)
-        ordering = np.ndarray((dimensionality, n-window+1, L), dtype=np.int32, buffer=existing_ord.buf)
-        print("current j", j)
-        hash_mat_curr = hash_mat[:,j,:,:-i] if i != 0 else hash_mat[:,j,:,:]
+        existing_arr = shared_memory.SharedMemory(name=hash_mat_name.name)
+        existing_ord = shared_memory.SharedMemory(name=ordering_name.name)
+        hash_mat = np.ndarray((n-window+1, dimensionality,K), dtype=np.int8, buffer=existing_arr.buf)
+        ordering = np.ndarray((dimensionality, n-window+1), dtype=np.int32, buffer=existing_ord.buf)
+
+        #hash_mat_curr = hash_mat[:,:,:-i] if i != 0 else hash_mat
         # Let's assume that ordering has the lexigraphical order of the dimensions
         for curr_dim in range(dimensionality):
-            ordering_dim = ordering[curr_dim,:,j]
-            ordered_view = hash_mat_curr[ordering_dim,curr_dim,:]
+            ordering_dim = ordering[curr_dim,:]
+            hash_mat_curr = hash_mat[:,curr_dim,:-i] if i != 0 else hash_mat[:,curr_dim,:]
             # Take the subsequent elements of the ordering and check if their hash is the same
-            for idx, elem1 in enumerate(ordered_view):
-                for idx2, elem2 in enumerate(ordered_view[idx+1:]):
+            for idx, elem1 in enumerate(hash_mat_curr):
+                for idx2, elem2 in enumerate(hash_mat_curr[idx+1:]):
                     sub_idx1 = ordering_dim[idx]
                     sub_idx2 = ordering_dim[idx+idx2+1]
                     # No trivial match
@@ -55,7 +54,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
                     else:
                         break
     # Get all entries whose counter is above or equal the motif dimensionality
-        #v_max = max(list(counter.values()))
+        v_max = max(list(counter.values()))
         #counter_extr = [pair for pair, v in counter.items() if v >= v_max]
         counter_extr = [pair for pair, v in counter.items() if v >= motif_dimensionality]
         del counter
@@ -63,15 +62,11 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
         for maximum_pair in counter_extr:
             coll_0, coll_1 = maximum_pair
             # Iƒ we already seen it in a key of greater length, skip
-            
-            if not i == 0:
-                if i == 1:
-                    rows = hash_mat[coll_0,j,:,:] == hash_mat[coll_1,j,:,:]
-                else:
-                    rows = hash_mat[coll_0,j,:,:-i+1] == hash_mat[coll_1,j,:,:-i+1]
+            if i >= 1:
+                rows = hash_mat[coll_0,:,:] == hash_mat[coll_1,:,:] if i == 1 else hash_mat[coll_0,:,:-i+1] == hash_mat[coll_1,:,:-i+1]
                 comp = np.sum(np.all(rows, axis=1))
                 if comp >= motif_dimensionality:
-                    continue            
+                    continue             
             dist_comp += 1
             curr_dist, dim, stop_dist= z_normalized_euclidean_distanceg(time_series[coll_0:coll_0+window].T, time_series[coll_1:coll_1+window].T,
                                                 dimensions, subsequences.mean(coll_0), subsequences.std(coll_0),
@@ -89,13 +84,22 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
          #   pr.print_stats(sort='cumtime')
         return top.queue, dist_comp, i, j#, counter
 
-def order_hash(hash_mat, l, dimension):
-    ordering = np.zeros((dimension, hash_mat.shape[0]), dtype=np.int32)
-    for curr_dim in range(dimension):
-        # Order hash[:,rep,dim,:] using as key the array of the last dimension
-        hash_mat_curr = hash_mat[:,curr_dim,:]
-        ordering[curr_dim,:] = np.lexsort(hash_mat_curr.T[::-1])
-    return ordering, l
+def order_hash(hash_mat_name, indices_name, l, dimension, num_s, K):
+    for hash_name, indices_n in zip(hash_mat_name, indices_name):
+        hash_mat_data = shared_memory.SharedMemory(name=hash_name.name)
+        hash_mat = np.ndarray((num_s, dimension, K), dtype=np.int8, buffer=hash_mat_data.buf)
+        indices_data = shared_memory.SharedMemory(name=indices_n.name)
+        indices = np.ndarray((dimension, num_s), dtype=np.int32, buffer=indices_data.buf)
+        for curr_dim in range(dimension):
+            indices[curr_dim,:] = np.lexsort(hash_mat[:,curr_dim,:].T[::-1])
+            hash_mat[:,curr_dim,:] = hash_mat[indices[curr_dim,:], curr_dim,:]
+
+        # Assign the ordering to the shared memory in one go
+        #hash_mat = hash_mat[indices,:]
+        
+        hash_mat_data.close()
+        indices_data.close()
+    return l
 
 def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.1):
     #pr = cProfile.Profile()
@@ -106,7 +110,15 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
     top = queue.PriorityQueue(maxsize=k+1)
     std_container = {}
     mean_container = {}
+    indices_container = []
+    hash_container = []
 
+    # Create shared memory for everything
+    for _ in range(L):
+        arrn, _ = create_shared_array((n-window+1, dimension, K), dtype=np.int8)
+        hash_container.append(arrn)
+        arri, _ = create_shared_array((dimension, n-window+1), dtype=np.int32)
+        indices_container.append(arri)
     
     failure_thresh = fail_thresh
     dist_comp = 0
@@ -118,9 +130,6 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
     num_chunks = max(1, n // chunk_sz)
     
     chunks = [(time_series[ranges[0]:ranges[-1]+window], ranges, window, rp) for ranges in np.array_split(np.arange(n - window + 1), num_chunks)]
-
-    shm_hash_mat, hash_mat = create_shared_array((n-window+1, L, dimension, K), dtype=np.int8)
-    shm_ordering, ordering = create_shared_array((dimension, n-window+1, L), dtype=np.int32) 
     #ordering = np.ndarray((dimension, n - window + 1, L), dtype=np.int32)
 
     # Hash the subsequences and order them lexigraphically
@@ -129,7 +138,7 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
         ord_results = []
 
         for chunk in chunks:
-            result = pool.apply_async(process_chunk, (*chunk, shm_hash_mat.name, hash_mat.shape, L, dimension, K))
+            result = pool.apply_async(process_chunk_graph, (*chunk, hash_container, L, dimension, n, K))
             results.append(result)
 
         for result in results:
@@ -137,22 +146,23 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
             std_container.update(std_temp)
             mean_container.update(mean_temp)
 
-        for rep in range(L):
-          result = pool.apply_async(order_hash, (hash_mat[:,rep,:,:], rep, dimension))
-          ord_results.append(result)
+        sizeL = int(np.sqrt(L))
+        splitted_hash = np.array_split(hash_container, sizeL)
+        splitted_indices = np.array_split(indices_container, sizeL)
+        for split, indices in zip(splitted_hash, splitted_indices):
+            result = pool.apply_async(order_hash, (split, indices, sizeL, dimension, n - window + 1, K))
+            ord_results.append(result)
         
         for result in ord_results:
-            ordering_temp, rep = result.get()
-            ordering[:,:,rep] = ordering_temp
-
+            rep = result.get()
 
     windowed_ts = WindowedTS(time_series_name, n, dimension, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
     stop_val = False
     #counter_tot = dict()
 
     # Cycle for the hash repetitions and concatenations
-    with ProcessPoolExecutor(max_workers=2, max_tasks_per_child = 4) as executor:
-        futures = [executor.submit(worker, i, j, windowed_ts, shm_hash_mat.name, shm_ordering.name, k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
+    with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
+        futures = [executor.submit(worker, i, j, windowed_ts, hash_container[j], indices_container[j], k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             #top_temp, dist_comp_temp, i, j, counter = future.result()
             top_temp, dist_comp_temp, i, j = future.result()
@@ -196,7 +206,6 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
                 stop_val = stopgraph(top.queue[0], i, j, fail_thresh, K, L, bin_width, motif_dimensionality)
                 #print(stop_val)
                 if (stop_val and len(top.queue) >= k):
-                        print("Stopping")
                         executor.shutdown(wait=True, cancel_futures=True)   
                         break
                  
@@ -262,9 +271,11 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
     
    # pr.disable()
     #pr.print_stats(sort='cumtime')
-    shm_hash_mat.close()
-    shm_hash_mat.unlink()
-    shm_ordering.close()
-    shm_ordering.unlink()
+    for arr in hash_container:
+        arr.close()
+        arr.unlink()
+    for arr in indices_container:
+        arr.close()
+        arr.unlink()
     time_series_data.close()
     return top, dist_comp

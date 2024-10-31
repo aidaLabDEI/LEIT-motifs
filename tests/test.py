@@ -64,7 +64,7 @@ if __name__ == "__main__":
     dimensions = d.shape[1]
     n = d.shape[0]
     shm_ts, ts = create_shared_array((n, dimensions), np.float32)
-    ts[:] = d
+    ts[:] = d[:]
     del d
     # Start the timer
     tracemalloc.start()
