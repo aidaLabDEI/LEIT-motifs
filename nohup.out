@@ -1,0 +1,22 @@
+Writing profile results into tests/memray-test.py.530642.bin
+Time elapsed:  2.6358157380000016
+Distance computations: 3
+Current memory usage is 0.968845MB; Peak was 7.987079MB
+/home/monaco/.local/share/uv/python/cpython-3.12.6-linux-x86_64-gnu/lib/python3.12/multiprocessing/reduction.py:51: size=572 KiB, count=9703, average=60 B
+<frozen importlib._bootstrap_external>:753: size=134 KiB, count=1123, average=122 B
+/home/monaco/bt_analysis/code/LEIT-motifs/source/RP_GRAPH.py:164: size=81.0 KiB, count=798, average=104 B
+/home/monaco/bt_analysis/code/LEIT-motifs/source/RP_GRAPH.py:140: size=5376 B, count=48, average=112 B
+/home/monaco/.local/share/uv/python/cpython-3.12.6-linux-x86_64-gnu/lib/python3.12/tempfile.py:146: size=5104 B, count=2, average=2552 B
+/home/monaco/.local/share/uv/python/cpython-3.12.6-linux-x86_64-gnu/lib/python3.12/multiprocessing/connection.py:251: size=5007 B, count=93, average=54 B
+/home/monaco/.local/share/uv/python/cpython-3.12.6-linux-x86_64-gnu/lib/python3.12/multiprocessing/pool.py:921: size=4172 B, count=11, average=379 B
+/home/monaco/bt_analysis/code/LEIT-motifs/source/RP_GRAPH.py:131: size=3792 B, count=56, average=68 B
+/home/monaco/.local/share/uv/python/cpython-3.12.6-linux-x86_64-gnu/lib/python3.12/multiprocessing/pool.py:173: size=3000 B, count=11, average=273 B
+/home/monaco/.local/share/uv/python/cpython-3.12.6-linux-x86_64-gnu/lib/python3.12/multiprocessing/process.py:85: size=2880 B, count=24, average=120 B
+[(-6.277530670166016, [1, (361, 702), [array([0, 1, 2, 3, 4, 5, 6, 7], dtype=int8)], array([1.346291  , 0.49483946, 0.52813154, 1.8293939 , 0.5243031 ,
+       0.5709547 , 0.42504406, 0.5585731 ], dtype=float32)])]
+[memray] Successfully generated profile results.
+
+You can now generate reports from the stored allocation records.
+Some example commands to generate reports:
+
+/home/monaco/bt_analysis/.venv/bin/python3 -m memray flamegraph tests/memray-test.py.530642.bin
