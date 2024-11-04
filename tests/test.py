@@ -1,10 +1,10 @@
 import sys
 sys.path.append('external_dependecies')
 sys.path.append('source')
-from RP_MH import pmotif_find2
-from RP_DC import pmotif_find3
+#from RP_MH import pmotif_find2
+#from RP_DC import pmotif_find3
 from RP_GRAPH import pmotif_findg
-from RPG_CF import pmotif_findauto
+#from RPG_CF import pmotif_findauto
 import time, pandas as pd, numpy as np, queue
 from data_loader import convert_tsf_to_dataframe
 from base import z_normalized_euclidean_distance, create_shared_array
@@ -52,13 +52,15 @@ if __name__ == "__main__":
     elif dataset == 3 or dataset == 5 or dataset == 6:
         data = pd.read_csv(paths[dataset])
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32) if dataset == 3 else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
+        if dataset != 3:
+            d += np.random.normal(0, 0.1, d.shape)
         
     else:
         data = pd.read_csv(paths[dataset], sep=r'\s+')
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 8#find_width_discr(d, window_size, K)
+    r = 32#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
     dimensions = d.shape[1]

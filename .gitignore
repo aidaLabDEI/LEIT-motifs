@@ -2,6 +2,8 @@
 /source/__pycache__
 /.vscode
 *.pyc
+*.out
+*.svg
 *.code-workspace
 Datasets/CLEAN_House1.csv
 Datasets/*.csv
