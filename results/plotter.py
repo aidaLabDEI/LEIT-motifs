@@ -32,7 +32,8 @@ if __name__ == "__main__":
     for i, ds_val in enumerate(ds_values):
         # Get the data for the current value
         L_data = data[data['Dataset'] == ds_val]
-        axs[i//2, i%2].fill_between(L_data['L'], L_data['Time elapsed'], color="wheat", alpha=0.4)
+        axs[i//2, i%2].stackplot(L_data['L'], L_data['Time int'], color="peachpuff", alpha=0.4)
+        axs[i//2, i%2].stackplot(L_data['L'], L_data['Time elapsed'] - L_data['Time int'], color="wheat", alpha=0.4)
         axs[i//2, i%2].plot(L_data['L'], L_data['Time elapsed'], color="orange", alpha=0.6, linewidth =1.2, marker='o')
         axs[i//2, i%2].set_title(names[i])
     sns.despine(offset=10, trim=True)
