@@ -4,7 +4,7 @@ import multiprocessing
 from multiprocessing import Pool, cpu_count
 from concurrent.futures import as_completed, ProcessPoolExecutor
 from hash_lsh import RandomProjection, euclidean_hash
-import cProfile
+import time
 from stop import stopgraph
 import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
 from scipy.sparse import dok_matrix
@@ -132,6 +132,7 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
     #ordering = np.ndarray((dimension, n - window + 1, L), dtype=np.int32)
 
     # Hash the subsequences and order them lexigraphically
+    st = time.process_time()
     with Pool() as pool:
         results = []
         ord_results = []
@@ -154,7 +155,7 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
         
         for result in ord_results:
             rep = result.get()
-
+    hash_t = time.process_time() - st
     windowed_ts = WindowedTS(time_series_name, n, dimension, window, mean_container, std_container, L, K, motif_dimensionality, bin_width)
     stop_val = False
     #counter_tot = dict()
@@ -277,4 +278,4 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
         arr.close()
         arr.unlink()
     time_series_data.close()
-    return top, dist_comp
+    return top, dist_comp, hash_t

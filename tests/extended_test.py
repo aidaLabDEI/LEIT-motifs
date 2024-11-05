@@ -42,18 +42,18 @@ def main():
 
     current_dir = os.path.dirname(__file__)
     paths = [
-        #os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
-        #os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
-        #os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
+        os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
+        os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
+        os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
         os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
-        os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
-        os.path.join(current_dir, '..', 'Datasets', 'whales.csv'),
+        #os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
+        #os.path.join(current_dir, '..', 'Datasets', 'whales.csv'),
     ]
 
     r_vals_computed = [8, 8, 32, 32]
     windows = [50, 75, 500, 5000]
     dimensionality = [8, 2, 4, 2]
-
+    
     # Base test for time elapsed
     for number, path in enumerate(paths):
         number_r = number + 3
@@ -84,7 +84,7 @@ def main():
             pmotif_findg(d, 50, 1, 8, 8, 0, 10, 8)
         print("Starting")
         print(d.shape)
-    
+        '''
         start = time.process_time()
         for i in range(3):
             motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], 0.5, 200, 8)
@@ -113,18 +113,19 @@ def main():
             gc.collect()
         
         print("K fin")
-        
+        '''
+        results = pd.DataFrame(columns=['Dataset', 'Time elapsed', 'Time int', 'RC1', 'K', 'L', 'w', 'r', 'dist_computed'])
         for L in Ls:
             start = time.process_time()
             for i in range(1):
-                motifs, num_dist = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], 0.5, L, 8)
+                motifs, num_dist,ht = pmotif_findg(d, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], 0.5, L, 8)
             end = (time.process_time() - start)
-            temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'RC1': 0, 'K': 8, 'L': L, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
+            temp_df = pd.DataFrame([{ 'Dataset': number_r, 'Time elapsed': end, 'Time int':ht, 'RC1': 0, 'K': 8, 'L': L, 'w': windows[number_r], 'r': r_vals_computed[number_r], 'dist_computed': num_dist}])
             results = results._append(temp_df, ignore_index=True) 
             gc.collect()
         print("L fin")
         results.to_csv("r_partial_dataset"+str(number_r), index=False)
-        
+        '''
         for r in rs:
             start = time.process_time()
             for i in range(1):
@@ -135,40 +136,11 @@ def main():
             gc.collect()
 
         results.to_csv("r_dataset"+str(number_r),index=False)
-    
+        '''
         print("Dataset", number_r, "finished")
 
-    '''
-    # Test for memory, run with mprof
-    for number, path in enumerate(paths):
-        gc.collect()
-    # Load the dataset
-        if number == 3:
-            data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[3], 0)
-            d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C').T
-        elif number == 4:
-            data = pd.read_csv(paths[number])
-            data = data.drop(['Time','Unix', 'Issues'],axis=1)
-            d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
-        elif number == 2:
-            data = pd.read_csv(paths[number])
-            d = np.ascontiguousarray(data.to_numpy(dtype=np.float64))
-        else:
-            data = pd.read_csv(paths[number], delim_whitespace= True)
-            data = data.drop(data.columns[[0]], axis=1)
-            d = np.ascontiguousarray(data.to_numpy())
-
-        #tracemalloc.start()    
-        motifs, num_dist = pmotif_findg(d, windows[number], 1, dimensionality[number], r_vals_computed[number], dimensionality[number]/d.shape[1], 100, 8)
-        gc.collect()
-        #current, peak = tracemalloc.get_traced_memory()  # Get the current and peak memory usage
-       # tracemalloc.stop()  # Stop tracking memory allocations
-
-        #print("Dataset", number)
-        #print("Peak memory usage:", peak / 10**9, "GB")
-
     # Failure test    
-
+    '''
     Fail = pd.DataFrame(columns=['Dataset', 'Prob','Motif1', 'Motif2', 'Motif3', 'Motif4', 'Motif5', 'Motif6', 'Motif7', 'Motif8', 'Motif9'])
     failure_probs = [0.8, 0.5, 0.2]
     motif_found = []
