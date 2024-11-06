@@ -10,11 +10,12 @@ from data_loader import convert_tsf_to_dataframe
 from base import z_normalized_euclidean_distance, create_shared_array
 from find_bin_width import find_width_discr
 #from extra import relative_contrast
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt, matplotlib
 from scipy.signal import savgol_filter
 
 import tracemalloc
 if __name__ == "__main__":
+    matplotlib.use('WebAgg')
     
     # Get from command line arguments the number of the dataset to be used, the window size, dimensionality, K and L
     # 0: FOETAL_ECG.dat
@@ -43,16 +44,18 @@ if __name__ == "__main__":
         data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(paths[2], 0)
         d = np.array([data.loc[i,"series_value"].to_numpy() for i in range(data.shape[0])], order='C', dtype=np.float32).T
         # Apply a savgol filter to the data
-        d = savgol_filter(d, 300, 2, axis=0)
+        d = savgol_filter(d, 300, 1, axis=0)
     elif dataset == 4:
         data = pd.read_csv(paths[dataset])
         data = data.drop(['Time','Unix', 'Issues'],axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
-        d = d[:100000,:]
+        # Add some noise to remove step-like patterns
+        d += np.random.normal(0, 0.1, d.shape)
     elif dataset == 3 or dataset == 5 or dataset == 6:
         data = pd.read_csv(paths[dataset])
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32) if dataset == 3 else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
         if dataset != 3:
+            # Add some noise to remove step-like patterns
             d += np.random.normal(0, 0.1, d.shape)
         
     else:
@@ -73,7 +76,7 @@ if __name__ == "__main__":
     start = time.process_time()
     # Find the motifs
     #for i in range(5):
-    motifs, num_dist = pmotif_findg(shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K)
+    motifs, num_dist, _ = pmotif_findg(shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K)
 
     end = (time.process_time() - start)
     print("Time elapsed: ", end)
@@ -90,8 +93,8 @@ if __name__ == "__main__":
 
     # Plot
     #motifs = queue.PriorityQueue()
-    print(motifs.queue)
-    copy = motifs.queue
+    print(motifs)
+    copy = motifs
     motifs = copy
     #motifs = find_all_occur(extract, motifs, window_size)
     colors = ["red", "green", "pink", "pink", "cyan", "yellow", "orange", "gray", "purple"]
