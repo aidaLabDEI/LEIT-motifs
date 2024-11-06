@@ -1,0 +1,61 @@
+import networkx as nx, matplotlib.pyplot as plt, plotly.graph_objects as go
+
+    # Graph construction for visualization
+    if False:
+        # Imagine counter_tot as an edge list with weights, plot the graph with the weights as the edge weights of the top
+        # elements
+        G = nx.Graph()
+
+        # Add the edges with the weights of the top elements and their neighbors
+        for element in top.queue:
+            G.add_edge(element[1][1][0], element[1][1][1], weight=counter_tot[element[1][1]])
+            keys = list(counter_tot.keys())
+            for key in keys:
+                if element[1][1][0] in key or element[1][1][1] in key:
+                    G.add_edge(key[0], key[1], weight=counter_tot[key])
+
+        # Add the edges between the added nodes, if they have a weight
+        keys = list(counter_tot.keys())
+        for key in keys:
+                if key[0] in G.nodes and key[1] in G.nodes:
+                    G.add_edge(key[0], key[1], weight=counter_tot[key])
+
+        # Generate layout positions
+        pos = nx.spring_layout(G)
+
+        # Get node degrees for size scaling
+        node_degrees = dict(G.degree())
+
+        # Each pair of motifs has a color the others are default
+        colors = ['tomato', 'blue', 'yellow', 'orange', 'purple']  
+        pair_colors = {}
+        default_color = 'orchid'
+
+        # Assign colors to pairs in top.queue
+        for idx, element in enumerate(top.queue):
+            node1, node2 = element[1][1]
+            pair_colors[(node1, node2)] = colors[idx % len(colors)]
+
+        # Create the Plotly figure
+        fig = go.Figure()
+
+        # Add nodes with size proportional to degree
+        for node, (x, y) in pos.items():
+            # Check if node belongs to any pair in top.queue
+            node_color = default_color  # Default color for non-pair nodes
+            for (n1, n2), color in pair_colors.items():
+                if node == n1 or node == n2:
+                    node_color = color
+                    break
+            
+            # Add node to figure with specified color and size
+            fig.add_trace(go.Scatter(
+                x=[x], y=[y],
+                mode="markers+text",
+                marker=dict(size=5 + 0.3* node_degrees[node], color=node_color, opacity=0.7),
+                text=str(node_degrees[node]),
+                name=str(node)
+            ))
+
+        # Show the interactive plot
+        fig.write_html("graph.html")
