@@ -28,7 +28,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
             ex_time_series = shared_memory.SharedMemory(name=subsequences.subsequences)
             time_series = np.ndarray((n,dimensionality), dtype=np.float32, buffer=ex_time_series.buf)
             dimensions = np.arange(dimensionality, dtype=np.int32)
-            counter = np.zeros(n-window+1, dtype=np.int32)
+            counter = np.zeros((dimensionality, n-window+1), dtype=np.int32)
             existing_arr = shared_memory.SharedMemory(name=hash_mat_name.name)
             existing_ord = shared_memory.SharedMemory(name=ordering_name.name)
             hash_mat = np.ndarray((n-window+1, dimensionality,K), dtype=np.int8, buffer=existing_arr.buf)
@@ -50,22 +50,26 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
                         # If same hash, increase the counter, see the next
                         if (elem1 == elem2).all():
                             #counter[sub_idx1, sub_idx2] += 1
-                            counter[sub_idx1] += 1
-                            counter[sub_idx2] += 1
+                            counter[curr_dim,sub_idx1] += 1
+                            counter[curr_dim,sub_idx2] += 1
                         # Else skip because we know that the ordering ensures that all the subsequences are different
                         else:
                             break
         # Get all entries whose counter is above or equal the motif dimensionality
             #counter_extr = [pair for pair, v in counter.items() if v >= v_max]
             #counter_extr = [pair for pair, v in counter.items() if v >= motif_dimensionality]
-            # Create the ordered combinations of subsequences that have a counter above the threshold
-            counter_extr = [i for i, elem in enumerate(counter) if elem >= motif_dimensionality*dimensionality]
-            #print(len(counter_extr))
-            del counter
+            # Extract the indices that have at least motif_dimensionality values in the column that are different than 0
+            counter_extr = []
+            for idx in range(n-window+1):
+                elem = counter[:,idx]
+                if np.count_nonzero(elem) >= motif_dimensionality:
+                    counter_extr.append(idx)
+            print(len(counter_extr))
+            #del counter
         # Find the set of dimensions with the minimal distance
             for maximum_pair in itertools.combinations(counter_extr, 2):
                 coll_0, coll_1 = maximum_pair
-                if abs(coll_0 - coll_1) <= window:
+                if abs(coll_0 - coll_1) <= window or np.count_nonzero(np.logical_and(counter[:,coll_0], counter[:,coll_1])) < motif_dimensionality:
                     continue
                 # Iƒ we already seen it in a key of greater length, skip
                 if i >= 1:

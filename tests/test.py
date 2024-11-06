@@ -54,16 +54,16 @@ if __name__ == "__main__":
     elif dataset == 3 or dataset == 5 or dataset == 6:
         data = pd.read_csv(paths[dataset])
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32) if dataset == 3 else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
-        if dataset != 3:
+        #if dataset != 3:
             # Add some noise to remove step-like patterns
-            d += np.random.normal(0, 0.1, d.shape)
+        d += np.random.normal(0, 0.1, d.shape)
         
     else:
         data = pd.read_csv(paths[dataset], sep=r'\s+')
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 32#find_width_discr(d, window_size, K)
+    r = 16#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
     dimensions = d.shape[1]

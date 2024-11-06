@@ -8,13 +8,13 @@ from  multiprocessing import shared_memory
 import pyarrow.parquet as pq
 import bisect
 if __name__ == "__main__":
-    l = [[-1,[0]],[-5,[4]],[-3,[8]],[-4,[7]]]
-    l = sorted(l, key=lambda x: x[0], reverse=True)
-    print(l)
-    bisect.insort(l, [-2,[3]], key=lambda x: -x[0])
-    print(l)
-    bisect.insort(l, [-2,[1]], key=lambda x: -x[0])
-    print(l)
+    a = np.array([5,6,7,7,0])
+    b = [1,2,0,4,5]
+    lis = np.argwhere(a==7)
+    gen = [elem for elem in itertools.combinations(list(lis), 2)]
+    print(gen)
+    #Loop over the rows of the array
+
 
 
 
