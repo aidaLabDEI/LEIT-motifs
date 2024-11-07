@@ -1,20 +1,16 @@
 from base import *
 import numpy as np, queue, itertools, bisect
-import multiprocessing
 from multiprocessing import Pool, cpu_count
 from concurrent.futures import as_completed, ProcessPoolExecutor
 from hash_lsh import RandomProjection, euclidean_hash
 import time
 from stop import stopgraph
-#from scipy.sparse import dok_matrix
+import cProfile
 
-def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_thresh):  
-        #if i == 0 and j == 1:
-         #   pr = cProfile.Profile()
-         #   pr.enable()
-        if stop_i:
-            return
-        #top_temp, dist_comp_temp = cycle(i, j, windowed_ts, hash_mat, ordering, k, failure_thresh)
+def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k, failure_thresh):  
+      #  if i == 0 and j == 1:
+       #     pr = cProfile.Profile()
+        #    pr.enable()
         dist_comp = 0
         top = queue.PriorityQueue(k+1)
         window = subsequences.w
@@ -25,14 +21,18 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
         K = subsequences.K 
         bin_width = subsequences.r
         try:
+            # Time Series
             ex_time_series = shared_memory.SharedMemory(name=subsequences.subsequences)
             time_series = np.ndarray((n,dimensionality), dtype=np.float32, buffer=ex_time_series.buf)
+            # Utility data
             dimensions = np.arange(dimensionality, dtype=np.int32)
-            counter = np.zeros((dimensionality, n-window+1), dtype=np.int32)
-            existing_arr = shared_memory.SharedMemory(name=hash_mat_name.name)
+            # Ordered hashes, ordering indices and unordered hashes
+            existing_arr = shared_memory.SharedMemory(name=ordered_name.name)
             existing_ord = shared_memory.SharedMemory(name=ordering_name.name)
+            existing_hash = shared_memory.SharedMemory(name=hash_mat_name.name)
             hash_mat = np.ndarray((n-window+1, dimensionality,K), dtype=np.int8, buffer=existing_arr.buf)
             ordering = np.ndarray((dimensionality, n-window+1), dtype=np.int32, buffer=existing_ord.buf)
+            original_mat = np.ndarray((n-window+1, dimensionality, K), dtype=np.int8, buffer=existing_hash.buf)
 
             #hash_mat_curr = hash_mat[:,:,:-i] if i != 0 else hash_mat
             # Let's assume that ordering has the lexigraphical order of the dimensions
@@ -44,76 +44,55 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, k, stop_i, failure_
                     for idx2, elem2 in enumerate(hash_mat_curr[idx+1:]):
                         sub_idx1 = ordering_dim[idx]
                         sub_idx2 = ordering_dim[idx+idx2+1]
+                        maximum_pair = [sub_idx1, sub_idx2] if sub_idx1 < sub_idx2 else [sub_idx2, sub_idx1]
                         # No trivial match
-                        if (abs(sub_idx1 - sub_idx2) <= window):
+                        if (maximum_pair[1] - maximum_pair[0] <= window):
                             continue
-                        # If same hash, increase the counter, see the next
+                        # If same hash, check if there's a collision, see the next after
                         if (elem1 == elem2).all():
-                            #counter[sub_idx1, sub_idx2] += 1
-                            counter[curr_dim,sub_idx1] += 1
-                            counter[curr_dim,sub_idx2] += 1
-                        # Else skip because we know that the ordering ensures that all the subsequences are different
-                        else:
-                            break
-        # Get all entries whose counter is above or equal the motif dimensionality
-            #counter_extr = [pair for pair, v in counter.items() if v >= v_max]
-            #counter_extr = [pair for pair, v in counter.items() if v >= motif_dimensionality]
-            # Extract the indices that have at least motif_dimensionality values in the column that are different than 0
-            counter_extr = []
-            for idx in range(n-window+1):
-                elem = counter[:,idx]
-                if np.count_nonzero(elem) >= motif_dimensionality:
-                    counter_extr.append(idx)
-            print(len(counter_extr))
-            #del counter
-        # Find the set of dimensions with the minimal distance
-            for maximum_pair in itertools.combinations(counter_extr, 2):
-                coll_0, coll_1 = maximum_pair
-                if abs(coll_0 - coll_1) <= window or np.count_nonzero(np.logical_and(counter[:,coll_0], counter[:,coll_1])) < motif_dimensionality:
-                    continue
-                # Iƒ we already seen it in a key of greater length, skip
-                if i >= 1:
-                    rows = hash_mat[coll_0,:,:] == hash_mat[coll_1,:,:] if i == 1 else hash_mat[coll_0,:,:-i+1] == hash_mat[coll_1,:,:-i+1]
-                    comp = np.sum(np.all(rows, axis=1))
-                    if comp >= motif_dimensionality:
-                        continue             
-                dist_comp += 1
-                curr_dist, dim, stop_dist= z_normalized_euclidean_distanceg(time_series[coll_0:coll_0+window].T, time_series[coll_1:coll_1+window].T,
-                                                    dimensions, subsequences.mean(coll_0), subsequences.std(coll_0),
-                                                    subsequences.mean(coll_1), subsequences.std(coll_1), motif_dimensionality)
-                top.put((-curr_dist, [dist_comp, maximum_pair, [dim], stop_dist]))
-                if top.qsize() > k:
-                    top.get()
+                            if (np.sum((original_mat[sub_idx1] == original_mat[sub_idx2]).all(axis=1)) >= motif_dimensionality):
+                                dist_comp += 1
+                                curr_dist, dim, stop_dist= z_normalized_euclidean_distanceg(time_series[sub_idx1:sub_idx1+window].T, time_series[sub_idx2:sub_idx2+window].T,
+                                                                    dimensions, subsequences.mean(sub_idx1), subsequences.std(sub_idx1),
+                                                                    subsequences.mean(sub_idx2), subsequences.std(sub_idx2), motif_dimensionality)
+                                top.put((-curr_dist, [dist_comp, maximum_pair, [dim], stop_dist]))
+                                if top.qsize() > k:
+                                    top.get()
+                        # Otherwise we know that this subsequence and all the following ones will have different hashes          
+                        else: break
 
             ex_time_series.close()
             existing_arr.close()
             existing_ord.close()
             del time_series, hash_mat, ordering
-        # if i == 0 and j == 1:
-            #    pr.disable()
-            #   pr.print_stats(sort='cumtime')
+            #if i == 0 and j == 1:
+             #   pr.disable()
+              #  pr.print_stats(sort='cumtime')
             return top.queue, dist_comp, i, j#, counter
         except FileNotFoundError:
             return [], 0, i, j
 
-def order_hash(hash_mat_name, indices_name, l, dimension, num_s, K):
-    for hash_name, indices_n in zip(hash_mat_name, indices_name):
+def order_hash(hash_mat_name, indices_name, ordered_name, l, dimension, num_s, K):
+    for hash_name, indices_n, ordered_n in zip(hash_mat_name, indices_name, ordered_name):
         hash_mat_data = shared_memory.SharedMemory(name=hash_name.name)
         hash_mat = np.ndarray((num_s, dimension, K), dtype=np.int8, buffer=hash_mat_data.buf)
         indices_data = shared_memory.SharedMemory(name=indices_n.name)
         indices = np.ndarray((dimension, num_s), dtype=np.int32, buffer=indices_data.buf)
+        ordered_data = shared_memory.SharedMemory(name=ordered_n.name)
+        ordered = np.ndarray((num_s,dimension, K), dtype=np.int8, buffer=ordered_data.buf)
         for curr_dim in range(dimension):
             indices[curr_dim,:] = np.lexsort(hash_mat[:,curr_dim,:].T[::-1])
-            hash_mat[:,curr_dim,:] = hash_mat[indices[curr_dim,:], curr_dim,:]
+            ordered[:,curr_dim,:] = hash_mat[indices[curr_dim,:], curr_dim,:]
 
         # Assign the ordering to the shared memory in one go
         #hash_mat = hash_mat[indices,:]
         
         hash_mat_data.close()
         indices_data.close()
+        ordered_data.close()
     return l
 
-def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.01):
+def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality, bin_width, lsh_threshold, L, K, fail_thresh=0.1):
     #pr = cProfile.Profile()
     #pr.enable()
     time_series_data = shared_memory.SharedMemory(name=time_series_name)
@@ -124,13 +103,17 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
     mean_container = {}
     indices_container = []
     hash_container = []
+    ordered_container = []
 
     # Create shared memory for everything
     for _ in range(L):
         arrn, _ = create_shared_array((n-window+1, dimension, K), dtype=np.int8)
         hash_container.append(arrn)
+        arro, _ = create_shared_array((n-window+1, dimension,K), dtype=np.int8)
+        ordered_container.append(arro)
         arri, _ = create_shared_array((dimension, n-window+1), dtype=np.int32)
         indices_container.append(arri)
+
     
     failure_thresh = fail_thresh
     dist_comp = 0
@@ -162,8 +145,9 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
         sizeL = int(np.sqrt(L))
         splitted_hash = np.array_split(hash_container, sizeL)
         splitted_indices = np.array_split(indices_container, sizeL)
-        for split, indices in zip(splitted_hash, splitted_indices):
-            result = pool.apply_async(order_hash, (split, indices, sizeL, dimension, n - window + 1, K))
+        splitted_ordered = np.array_split(ordered_container, sizeL)
+        for split, indices, ordered in zip(splitted_hash, splitted_indices, splitted_ordered):
+            result = pool.apply_async(order_hash, (split, indices, ordered, sizeL, dimension, n - window + 1, K))
             ord_results.append(result)
         
         for result in ord_results:
@@ -174,8 +158,8 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
     #counter_tot = dict()
     del chunks
     # Cycle for the hash repetitions and concatenations
-    with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
-        futures = [executor.submit(worker, i, j, windowed_ts, hash_container[j], indices_container[j], k, stop_val, fail_thresh) for i, j in itertools.product(range(K), range(L))]
+    with ProcessPoolExecutor(max_workers=cpu_count()//2) as executor:
+        futures = [executor.submit(worker, i, j, windowed_ts, hash_container[j], indices_container[j], ordered_container[j], k, fail_thresh) for i, j in itertools.product(range(K), range(L))]
         for future in as_completed(futures):
             #top_temp, dist_comp_temp, i, j, counter = future.result()
             top_temp, dist_comp_temp, i, j = future.result()
@@ -215,6 +199,9 @@ def pmotif_findg(time_series_name, n, dimension, window, k, motif_dimensionality
         arr.close()
         arr.unlink()
     for arr in indices_container:
+        arr.close()
+        arr.unlink()
+    for arr in ordered_container:
         arr.close()
         arr.unlink()
     time_series_data.close()

@@ -8,11 +8,10 @@ from  multiprocessing import shared_memory
 import pyarrow.parquet as pq
 import bisect
 if __name__ == "__main__":
-    a = np.array([5,6,7,7,0])
-    b = [1,2,0,4,5]
-    lis = np.argwhere(a==7)
-    gen = [elem for elem in itertools.combinations(list(lis), 2)]
-    print(gen)
+    a = np.zeros((10), dtype=np.uint8)
+    a[0] += 2
+    print(a)
+    
     #Loop over the rows of the array
 
 

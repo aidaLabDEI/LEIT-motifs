@@ -56,14 +56,14 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32) if dataset == 3 else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
         #if dataset != 3:
             # Add some noise to remove step-like patterns
-        d += np.random.normal(0, 0.1, d.shape)
+        d += np.random.normal(0, 0.01, d.shape)
         
     else:
         data = pd.read_csv(paths[dataset], sep=r'\s+')
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 16#find_width_discr(d, window_size, K)
+    r = 32#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
     dimensions = d.shape[1]
@@ -82,13 +82,13 @@ if __name__ == "__main__":
     print("Time elapsed: ", end)
     print("Distance computations:", num_dist)
     size, peak = tracemalloc.get_traced_memory()
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
+   # snapshot = tracemalloc.take_snapshot()
+    #top_stats = snapshot.statistics('lineno')
 
 
     print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
-    for stat in top_stats[:10]:
-        print(stat)
+    #for stat in top_stats[:10]:
+     #   print(stat)
 
 
     # Plot
