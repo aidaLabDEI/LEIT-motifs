@@ -1,6 +1,6 @@
-from obspy.clients.iris import Client
 from obspy import UTCDateTime, read
-import matplotlib.pyplot as plt, numpy as np, pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 from scipy.signal import spectrogram
 
 dt = UTCDateTime("2014-05-25T06:10:00")

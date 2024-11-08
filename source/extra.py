@@ -1,5 +1,4 @@
 from base import *
-from multiprocessing import Pool
 import stumpy
 
 def relative_contrast(ts, window, dimensionality):

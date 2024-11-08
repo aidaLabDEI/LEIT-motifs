@@ -1,5 +1,8 @@
 from extendedMD.emd import find_motifs_from_emd
-import time, sys, pandas as pd, numpy as np, queue, os
+import time
+import sys
+import pandas as pd
+import os
 sys.path.append('external_dependecies')
 from data_loader import convert_tsf_to_dataframe
 

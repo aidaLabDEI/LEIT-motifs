@@ -1,6 +1,5 @@
 import numpy as np
 from numba import jit, prange
-import numba as nb
 import time
 
 class RandomProjection:

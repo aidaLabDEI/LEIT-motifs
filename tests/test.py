@@ -5,12 +5,14 @@ sys.path.append('source')
 #from RP_DC import pmotif_find3
 from RP_GRAPH import pmotif_findg
 #from RPG_CF import pmotif_findauto
-import time, pandas as pd, numpy as np, queue
+import time
+import pandas as pd
+import numpy as np
 from data_loader import convert_tsf_to_dataframe
-from base import z_normalized_euclidean_distance, create_shared_array
-from find_bin_width import find_width_discr
+from base import create_shared_array
 #from extra import relative_contrast
-import matplotlib.pyplot as plt, matplotlib
+import matplotlib.pyplot as plt
+import matplotlib
 from scipy.signal import savgol_filter
 
 import tracemalloc

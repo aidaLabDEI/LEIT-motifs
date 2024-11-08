@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.typing as npt
-from numpy.fft import fft, ifft
 
 
 def find_width_discr(ts: npt.ArrayLike, window: int, K: int) -> int:

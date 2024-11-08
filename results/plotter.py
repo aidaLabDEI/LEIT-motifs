@@ -1,4 +1,7 @@
-import matplotlib.pyplot as plt, pandas as pd, numpy as np, os, sys, seaborn as sns, matplotlib
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import matplotlib
 
 if __name__ == "__main__":
     matplotlib.use('WebAgg')

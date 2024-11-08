@@ -2,11 +2,13 @@ from base import *
 from find_bin_width import *
 from stop import stop3
 import numpy as np
-import queue, threading, multiprocessing, itertools
+import queue
+import threading
+import multiprocessing
+import itertools
 from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from hash_lsh import RandomProjection, euclidean_hash
-from numba import jit
+from hash_lsh import RandomProjection
 
 
 def find_matching_pairs(index, proj_hashes):

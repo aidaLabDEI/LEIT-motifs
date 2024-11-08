@@ -1,10 +1,8 @@
 from base import *
-import numpy as np, queue, itertools
+import numpy as np
+import queue
 from multiprocessing import Pool, cpu_count
-from concurrent.futures import as_completed, ProcessPoolExecutor
-from hash_lsh import RandomProjection, euclidean_hash
-import cProfile
-from stop import stopgraph
+from hash_lsh import RandomProjection
 
 def conf_sampling(subsequences, i, num_conf, collisions, k):
     collisions = {v: key for v, key in collisions.items() if key >= subsequences.d}

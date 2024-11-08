@@ -1,12 +1,13 @@
 from base import *
 from find_bin_width import *
 from stop import stop
-import numpy as np, queue, threading, multiprocessing
+import numpy as np
+import queue
+import threading
+import multiprocessing
 import numpy.typing as npt
 from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from tqdm import tqdm
-import cProfile
 from hash_lsh import RandomProjection
 from datasketch import MinHashLSH, MinHash
 import time

@@ -1,7 +1,12 @@
 import stumpy
-import time, sys, pandas as pd, numpy as np, queue, os
+import time
+import sys
+import pandas as pd
+import numpy as np
+import os
 sys.path.append('external_dependecies')
 from data_loader import convert_tsf_to_dataframe
+from scipy.signal import savgol_filter
 
 if __name__ == "__main__":
     current_dir = os.path.dirname(__file__)

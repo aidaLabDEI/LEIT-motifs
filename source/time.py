@@ -1,16 +1,8 @@
-from concurrent.futures import ProcessPoolExecutor, as_completed
-import itertools
-import numpy as np, pandas as pd
-import time
-from numba import jit, prange
-from base import create_shared_array
-from  multiprocessing import shared_memory
-import pyarrow.parquet as pq
-import bisect
+import numpy as np
 if __name__ == "__main__":
-    a = np.zeros((10), dtype=np.uint8)
-    a[0] += 2
-    print(a)
+    a = np.array([[1,2,3],[1,1,1]])
+    b = np.array([[3,5,6],[1,1,1]])
+    print(np.sum((a==b).all(axis=1)))
     
     #Loop over the rows of the array
 
