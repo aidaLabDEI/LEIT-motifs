@@ -38,7 +38,7 @@ if __name__ == "__main__":
         device = 0
 
     paths = ["Datasets/FOETAL_ECG.dat", "Datasets/evaporator.dat", "Datasets/oikolab_weather_dataset.tsf", "Datasets/RUTH.csv", "Datasets/CLEAN_House1.csv",
-                "Datasets/whales.csv", "Datasets/earthquake.csv"]
+                "Datasets/whales.parquet", "Datasets/earthquake.parquet"]
     d = None
 
     # Load the dataset
@@ -48,24 +48,27 @@ if __name__ == "__main__":
         # Apply a savgol filter to the data
         d = savgol_filter(d, 300, 1, axis=0)
     elif dataset == 4:
-        data = pd.read_csv(paths[dataset])
+        data = pd.read_csv(paths[dataset], dtype=np.float32)
         data = data.drop(['Time','Unix', 'Issues'],axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
         # Add some noise to remove step-like patterns
         d += np.random.normal(0, 0.1, d.shape)
-    elif dataset == 3 or dataset == 5 or dataset == 6:
-        data = pd.read_csv(paths[dataset])
+    elif dataset == 3:
+        data = pd.read_csv(paths[dataset], dtype=np.float32)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32) if dataset == 3 else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
         #if dataset != 3:
             # Add some noise to remove step-like patterns
         d += np.random.normal(0, 0.01, d.shape)
-        
+    elif dataset == 5 or dataset == 6:
+        data = pd.read_parquet(paths[dataset])
+        d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
+        d += np.random.normal(0, 0.01, d.shape)
     else:
         data = pd.read_csv(paths[dataset], sep=r'\s+')
         data = data.drop(data.columns[[0]], axis=1)
-        d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
+        d  = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 32#find_width_discr(d, window_size, K)
+    r = 12#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
     dimensions = d.shape[1]
@@ -78,10 +81,10 @@ if __name__ == "__main__":
     start = time.process_time()
     # Find the motifs
     #for i in range(5):
-    motifs, num_dist, _ = pmotif_findg(shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K)
+    motifs, num_dist, hash_t = pmotif_findg(shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K)
 
     end = (time.process_time() - start)
-    print("Time elapsed: ", end)
+    print("Time elapsed: ", end, "of which", hash_t, "for hashing")
     print("Distance computations:", num_dist)
     size, peak = tracemalloc.get_traced_memory()
    # snapshot = tracemalloc.take_snapshot()

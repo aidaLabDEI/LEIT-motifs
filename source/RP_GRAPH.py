@@ -4,7 +4,7 @@ from base import (
     z_normalized_euclidean_distanceg,
     process_chunk_graph,
 )
-import shared_memory
+from multiprocessing import shared_memory
 import numpy as np
 import queue
 import itertools
@@ -52,7 +52,6 @@ def worker(
             (n - window + 1, dimensionality, K), dtype=np.int8, buffer=existing_hash.buf
         )
         seen = LRUCache(maxsize=n)
-        skip = 0
         # hash_mat_curr = hash_mat[:,:,:-i] if i != 0 else hash_mat
         # Let's assume that ordering has the lexigraphical order of the dimensions
         for curr_dim in range(dimensionality):
@@ -76,17 +75,19 @@ def worker(
                     # If same hash, check if there's a collision, see the next after
                     if all(elem1 == elem2):
                         if tuple(maximum_pair) in seen:
-                            skip += 1
                             continue
+                        tot_hash1 = original_mat[sub_idx1,:,:-i] if i != 0 else original_mat[sub_idx1]
+                        tot_hash2 = original_mat[sub_idx2,:,:-i] if i != 0 else original_mat[sub_idx2]                        
                         if (
                             np.sum(
-                                (original_mat[sub_idx1] == original_mat[sub_idx2]).all(
+                                (tot_hash1 == tot_hash2).all(
                                     axis=1
                                 )
                             )
                             >= motif_dimensionality
                         ):
                             dist_comp += 1
+                            #print("Comparing: ", sub_idx1, sub_idx2)
                             curr_dist, dim, stop_dist = (
                                 z_normalized_euclidean_distanceg(
                                     time_series[sub_idx1 : sub_idx1 + window].T,
@@ -115,7 +116,6 @@ def worker(
         ex_time_series.close()
         existing_arr.close()
         existing_ord.close()
-        print(skip)
         # if i == 0 and j == 1:
         #    pr.disable()
         #   pr.print_stats(sort='cumtime')
@@ -236,6 +236,10 @@ def pmotif_findg(
 
         for result in ord_results:
             _ = result.get()
+    # Close the time series otherwise it will be copied in all children processes
+    time_series_data.close()
+    del chunks
+
     hash_t = time.process_time() - st
     windowed_ts = WindowedTS(
         time_series_name,
@@ -251,8 +255,54 @@ def pmotif_findg(
     )
     stop_val = False
     # counter_tot = dict()
-    del chunks
+    # Non parallelized version
+    '''
+    for i, j in itertools.product(range(K), range(L)):
+        top_temp, dist_comp_temp, _, _ = worker(
+            i,
+            j,
+            windowed_ts,
+            hash_container[j],
+            indices_container[j],
+            ordered_container[j],
+            k,
+            fail_thresh,
+        )
+        print(top_temp)
+        dist_comp += dist_comp_temp
+        for element in top_temp:
+            add = True
+            # Check is there's already an overlapping sequence, in that case keep the best match
+            for stored in top:
+                indices_1_0 = element[1][1][0]
+                indices_1_1 = element[1][1][1]
+                indices_2_0 = stored[1][1][0]
+                indices_2_1 = stored[1][1][1]
+                if (
+                    (abs(indices_1_0 - indices_2_0) < window)
+                    or (abs(indices_1_0 - indices_2_1) < window)
+                    or (abs(indices_1_1 - indices_2_0) < window)
+                    or (abs(indices_1_1 - indices_2_1) < window)
+                ):
+                    if element[0] > stored[0]:
+                        top.remove(stored)
+                    else:
+                        add = False
+                        continue
+            if add:
+                bisect.insort(top, element, key=lambda x: -x[0])
+            if len(top) > k:
+                top = top[:k]
+        if len(top) == k:
+            stop_val = stopgraph(
+                top[0], i, j, fail_thresh, K, L, bin_width, motif_dimensionality
+            )
+            if stop_val and len(top) >= k:
+                break
+
+
     # Cycle for the hash repetitions and concatenations
+    '''
     with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
         futures = [
             executor.submit(
@@ -271,7 +321,7 @@ def pmotif_findg(
         for future in as_completed(futures):
             # top_temp, dist_comp_temp, i, j, counter = future.result()
             top_temp, dist_comp_temp, i, j = future.result()
-            # print(top_temp)
+            print(top_temp)
 
             # counter_tot.update(counter)
             dist_comp += dist_comp_temp
@@ -305,7 +355,7 @@ def pmotif_findg(
                 if stop_val and len(top) >= k:
                     executor.shutdown(wait=False, cancel_futures=True)
                     break
-
+    
     # pr.disable()
     # pr.print_stats(sort='cumtime')
     for arr in hash_container:
@@ -317,5 +367,4 @@ def pmotif_findg(
     for arr in ordered_container:
         arr.close()
         arr.unlink()
-    time_series_data.close()
     return top, dist_comp, hash_t

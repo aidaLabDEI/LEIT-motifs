@@ -9,3 +9,4 @@ Datasets/CLEAN_House1.csv
 Datasets/*.csv
 Datasets/IrpiniaEarthquake/
 Datasets/*.mseed
+*.parquet
