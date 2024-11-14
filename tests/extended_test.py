@@ -46,10 +46,11 @@ def main():
     paths = [
         #os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
         #os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
-        os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
+        #os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
         os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
         #os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
-        #os.path.join(current_dir, '..', 'Datasets', 'whales.csv'),
+        #os.path.join(current_dir, '..', 'Datasets', 'whales.parquet'),
+        #os.path.join(current_dir, '..', 'Datasets', 'quake.parquet'),
     ]
 
     r_vals_computed = [4, 8, 16, 32]
@@ -58,7 +59,7 @@ def main():
     
     # Base test for time elapsed
     for number, path in enumerate(paths):
-        number_r = number + 2
+        number_r = number + 3
         results = pd.DataFrame(columns=['Dataset', 'Time elapsed', 'RC1', 'K', 'L', 'w', 'r', 'dist_computed'])
 
 
@@ -73,10 +74,14 @@ def main():
             data = data.drop(['Time','Unix', 'Issues'],axis=1)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
             d = d[:100000,:]
-        elif number_r == 2 or number_r == 5 or number_r == 6:
+        elif number_r == 2:
             data = pd.read_csv(path)
-            d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32) if number_r == 2 else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
+            d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
             d += np.random.normal(0, 0.1, d.shape)
+        elif number_r == 5 or number_r == 6:
+            data = pd.read_parquet(paths[number_r])
+            d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
+            d += np.random.normal(0, 0.01, d.shape)
         else:
             data = pd.read_csv(path, sep=r'\s+')
             data = data.drop(data.columns[[0]], axis=1)

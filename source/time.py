@@ -1,8 +1,16 @@
 import numpy as np, pandas as pd
+from cachetools import LRUCache
 if __name__ == "__main__":
 
-    data = pd.read_parquet("Datasets/whales.parquet")
-    print(data.shape)
+    cache = LRUCache(maxsize=2)
+    print(cache)
+    cache["a"] = 1
+    cache["b"] = 2
+    if "a" in cache:
+        cache["a"] = 1
+        print("a is in cache")
+    cache["c"] = 3
+    print(cache)
 
 
     

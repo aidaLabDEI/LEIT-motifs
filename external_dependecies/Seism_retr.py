@@ -1,6 +1,6 @@
 from obspy import UTCDateTime, read
 import matplotlib.pyplot as plt
-import numpy as np
+import numpy as np, pandas as pd
 from scipy.signal import spectrogram
 
 dt = UTCDateTime("2014-05-25T06:10:00")
@@ -11,14 +11,14 @@ dt_end = UTCDateTime("2014-06-04T00:00:00")
 st = read("Datasets/quake.mseed")
 
 st.plot(color='purple', tick_format='%I:%M %p', starttime = st[0].stats.starttime, endtime = st[0].stats.endtime, outfile='quak.png')
-st[0].spectrogram(log=True, outfile='spectrogram.png')
+#st[0].spectrogram(log=True, outfile='spectrogram.png')
 
 tr = st[0]
 data = tr.data
 fs = 1 / tr.stats.delta 
 
 # Compute the spectrogram
-frequencies, times, Sxx = spectrogram(data, fs)
+frequencies, times, Sxx = spectrogram(data, fs, nperseg=8, noverlap=4)
 n_bands = 32
 min_freq = 1  # Minimum frequency of interest
 max_freq = 20  # Maximum frequency of interest
@@ -36,6 +36,10 @@ for i in range(n_bands):
 
 for i in range(n_bands):
     plt.plot(times, band_energies[i, :], label=f'Band {i+1} ({band_edges[i]:.2f}-{band_edges[i+1]:.2f} Hz)')
+
+parquet = pd.DataFrame(band_energies).T
+print(parquet.shape)
+parquet.to_parquet("Datasets/quake.parquet")
 
 plt.legend(ncol=2, fontsize='small')
 plt.xlabel('Time (s)')

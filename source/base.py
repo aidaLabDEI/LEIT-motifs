@@ -290,7 +290,7 @@ def process_chunk(
 
 
 def process_chunk_graph(
-    time_series, ranges, window, rp, hash_names, L, dimension, n, K
+    time_series, ranges, window, rp, hash_names, L, dimension, n, K, mean, std
 ):
     """
     Process a chunk of time series data.
@@ -320,9 +320,11 @@ def process_chunk_graph(
         np.ndarray((n - window + 1, dimension, K), dtype=np.int8, buffer=shm.buf)
         for shm in shm_hashes
     ]
+    mean_existing_shm = shared_memory.SharedMemory(name=mean.name)
+    mean_container = np.ndarray((n - window + 1, dimension), dtype=np.float32, buffer=mean_existing_shm.buf)
+    std_existing_shm = shared_memory.SharedMemory(name=std.name)
+    std_container = np.ndarray((n - window + 1, dimension), dtype=np.float32, buffer=std_existing_shm.buf)
 
-    mean_container = {}
-    std_container = {}
 
     for idx_ts, idx in enumerate(ranges):
         subsequence = np.ascontiguousarray(
@@ -332,6 +334,7 @@ def process_chunk_graph(
         mean_container[idx] = np.mean(subsequence, axis=1)
         std_held = np.std(subsequence, axis=1)
         std_container[idx] = np.where(std_held == 0, 0.00001, std_held)
+        
 
         subsequence_n = (
             subsequence - mean_container[idx][:, np.newaxis]
@@ -355,4 +358,4 @@ def process_chunk_graph(
 
     for shm in shm_hashes:
         shm.close()
-    return std_container, mean_container
+    return True

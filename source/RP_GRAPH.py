@@ -23,6 +23,7 @@ def worker(
     # if i == 0 and j == 1:
     #    pr = cProfile.Profile()
     #   pr.enable()
+    #print("Worker: ", i, j)
     dist_comp = 0
     top = queue.PriorityQueue(k + 1)
     window = subsequences.w
@@ -38,6 +39,10 @@ def worker(
     )
     # Utility data
     dimensions = np.arange(dimensionality, dtype=np.int32)
+    means_ex = shared_memory.SharedMemory(name=subsequences.avgs.name)
+    stds_ex = shared_memory.SharedMemory(name=subsequences.stds.name)
+    means = np.ndarray((n-window+1, dimensionality), dtype=np.float32, buffer=means_ex.buf)
+    stds = np.ndarray((n-window+1, dimensionality), dtype=np.float32, buffer=stds_ex.buf)
     # Ordered hashes, ordering indices and unordered hashes
     existing_arr = shared_memory.SharedMemory(name=ordered_name.name)
     existing_ord = shared_memory.SharedMemory(name=ordering_name.name)
@@ -75,6 +80,7 @@ def worker(
                 # If same hash, check if there's a collision, see the next after
                 if all(elem1 == elem2):
                     if tuple(maximum_pair) in seen:
+                        seen[tuple(maximum_pair)] = True # Confirm so that the LRU can function
                         continue
                     tot_hash1 = (
                         original_mat[sub_idx1, :, :-i]
@@ -96,10 +102,10 @@ def worker(
                             time_series[sub_idx1 : sub_idx1 + window].T,
                             time_series[sub_idx2 : sub_idx2 + window].T,
                             dimensions,
-                            subsequences.mean(sub_idx1),
-                            subsequences.std(sub_idx1),
-                            subsequences.mean(sub_idx2),
-                            subsequences.std(sub_idx2),
+                            means[sub_idx1],
+                            stds[sub_idx1],
+                            means[sub_idx2],
+                            stds[sub_idx2],
                             motif_dimensionality,
                         )
                         top.put(
@@ -118,9 +124,13 @@ def worker(
     ex_time_series.close()
     existing_arr.close()
     existing_ord.close()
+    existing_hash.close()
+    means_ex.close()
+    stds_ex.close()
     # if i == 0 and j == 1:
     #    pr.disable()
     #   pr.print_stats(sort='cumtime')
+    #print("Worker: ", i, j, "done")
     return top.queue, dist_comp, i, j  # , counter
 
 
@@ -176,8 +186,8 @@ def pmotif_findg(
     )
     # Data
     top = []  # queue.PriorityQueue(maxsize=k+1)
-    std_container = {}
-    mean_container = {}
+    std_container, _ = create_shared_array((n - window + 1, dimension), dtype=np.float32)
+    mean_container, _ = create_shared_array((n - window + 1, dimension), dtype=np.float32)
     indices_container = []
     hash_container = []
     ordered_container = []
@@ -212,14 +222,12 @@ def pmotif_findg(
 
         for chunk in chunks:
             result = pool.apply_async(
-                process_chunk_graph, (*chunk, hash_container, L, dimension, n, K)
+                process_chunk_graph, (*chunk, hash_container, L, dimension, n, K, mean_container, std_container)
             )
             results.append(result)
 
         for result in results:
-            std_temp, mean_temp = result.get()
-            std_container.update(std_temp)
-            mean_container.update(mean_temp)
+            _ = result.get()
 
         sizeL = int(np.sqrt(L))
         splitted_hash = np.array_split(hash_container, sizeL)
@@ -238,6 +246,8 @@ def pmotif_findg(
             _ = result.get()
     # Close the time series otherwise it will be copied in all children processes
     time_series_data.close()
+    std_container.close()
+    mean_container.close()
     del chunks
 
     hash_t = time.process_time() - st
@@ -369,4 +379,7 @@ def pmotif_findg(
     for arr in ordered_container:
         arr.close()
         arr.unlink()
+
+    mean_container.unlink()
+    std_container.unlink()
     return top, dist_comp, hash_t

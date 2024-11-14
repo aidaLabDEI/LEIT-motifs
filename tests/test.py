@@ -38,7 +38,7 @@ if __name__ == "__main__":
         device = 0
 
     paths = ["Datasets/FOETAL_ECG.dat", "Datasets/evaporator.dat", "Datasets/oikolab_weather_dataset.tsf", "Datasets/RUTH.csv", "Datasets/CLEAN_House1.csv",
-                "Datasets/whales.parquet", "Datasets/earthquake.parquet"]
+                "Datasets/whales.parquet", "Datasets/quake.parquet"]
     d = None
 
     # Load the dataset
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d  = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 12#find_width_discr(d, window_size, K)
+    r = 16#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
     dimensions = d.shape[1]
