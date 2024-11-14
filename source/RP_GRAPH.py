@@ -30,98 +30,98 @@ def worker(
     dimensionality = subsequences.dimensionality
     motif_dimensionality = subsequences.d
     K = subsequences.K
-    try:
-        # Time Series
-        ex_time_series = shared_memory.SharedMemory(name=subsequences.subsequences)
-        time_series = np.ndarray(
-            (n, dimensionality), dtype=np.float32, buffer=ex_time_series.buf
-        )
-        # Utility data
-        dimensions = np.arange(dimensionality, dtype=np.int32)
-        # Ordered hashes, ordering indices and unordered hashes
-        existing_arr = shared_memory.SharedMemory(name=ordered_name.name)
-        existing_ord = shared_memory.SharedMemory(name=ordering_name.name)
-        existing_hash = shared_memory.SharedMemory(name=hash_mat_name.name)
-        hash_mat = np.ndarray(
-            (n - window + 1, dimensionality, K), dtype=np.int8, buffer=existing_arr.buf
-        )
-        ordering = np.ndarray(
-            (dimensionality, n - window + 1), dtype=np.int32, buffer=existing_ord.buf
-        )
-        original_mat = np.ndarray(
-            (n - window + 1, dimensionality, K), dtype=np.int8, buffer=existing_hash.buf
-        )
-        seen = LRUCache(maxsize=n)
-        # hash_mat_curr = hash_mat[:,:,:-i] if i != 0 else hash_mat
-        # Let's assume that ordering has the lexigraphical order of the dimensions
-        for curr_dim in range(dimensionality):
-            ordering_dim = ordering[curr_dim, :]
-            hash_mat_curr = (
-                hash_mat[:, curr_dim, :-i] if i != 0 else hash_mat[:, curr_dim, :]
-            )
-            # Take the subsequent elements of the ordering and check if their hash is the same
-            for idx, elem1 in enumerate(hash_mat_curr):
-                for idx2, elem2 in enumerate(hash_mat_curr[idx + 1 :]):
-                    sub_idx1 = ordering_dim[idx]
-                    sub_idx2 = ordering_dim[idx + idx2 + 1]
-                    maximum_pair = (
-                        [sub_idx1, sub_idx2]
-                        if sub_idx1 < sub_idx2
-                        else [sub_idx2, sub_idx1]
-                    )
-                    # No trivial match
-                    if maximum_pair[1] - maximum_pair[0] <= window:
-                        continue
-                    # If same hash, check if there's a collision, see the next after
-                    if all(elem1 == elem2):
-                        if tuple(maximum_pair) in seen:
-                            continue
-                        tot_hash1 = original_mat[sub_idx1,:,:-i] if i != 0 else original_mat[sub_idx1]
-                        tot_hash2 = original_mat[sub_idx2,:,:-i] if i != 0 else original_mat[sub_idx2]                        
-                        if (
-                            np.sum(
-                                (tot_hash1 == tot_hash2).all(
-                                    axis=1
-                                )
-                            )
-                            >= motif_dimensionality
-                        ):
-                            dist_comp += 1
-                            #print("Comparing: ", sub_idx1, sub_idx2)
-                            curr_dist, dim, stop_dist = (
-                                z_normalized_euclidean_distanceg(
-                                    time_series[sub_idx1 : sub_idx1 + window].T,
-                                    time_series[sub_idx2 : sub_idx2 + window].T,
-                                    dimensions,
-                                    subsequences.mean(sub_idx1),
-                                    subsequences.std(sub_idx1),
-                                    subsequences.mean(sub_idx2),
-                                    subsequences.std(sub_idx2),
-                                    motif_dimensionality,
-                                )
-                            )
-                            top.put(
-                                (
-                                    -curr_dist,
-                                    [dist_comp, maximum_pair, [dim], stop_dist],
-                                )
-                            )
-                            if top.qsize() > k:
-                                top.get()
-                        seen[tuple(maximum_pair)] = True
-                    # Otherwise we know that this subsequence and all the following ones will have different hashes
-                    else:
-                        break
 
-        ex_time_series.close()
-        existing_arr.close()
-        existing_ord.close()
-        # if i == 0 and j == 1:
-        #    pr.disable()
-        #   pr.print_stats(sort='cumtime')
-        return top.queue, dist_comp, i, j  # , counter
-    except FileNotFoundError:
-        return [], 0, i, j
+    # Time Series
+    ex_time_series = shared_memory.SharedMemory(name=subsequences.subsequences)
+    time_series = np.ndarray(
+        (n, dimensionality), dtype=np.float32, buffer=ex_time_series.buf
+    )
+    # Utility data
+    dimensions = np.arange(dimensionality, dtype=np.int32)
+    # Ordered hashes, ordering indices and unordered hashes
+    existing_arr = shared_memory.SharedMemory(name=ordered_name.name)
+    existing_ord = shared_memory.SharedMemory(name=ordering_name.name)
+    existing_hash = shared_memory.SharedMemory(name=hash_mat_name.name)
+    hash_mat = np.ndarray(
+        (n - window + 1, dimensionality, K), dtype=np.int8, buffer=existing_arr.buf
+    )
+    ordering = np.ndarray(
+        (dimensionality, n - window + 1), dtype=np.int32, buffer=existing_ord.buf
+    )
+    original_mat = np.ndarray(
+        (n - window + 1, dimensionality, K), dtype=np.int8, buffer=existing_hash.buf
+    )
+    seen = LRUCache(maxsize=n)
+    # hash_mat_curr = hash_mat[:,:,:-i] if i != 0 else hash_mat
+    # Let's assume that ordering has the lexigraphical order of the dimensions
+    for curr_dim in range(dimensionality):
+        ordering_dim = ordering[curr_dim, :]
+        hash_mat_curr = (
+            hash_mat[:, curr_dim, :-i] if i != 0 else hash_mat[:, curr_dim, :]
+        )
+        # Take the subsequent elements of the ordering and check if their hash is the same
+        for idx, elem1 in enumerate(hash_mat_curr):
+            for idx2, elem2 in enumerate(hash_mat_curr[idx + 1 :]):
+                sub_idx1 = ordering_dim[idx]
+                sub_idx2 = ordering_dim[idx + idx2 + 1]
+                maximum_pair = (
+                    [sub_idx1, sub_idx2]
+                    if sub_idx1 < sub_idx2
+                    else [sub_idx2, sub_idx1]
+                )
+                # No trivial match
+                if maximum_pair[1] - maximum_pair[0] <= window:
+                    continue
+                # If same hash, check if there's a collision, see the next after
+                if all(elem1 == elem2):
+                    if tuple(maximum_pair) in seen:
+                        continue
+                    tot_hash1 = (
+                        original_mat[sub_idx1, :, :-i]
+                        if i != 0
+                        else original_mat[sub_idx1]
+                    )
+                    tot_hash2 = (
+                        original_mat[sub_idx2, :, :-i]
+                        if i != 0
+                        else original_mat[sub_idx2]
+                    )
+                    if (
+                        np.sum((tot_hash1 == tot_hash2).all(axis=1))
+                        >= motif_dimensionality
+                    ):
+                        dist_comp += 1
+                        # print("Comparing: ", sub_idx1, sub_idx2)
+                        curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
+                            time_series[sub_idx1 : sub_idx1 + window].T,
+                            time_series[sub_idx2 : sub_idx2 + window].T,
+                            dimensions,
+                            subsequences.mean(sub_idx1),
+                            subsequences.std(sub_idx1),
+                            subsequences.mean(sub_idx2),
+                            subsequences.std(sub_idx2),
+                            motif_dimensionality,
+                        )
+                        top.put(
+                            (
+                                -curr_dist,
+                                [dist_comp, maximum_pair, [dim], stop_dist],
+                            )
+                        )
+                        if top.qsize() > k:
+                            top.get()
+                    seen[tuple(maximum_pair)] = True
+                # Otherwise we know that this subsequence and all the following ones will have different hashes
+                else:
+                    break
+
+    ex_time_series.close()
+    existing_arr.close()
+    existing_ord.close()
+    # if i == 0 and j == 1:
+    #    pr.disable()
+    #   pr.print_stats(sort='cumtime')
+    return top.queue, dist_comp, i, j  # , counter
 
 
 def order_hash(
@@ -256,7 +256,7 @@ def pmotif_findg(
     stop_val = False
     # counter_tot = dict()
     # Non parallelized version
-    '''
+    """
     for i, j in itertools.product(range(K), range(L)):
         top_temp, dist_comp_temp, _, _ = worker(
             i,
@@ -302,7 +302,7 @@ def pmotif_findg(
 
 
     # Cycle for the hash repetitions and concatenations
-    '''
+    """
     with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
         futures = [
             executor.submit(
@@ -319,8 +319,10 @@ def pmotif_findg(
             for i, j in itertools.product(range(K), range(L))
         ]
         for future in as_completed(futures):
-            # top_temp, dist_comp_temp, i, j, counter = future.result()
-            top_temp, dist_comp_temp, i, j = future.result()
+            try:
+                top_temp, dist_comp_temp, i, j = future.result()
+            except FileNotFoundError:
+                continue
             print(top_temp)
 
             # counter_tot.update(counter)
@@ -355,7 +357,7 @@ def pmotif_findg(
                 if stop_val and len(top) >= k:
                     executor.shutdown(wait=False, cancel_futures=True)
                     break
-    
+
     # pr.disable()
     # pr.print_stats(sort='cumtime')
     for arr in hash_container:

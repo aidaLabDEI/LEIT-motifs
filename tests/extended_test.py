@@ -108,7 +108,7 @@ def main():
         rs = [4, 8, 16, 32]
         
         # Testing on hashing
-        '''
+        
         for K in Ks:
             start = time.process_time()
             for i in range(1):
@@ -119,7 +119,7 @@ def main():
             gc.collect()
         
         print("K fin")
-        '''
+        
         for L in Ls:
             start = time.process_time()
             for i in range(1):
