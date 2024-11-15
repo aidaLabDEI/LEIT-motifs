@@ -68,7 +68,7 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d  = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 16#find_width_discr(d, window_size, K)
+    r = 8#find_width_discr(d, window_size, K)
 
     thresh = min(dimensionality/d.shape[1], 0.8)
     dimensions = d.shape[1]
@@ -78,12 +78,12 @@ if __name__ == "__main__":
     del d
     # Start the timer
     tracemalloc.start()
-    start = time.process_time()
+    start = time.perf_counter()
     # Find the motifs
     #for i in range(5):
     motifs, num_dist, hash_t = pmotif_findg(shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K)
 
-    end = (time.process_time() - start)
+    end = ((time.perf_counter() - start))
     print("Time elapsed: ", end, "of which", hash_t, "for hashing")
     print("Distance computations:", num_dist)
     size, peak = tracemalloc.get_traced_memory()

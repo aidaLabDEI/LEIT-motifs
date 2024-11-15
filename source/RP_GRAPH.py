@@ -316,7 +316,7 @@ def pmotif_findg(
 
     # Cycle for the hash repetitions and concatenations
     """
-    with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
+    with ProcessPoolExecutor(max_workers=cpu_count()-1) as executor:
         futures = [
             executor.submit(
                 worker,
