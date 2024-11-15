@@ -334,9 +334,9 @@ def pmotif_findg(
         for future in as_completed(futures):
             try:
                 top_temp, dist_comp_temp, i, j = future.result()
-            except Exception as e:
+            except Exception:
                 continue
-            print(top_temp)
+            #print(top_temp)
 
             # counter_tot.update(counter)
             dist_comp += dist_comp_temp

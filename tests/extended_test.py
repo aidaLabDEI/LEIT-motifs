@@ -45,10 +45,10 @@ def main():
 
     current_dir = os.path.dirname(__file__)
     paths = [
-       # os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
-       # os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
-       # os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
-       # os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
+        #os.path.join(current_dir, '..', 'Datasets', 'FOETAL_ECG.dat'),
+        #os.path.join(current_dir, '..', 'Datasets', 'evaporator.dat'),
+        #os.path.join(current_dir, '..', 'Datasets', 'RUTH.csv'),
+        #os.path.join(current_dir, '..', 'Datasets', 'oikolab_weather_dataset.tsf'),
         #os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
         os.path.join(current_dir, '..', 'Datasets', 'whales.parquet'),
         os.path.join(current_dir, '..', 'Datasets', 'quake.parquet'),
@@ -149,10 +149,11 @@ def main():
         
         print("Dataset", number_r, "finished")
         shm_ts.unlink()
+    
     # Mem test
     results = pd.DataFrame(columns=['Dataset', 'Mem'])
     for number, path in enumerate(paths):
-        number_r = number + 5
+        number_r = number +5
 
         # Load the dataset
         if number_r == 3:
@@ -164,7 +165,6 @@ def main():
             data = pd.read_csv(path)
             data = data.drop(['Time','Unix', 'Issues'],axis=1)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
-            d = d[:100000,:]
         elif number_r == 2:
             data = pd.read_csv(path)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
