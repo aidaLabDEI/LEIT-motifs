@@ -355,7 +355,9 @@ def process_chunk_graph(
 
         for rep in range(L):
             hash_arrs[rep][idx] = hashed_sub[rep]
-
+    # Close all the shared memory objects
     for shm in shm_hashes:
         shm.close()
-    return True
+    mean_existing_shm.close()
+    std_existing_shm.close()
+    #return True

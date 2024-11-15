@@ -205,7 +205,7 @@ def pmotif_findg(
     # Hasher
     rp = RandomProjection(window, bin_width, K, L)  # []
 
-    chunk_sz = int(np.sqrt(n))
+    chunk_sz = min(int(np.sqrt(n)), 10000)
     num_chunks = max(1, n // chunk_sz)
 
     chunks = [
@@ -227,8 +227,11 @@ def pmotif_findg(
             results.append(result)
 
         for result in results:
-            _ = result.get()
-
+            try:
+                _ = result.get()
+            except Exception as e:
+                print(e)
+                continue
         sizeL = int(np.sqrt(L))
         splitted_hash = np.array_split(hash_container, sizeL)
         splitted_indices = np.array_split(indices_container, sizeL)
@@ -331,7 +334,7 @@ def pmotif_findg(
         for future in as_completed(futures):
             try:
                 top_temp, dist_comp_temp, i, j = future.result()
-            except FileNotFoundError:
+            except Exception as e:
                 continue
             print(top_temp)
 
@@ -367,7 +370,7 @@ def pmotif_findg(
                 if stop_val and len(top) >= k:
                     executor.shutdown(wait=False, cancel_futures=True)
                     break
-
+    
     # pr.disable()
     # pr.print_stats(sort='cumtime')
     for arr in hash_container:
