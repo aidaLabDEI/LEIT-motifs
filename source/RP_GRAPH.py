@@ -4,6 +4,7 @@ from base import (
     z_normalized_euclidean_distanceg,
     process_chunk_graph,
 )
+from typing import Tuple
 from multiprocessing import shared_memory
 import numpy as np
 import queue
@@ -14,7 +15,7 @@ from concurrent.futures import as_completed, ProcessPoolExecutor
 from hash_lsh import RandomProjection
 import time
 from stop import stopgraph
-from cachetools import LRUCache
+from jitted_utilities import eq, multi_eq
 
 
 def worker(
@@ -23,7 +24,7 @@ def worker(
     # if i == 0 and j == 1:
     #    pr = cProfile.Profile()
     #   pr.enable()
-    #print("Worker: ", i, j)
+    # print("Worker: ", i, j)
     dist_comp = 0
     top = queue.PriorityQueue(k + 1)
     window = subsequences.w
@@ -41,8 +42,12 @@ def worker(
     dimensions = np.arange(dimensionality, dtype=np.int32)
     means_ex = shared_memory.SharedMemory(name=subsequences.avgs.name)
     stds_ex = shared_memory.SharedMemory(name=subsequences.stds.name)
-    means = np.ndarray((n-window+1, dimensionality), dtype=np.float32, buffer=means_ex.buf)
-    stds = np.ndarray((n-window+1, dimensionality), dtype=np.float32, buffer=stds_ex.buf)
+    means = np.ndarray(
+        (n - window + 1, dimensionality), dtype=np.float32, buffer=means_ex.buf
+    )
+    stds = np.ndarray(
+        (n - window + 1, dimensionality), dtype=np.float32, buffer=stds_ex.buf
+    )
     # Ordered hashes, ordering indices and unordered hashes
     existing_arr = shared_memory.SharedMemory(name=ordered_name.name)
     existing_ord = shared_memory.SharedMemory(name=ordering_name.name)
@@ -56,7 +61,7 @@ def worker(
     original_mat = np.ndarray(
         (n - window + 1, dimensionality, K), dtype=np.int8, buffer=existing_hash.buf
     )
-    seen = LRUCache(maxsize=n)
+    # seen = LRUCache(maxsize=np.ceil(np.sqrt(n)))
     # hash_mat_curr = hash_mat[:,:,:-i] if i != 0 else hash_mat
     # Let's assume that ordering has the lexigraphical order of the dimensions
     for curr_dim in range(dimensionality):
@@ -78,10 +83,7 @@ def worker(
                 if maximum_pair[1] - maximum_pair[0] <= window:
                     continue
                 # If same hash, check if there's a collision, see the next after
-                if all(elem1 == elem2):
-                    if tuple(maximum_pair) in seen:
-                        seen[tuple(maximum_pair)] = True # Confirm so that the LRU can function
-                        continue
+                if eq(elem1, elem2):
                     tot_hash1 = (
                         original_mat[sub_idx1, :, :-i]
                         if i != 0
@@ -92,10 +94,7 @@ def worker(
                         if i != 0
                         else original_mat[sub_idx2]
                     )
-                    if (
-                        np.sum((tot_hash1 == tot_hash2).all(axis=1))
-                        >= motif_dimensionality
-                    ):
+                    if multi_eq(tot_hash1, tot_hash2) >= motif_dimensionality:
                         dist_comp += 1
                         # print("Comparing: ", sub_idx1, sub_idx2)
                         curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
@@ -116,11 +115,10 @@ def worker(
                         )
                         if top.qsize() > k:
                             top.get()
-                    seen[tuple(maximum_pair)] = True
+                    # seen[tuple(maximum_pair)] = True
                 # Otherwise we know that this subsequence and all the following ones will have different hashes
                 else:
                     break
-
     ex_time_series.close()
     existing_arr.close()
     existing_ord.close()
@@ -130,7 +128,7 @@ def worker(
     # if i == 0 and j == 1:
     #    pr.disable()
     #   pr.print_stats(sort='cumtime')
-    #print("Worker: ", i, j, "done")
+    # print("Worker: ", i, j, "done")
     return top.queue, dist_comp, i, j  # , counter
 
 
@@ -166,28 +164,48 @@ def order_hash(
 
 
 def pmotif_findg(
-    time_series_name,
-    n,
-    dimension,
-    window,
-    k,
-    motif_dimensionality,
-    bin_width,
-    lsh_threshold,
-    L,
-    K,
-    fail_thresh=0.1,
-):
+    time_series_name: str,
+    n: int,
+    dimension: int,
+    window: int,
+    k: int,
+    motif_dimensionality: int,
+    bin_width: int,
+    lsh_threshold: float = 0,
+    L: int = 200,
+    K: int = 8,
+    fail_thresh: float = 0.1,
+) -> Tuple[list, int, float]:
+    """
+    Find the top-k motifs in a time series
+
+    :param str time_series_name: The name of the shared memory block containing the time series
+    :param int n: The length of the time series
+    :param int dimension: The dimensionality of the time series
+    :param int window: The length of the motif to find
+    :param int k: The number of motifs to find
+    :param int motif_dimensionality: The dimensionality of the motif
+    :param int bin_width: The bin width for Discretized Random Projections
+    :param float lsh_threshold: unused, for compatibility
+    :param int L: The number of repetitions of the hashing
+    :param int K: The number of concatenations of the hashing
+    :param float fail_thresh: The allowed failure probability for the hashing
+    :return: A tuple containing the top-k motifs, the number of distance computations and the hashing time
+    """
     # pr = cProfile.Profile()
     # pr.enable()
-    time_series_data = shared_memory.SharedMemory(name=time_series_name)
-    time_series = np.ndarray(
-        (n, dimension), dtype=np.float32, buffer=time_series_data.buf
-    )
+    # time_series_data = shared_memory.SharedMemory(name=time_series_name)
+    # time_series = np.ndarray(
+    #    (n, dimension), dtype=np.float32, buffer=time_series_data.buf
+    # )
     # Data
     top = []  # queue.PriorityQueue(maxsize=k+1)
-    std_container, _ = create_shared_array((n - window + 1, dimension), dtype=np.float32)
-    mean_container, _ = create_shared_array((n - window + 1, dimension), dtype=np.float32)
+    std_container, _ = create_shared_array(
+        (n - window + 1, dimension), dtype=np.float32
+    )
+    mean_container, _ = create_shared_array(
+        (n - window + 1, dimension), dtype=np.float32
+    )
     indices_container = []
     hash_container = []
     ordered_container = []
@@ -205,33 +223,40 @@ def pmotif_findg(
     # Hasher
     rp = RandomProjection(window, bin_width, K, L)  # []
 
-    chunk_sz = min(int(np.sqrt(n)), 10000)
+    chunk_sz = n // (cpu_count() * 2)  # min(int(np.sqrt(n)), 10000)
     num_chunks = max(1, n // chunk_sz)
 
     chunks = [
-        (time_series[ranges[0] : ranges[-1] + window], ranges, window, rp)
+        (time_series_name, ranges, window, rp)
         for ranges in np.array_split(np.arange(n - window + 1), num_chunks)
     ]
     # ordering = np.ndarray((dimension, n - window + 1, L), dtype=np.int32)
 
     # Hash the subsequences and order them lexigraphically
-    st = time.process_time()
-    with Pool() as pool:
+    st = time.perf_counter()
+    with Pool(processes=cpu_count() // 2) as pool:
         results = []
         ord_results = []
 
         for chunk in chunks:
             result = pool.apply_async(
-                process_chunk_graph, (*chunk, hash_container, L, dimension, n, K, mean_container, std_container)
+                process_chunk_graph,
+                (
+                    *chunk,
+                    hash_container,
+                    L,
+                    dimension,
+                    n,
+                    K,
+                    mean_container,
+                    std_container,
+                ),
             )
             results.append(result)
-
+        # Wait for completion
         for result in results:
-            try:
-                _ = result.get()
-            except Exception as e:
-                print(e)
-                continue
+            _ = result.get()
+
         sizeL = int(np.sqrt(L))
         splitted_hash = np.array_split(hash_container, sizeL)
         splitted_indices = np.array_split(indices_container, sizeL)
@@ -248,12 +273,12 @@ def pmotif_findg(
         for result in ord_results:
             _ = result.get()
     # Close the time series otherwise it will be copied in all children processes
-    time_series_data.close()
+    # time_series_data.close()
     std_container.close()
     mean_container.close()
     del chunks
-
-    hash_t = time.process_time() - st
+    hash_t = time.perf_counter() - st
+    print("Hashing time: ", hash_t)
     windowed_ts = WindowedTS(
         time_series_name,
         n,
@@ -316,7 +341,7 @@ def pmotif_findg(
 
     # Cycle for the hash repetitions and concatenations
     """
-    with ProcessPoolExecutor(max_workers=cpu_count()-1) as executor:
+    with ProcessPoolExecutor(max_workers=cpu_count() // 2) as executor:
         futures = [
             executor.submit(
                 worker,
@@ -336,7 +361,7 @@ def pmotif_findg(
                 top_temp, dist_comp_temp, i, j = future.result()
             except Exception:
                 continue
-            #print(top_temp)
+            # print(top_temp)
 
             # counter_tot.update(counter)
             dist_comp += dist_comp_temp
@@ -370,7 +395,7 @@ def pmotif_findg(
                 if stop_val and len(top) >= k:
                     executor.shutdown(wait=False, cancel_futures=True)
                     break
-    
+
     # pr.disable()
     # pr.print_stats(sort='cumtime')
     for arr in hash_container:

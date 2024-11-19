@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 from data_loader import convert_tsf_to_dataframe
 from base import create_shared_array
+from find_bin_width import find_width_discr
 #from extra import relative_contrast
 import matplotlib.pyplot as plt
 import matplotlib
@@ -62,6 +63,9 @@ if __name__ == "__main__":
     elif dataset == 5 or dataset == 6:
         data = pd.read_parquet(paths[dataset])
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
+        if dataset == 6:
+                # fill nan values with the mean
+                d = np.nan_to_num(d, nan=np.nanmean(d))
         d += np.random.normal(0, 0.01, d.shape)
     else:
         data = pd.read_csv(paths[dataset], sep=r'\s+')
@@ -69,6 +73,7 @@ if __name__ == "__main__":
         d  = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
     r = 8#find_width_discr(d, window_size, K)
+
 
     thresh = min(dimensionality/d.shape[1], 0.8)
     dimensions = d.shape[1]
@@ -80,10 +85,10 @@ if __name__ == "__main__":
     tracemalloc.start()
     start = time.perf_counter()
     # Find the motifs
-    #for i in range(5):
-    motifs, num_dist, hash_t = pmotif_findg(shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K)
+    for i in range(5):
+        motifs, num_dist, hash_t = pmotif_findg(shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K)
 
-    end = ((time.perf_counter() - start))
+    end = ((time.perf_counter() - start)/5)
     print("Time elapsed: ", end, "of which", hash_t, "for hashing")
     print("Distance computations:", num_dist)
     size, peak = tracemalloc.get_traced_memory()

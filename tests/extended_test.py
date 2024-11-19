@@ -30,9 +30,9 @@ def main():
         os.path.join(current_dir, '..', 'Datasets', 'quake.parquet'),
     ]
 
-    r_vals_computed = [4, 8, 16, 32, 8, 16, 8]
+    r_vals_computed = [4, 8, 16, 32, 8, 20, 8]
     windows = [50, 75, 500, 5000, 1000, 200, 150]
-    dimensionality = [8, 2, 4, 2, 6, 6, 3]
+    dimensionality = [8, 2, 4, 2, 6, 4, 3]
     
     # Base test for time elapsed
     for number, path in enumerate(paths):
@@ -58,6 +58,9 @@ def main():
         elif number_r == 5 or number_r == 6:
             data = pd.read_parquet(path)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
+            if number_r == 6:
+                # fill nan values with the mean
+                d = np.nan_to_num(d, nan=np.nanmean(d))
             d += np.random.normal(0, 0.01, d.shape)
         else:
             data = pd.read_csv(path, sep=r'\s+')
@@ -148,6 +151,9 @@ def main():
         elif number_r == 5 or number_r == 6:
             data = pd.read_parquet(path)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
+            if number_r == 6:
+                # fill nan values with the mean
+                d = np.nan_to_num(d, nan=np.nanmean(d))
             d += np.random.normal(0, 0.01, d.shape)
         else:
             data = pd.read_csv(path, sep=r'\s+')

@@ -3,6 +3,7 @@ from multiprocessing import shared_memory
 from numba import jit
 import numba as nb
 from hash_lsh import compute_hash
+import bottleneck as bn
 
 
 class WindowedTS:
@@ -290,7 +291,7 @@ def process_chunk(
 
 
 def process_chunk_graph(
-    time_series, ranges, window, rp, hash_names, L, dimension, n, K, mean, std
+    time_series_name, ranges, window, rp, hash_names, L, dimension, n, K, mean, std
 ):
     """
     Process a chunk of time series data.
@@ -324,11 +325,17 @@ def process_chunk_graph(
     mean_container = np.ndarray((n - window + 1, dimension), dtype=np.float32, buffer=mean_existing_shm.buf)
     std_existing_shm = shared_memory.SharedMemory(name=std.name)
     std_container = np.ndarray((n - window + 1, dimension), dtype=np.float32, buffer=std_existing_shm.buf)
+    exist_ts = shared_memory.SharedMemory(name=time_series_name)
+    time_series = np.ndarray((n, dimension), dtype=np.float32, buffer=exist_ts.buf)
 
+    # Use bottleneck to compute the mean and standard deviation
+    #print(bn.move_mean(time_series[ranges[0]:ranges[-1]+window], window, axis=0))
+    #mean_container[ranges[0]:ranges[-1]] = bn.move_mean(time_series[ranges[0]:ranges[-1]+window], window, axis=0)[window:window+len(ranges)]
+    #std_container[ranges[0]:ranges[-1]] = bn.move_std(time_series[ranges[0]:ranges[-1]+window], window, axis=0)[1:len(ranges)]
 
-    for idx_ts, idx in enumerate(ranges):
+    for idx in ranges:
         subsequence = np.ascontiguousarray(
-            time_series[idx_ts : idx_ts + window].T, dtype=np.float32
+            time_series[idx : idx + window].T, dtype=np.float32
         )
 
         mean_container[idx] = np.mean(subsequence, axis=1)
@@ -358,6 +365,7 @@ def process_chunk_graph(
     # Close all the shared memory objects
     for shm in shm_hashes:
         shm.close()
+    exist_ts.close()
     mean_existing_shm.close()
     std_existing_shm.close()
     #return True
