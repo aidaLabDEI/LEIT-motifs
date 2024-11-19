@@ -85,10 +85,10 @@ if __name__ == "__main__":
     tracemalloc.start()
     start = time.perf_counter()
     # Find the motifs
-    for i in range(5):
-        motifs, num_dist, hash_t = pmotif_findg(shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K)
+    #for i in range(5):
+    motifs, num_dist, hash_t = pmotif_findg(shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K)
 
-    end = ((time.perf_counter() - start)/5)
+    end = ((time.perf_counter() - start))
     print("Time elapsed: ", end, "of which", hash_t, "for hashing")
     print("Distance computations:", num_dist)
     size, peak = tracemalloc.get_traced_memory()

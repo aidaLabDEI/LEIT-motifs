@@ -2,9 +2,8 @@ import numpy as np
 from multiprocessing import shared_memory
 from numba import jit
 import numba as nb
-from hash_lsh import compute_hash
-import bottleneck as bn
-
+from hash_lsh import compute_hash, multi_compute_hash
+from jitted_utilities import rolling_window
 
 class WindowedTS:
     def __init__(
@@ -271,6 +270,7 @@ def process_chunk(
         subsequence_n = (
             subsequence - mean_container[idx][:, np.newaxis]
         ) / std_container[idx][:, np.newaxis]
+        '''
         hashed_sub = np.apply_along_axis(
             compute_hash,
             1,
@@ -284,7 +284,8 @@ def process_chunk(
             rp.L,
         )
         hashed_sub = np.swapaxes(hashed_sub, 0, 1)
-        hash_mat[idx] = hashed_sub
+        '''
+        hash_mat[idx] = multi_compute_hash(subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L)
 
     existing_shm_hash_mat.close()
     return std_container, mean_container
@@ -330,36 +331,20 @@ def process_chunk_graph(
 
     # Use bottleneck to compute the mean and standard deviation
     #print(bn.move_mean(time_series[ranges[0]:ranges[-1]+window], window, axis=0))
-    #mean_container[ranges[0]:ranges[-1]] = bn.move_mean(time_series[ranges[0]:ranges[-1]+window], window, axis=0)[window:window+len(ranges)]
-    #std_container[ranges[0]:ranges[-1]] = bn.move_std(time_series[ranges[0]:ranges[-1]+window], window, axis=0)[1:len(ranges)]
+    for d in range(dimension):
+        mean_container[ranges[0]:ranges[-1], d] = np.mean(rolling_window(time_series[ranges[0]:ranges[-1]+window-1, d], window), axis=-1)
+        std_container[ranges[0]:ranges[-1], d] = np.nanstd(rolling_window(time_series[ranges[0]:ranges[-1]+window-1, d], window), axis=-1)
 
     for idx in ranges:
-        subsequence = np.ascontiguousarray(
-            time_series[idx : idx + window].T, dtype=np.float32
-        )
+        subsequence =  time_series[idx : idx + window]
 
-        mean_container[idx] = np.mean(subsequence, axis=1)
-        std_held = np.std(subsequence, axis=1)
-        std_container[idx] = np.where(std_held == 0, 0.00001, std_held)
+        std_container[idx] = np.where(std_container[idx] == 0, 0.00001, std_container[idx])
         
-
         subsequence_n = (
-            subsequence - mean_container[idx][:, np.newaxis]
-        ) / std_container[idx][:, np.newaxis]
-        hashed_sub = np.apply_along_axis(
-            compute_hash,
-            1,
-            subsequence_n,
-            rp.a_l,
-            rp.b_l,
-            rp.a_r,
-            rp.b_r,
-            rp.r,
-            rp.K,
-            rp.L,
-        )
-        hashed_sub = np.swapaxes(hashed_sub, 0, 1)
-
+            subsequence - mean_container[idx]
+        ) / std_container[idx]
+        subsequence_n = np.ascontiguousarray(subsequence_n.T, dtype=np.float32)
+        hashed_sub = multi_compute_hash(subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L)
         for rep in range(L):
             hash_arrs[rep][idx] = hashed_sub[rep]
     # Close all the shared memory objects

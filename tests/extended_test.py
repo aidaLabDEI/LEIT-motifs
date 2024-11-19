@@ -76,9 +76,9 @@ def main():
             pmotif_findg(shm_ts.name, n, dimensions, 50, 1, 8, 8, 0, 10, 8)
         print("Starting")
         start = time.perf_counter()
-        for i in range(3):
+        for i in range(1):
             motifs, num_dist,_ = pmotif_findg(shm_ts.name, n, dimensions, windows[number_r], 1, dimensionality[number_r], r_vals_computed[number_r], 0.5, 200, 8)
-        end = (time.perf_counter() - start)/3
+        end = (time.perf_counter() - start)/1
         motifs = motifs
         
         rel_cont = 0#relative_contrast(d, motifs[0][1][1], windows[number])
