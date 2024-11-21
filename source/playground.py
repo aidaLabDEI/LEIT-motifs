@@ -1,36 +1,38 @@
-from ctypes import sizeof
-import numpy as np, pandas as pd
-from cachetools import LRUCache
+import numpy as np
 from numba import njit, prange
-import numba as nb, time
+import numba as nb
+from base import create_shared_array
 
-@njit(nb.bool(nb.int8[:], nb.int8[:]),
-        fastmath=True, cache= True)
-def eq(a,b):
-    return (a==b).all()
 
-@njit(nb.int8(nb.int8[:,:], nb.int8[:,:]),
-      fastmath=True, cache=True, parallel=True) 
+@njit(nb.bool(nb.int8[:], nb.int8[:]), fastmath=True, cache=True)
+def eq(a, b):
+    return (a == b).all()
+
+
+@njit(nb.int8(nb.int8[:, :], nb.int8[:, :]), fastmath=True, cache=True, parallel=True)
 def multi_eq(a, b):
     sum = 0
     for i in prange(a.shape[0]):
-      if np.all(a[i] == b[i]):
-          sum += 1
+        if np.all(a[i] == b[i]):
+            sum += 1
     return sum
-   
-@njit(nb.float32[:](nb.float32[:,:]),fastmath=True, cache=True)
+
+
+@njit(nb.float32[:](nb.float32[:, :]), fastmath=True, cache=True)
 def comp_mean(a):
     res = np.empty(a.shape[1], dtype=np.float32)
     for i in range(a.shape[1]):
         res[i] = np.mean(a[i])
     return res
 
-@njit(nb.float32[:](nb.float32[:,:]),fastmath=True, cache=True)
+
+@njit(nb.float32[:](nb.float32[:, :]), fastmath=True, cache=True)
 def comp_std(a):
     res = np.empty(a.shape[1], dtype=np.float32)
     for i in range(a.shape[0]):
         res[i] = np.std(a[i])
     return res
+
 
 def rolling_window(a, window):
     """
@@ -55,21 +57,13 @@ def rolling_window(a, window):
 
     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
 
-if __name__ == "__main__":
-   a = np.random.randint(0, 2, (100000), dtype=np.int8)
-   # compute a rolling mean using the sliding window
-   window = 10
-   time1 = time.perf_counter()
-   mean = np.mean(rolling_window(a, window), axis=-1)
-   time2 = time.perf_counter()
-   print(f"Time: {time2-time1}")
-   print(mean.shape)
 
-   # Compute all the means
-   mean = []
-   time1 = time.perf_counter()
-   for i in range(a.shape[0]-window+1):
-       mean.append( np.mean(a[i:i+window], axis=-1))
-   time2 = time.perf_counter()
-   print(f"Time: {time2-time1}")
-   print(len(mean), mean[0].shape)
+@njit
+def sum(a_name):
+    return np.sum(a_name)
+
+
+if __name__ == "__main__":
+    a_name, a = create_shared_array((5, 5), np.float32)
+    a[:] = np.random.rand(5, 5)
+    print(sum(a))

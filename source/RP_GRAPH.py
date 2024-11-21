@@ -1,8 +1,8 @@
 from base import (
     create_shared_array,
     WindowedTS,
-    z_normalized_euclidean_distanceg,
     process_chunk_graph,
+    inner_cycle,
 )
 from typing import Tuple
 from multiprocessing import shared_memory
@@ -15,8 +15,6 @@ from concurrent.futures import as_completed, ProcessPoolExecutor
 from hash_lsh import RandomProjection
 import time
 from stop import stopgraph
-from jitted_utilities import eq
-
 
 
 def worker(
@@ -33,14 +31,13 @@ def worker(
     dimensionality = subsequences.dimensionality
     motif_dimensionality = subsequences.d
     K = subsequences.K
-    
+
     # Time Series
     ex_time_series = shared_memory.SharedMemory(name=subsequences.subsequences)
     time_series = np.ndarray(
         (n, dimensionality), dtype=np.float32, buffer=ex_time_series.buf
     )
     # Utility data
-    dimensions = np.arange(dimensionality, dtype=np.int32)
     means_ex = shared_memory.SharedMemory(name=subsequences.avgs.name)
     stds_ex = shared_memory.SharedMemory(name=subsequences.stds.name)
     means = np.ndarray(
@@ -62,64 +59,27 @@ def worker(
     original_mat = np.ndarray(
         (n - window + 1, dimensionality, K), dtype=np.int8, buffer=existing_hash.buf
     )
-    # seen = LRUCache(maxsize=np.ceil(np.sqrt(n)))
 
-    # Let's assume that ordering has the lexigraphical order of the dimensions
-    for curr_dim in range(dimensionality):
-        ordering_dim = ordering[curr_dim, :]
-        hash_mat_curr = (
-            hash_mat[:, curr_dim, :-i] if i != 0 else hash_mat[:, curr_dim, :]
-        )
-        # Take the subsequent elements of the ordering and check if their hash is the same
-        for idx, elem1 in enumerate(hash_mat_curr):
-            for idx2, elem2 in enumerate(hash_mat_curr[idx + 1 :]):
-                sub_idx1 = ordering_dim[idx]
-                sub_idx2 = ordering_dim[idx + idx2 + 1]
-                maximum_pair = (
-                    [sub_idx1, sub_idx2]
-                    if sub_idx1 < sub_idx2
-                    else [sub_idx2, sub_idx1]
-                )
-                # No trivial match
-                if maximum_pair[1] - maximum_pair[0] <= window:
-                    continue
-                # If same hash, check if there's a collision, see the next after
-                if eq(elem1, elem2):
-                    tot_hash1 = (
-                        original_mat[sub_idx1, :, :-i]
-                        if i != 0
-                        else original_mat[sub_idx1]
-                    )
-                    tot_hash2 = (
-                        original_mat[sub_idx2, :, :-i]
-                        if i != 0
-                        else original_mat[sub_idx2]
-                    )
-                    if np.sum((tot_hash1 == tot_hash2).all(axis=1)) >= motif_dimensionality:
-                        dist_comp += 1
-                        # print("Comparing: ", sub_idx1, sub_idx2)
-                        curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
-                            time_series[sub_idx1 : sub_idx1 + window].T,
-                            time_series[sub_idx2 : sub_idx2 + window].T,
-                            dimensions,
-                            means[sub_idx1],
-                            stds[sub_idx1],
-                            means[sub_idx2],
-                            stds[sub_idx2],
-                            motif_dimensionality,
-                        )
-                        top.put(
-                            (
-                                -curr_dist,
-                                [dist_comp, maximum_pair, [dim], stop_dist],
-                            )
-                        )
-                        if top.qsize() > k:
-                            top.get()
-                    # seen[tuple(maximum_pair)] = True
-                # Otherwise we know that this subsequence and all the following ones will have different hashes
-                else:
-                    break
+    dist, pairs, dims, dists, dist_comp = inner_cycle(
+        dimensionality,
+        ordering,
+        hash_mat,
+        original_mat,
+        time_series,
+        window,
+        motif_dimensionality,
+        i,
+        k,
+        means,
+        stds,
+    )
+    for d, p, dim, stop_dist in zip(dist, pairs, dims, dists):
+        if d == np.inf:
+            break
+        top.put((-d, [dist_comp, p, dim, stop_dist]))
+        if top.qsize() > k:
+            top.get()
+
     ex_time_series.close()
     existing_arr.close()
     existing_ord.close()
@@ -129,7 +89,6 @@ def worker(
     # if i == 0 and j == 1:
     #    pr.disable()
     #   pr.print_stats(sort='cumtime')
-    # print("Worker: ", i, j, "done")
     return top.queue, dist_comp, i, j  # , counter
 
 
@@ -172,7 +131,7 @@ def pmotif_findg(
     lsh_threshold: float = 0,
     L: int = 200,
     K: int = 8,
-    fail_thresh: float = 0.1,
+    fail_thresh: float = 0.01,
 ) -> Tuple[list, int, float]:
     """
     Find the top-k motifs in a time series
@@ -222,7 +181,7 @@ def pmotif_findg(
         # Hasher
         rp = RandomProjection(window, bin_width, K, L)  # []
 
-        chunk_sz = n // (cpu_count()*2)  # min(int(np.sqrt(n)), 10000)
+        chunk_sz = n // (cpu_count() * 2)  # min(int(np.sqrt(n)), 10000)
         num_chunks = max(1, n // chunk_sz)
 
         chunks = [
@@ -273,8 +232,8 @@ def pmotif_findg(
                 _ = result.get()
         # Close the time series otherwise it will be copied in all children processes
         # time_series_data.close()
-        std_container.close()
-        mean_container.close()
+        # std_container.close()
+        # mean_container.close()
         del chunks
         hash_t = time.perf_counter() - st
         print("Hashing time: ", hash_t)
@@ -291,56 +250,8 @@ def pmotif_findg(
             bin_width,
         )
         stop_val = False
-        # counter_tot = dict()
-        # Non parallelized version
-        """
-        for i, j in itertools.product(range(K), range(L)):
-            top_temp, dist_comp_temp, _, _ = worker(
-                i,
-                j,
-                windowed_ts,
-                hash_container[j],
-                indices_container[j],
-                ordered_container[j],
-                k,
-                fail_thresh,
-            )
-            print(top_temp)
-            dist_comp += dist_comp_temp
-            for element in top_temp:
-                add = True
-                # Check is there's already an overlapping sequence, in that case keep the best match
-                for stored in top:
-                    indices_1_0 = element[1][1][0]
-                    indices_1_1 = element[1][1][1]
-                    indices_2_0 = stored[1][1][0]
-                    indices_2_1 = stored[1][1][1]
-                    if (
-                        (abs(indices_1_0 - indices_2_0) < window)
-                        or (abs(indices_1_0 - indices_2_1) < window)
-                        or (abs(indices_1_1 - indices_2_0) < window)
-                        or (abs(indices_1_1 - indices_2_1) < window)
-                    ):
-                        if element[0] > stored[0]:
-                            top.remove(stored)
-                        else:
-                            add = False
-                            continue
-                if add:
-                    bisect.insort(top, element, key=lambda x: -x[0])
-                if len(top) > k:
-                    top = top[:k]
-            if len(top) == k:
-                stop_val = stopgraph(
-                    top[0], i, j, fail_thresh, K, L, bin_width, motif_dimensionality
-                )
-                if stop_val and len(top) >= k:
-                    break
 
-
-        # Cycle for the hash repetitions and concatenations
-        """
-        with ProcessPoolExecutor(max_workers=cpu_count() // 2) as executor:
+        with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
             futures = [
                 executor.submit(
                     worker,
@@ -389,11 +300,19 @@ def pmotif_findg(
                         top = top[:k]
                 if len(top) == k:
                     stop_val = stopgraph(
-                        top[0], i, j, fail_thresh, K, L, bin_width, motif_dimensionality
+                        top[-1][1][3],
+                        i,
+                        j,
+                        fail_thresh,
+                        K,
+                        L,
+                        bin_width,
+                        motif_dimensionality,
                     )
                     if stop_val and len(top) >= k:
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
+
     except (KeyboardInterrupt, FileNotFoundError, OSError):
         pass
     finally:

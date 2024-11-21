@@ -2,6 +2,7 @@ import numpy as np
 from numba import jit, prange
 import time
 
+
 class RandomProjection:
     def __init__(self, dim: int, r: int, K: int, L: int, random_state=None):
         self.dim = dim
@@ -11,16 +12,27 @@ class RandomProjection:
         np.random.seed(random_state)
         sqrt_L = int(np.sqrt(L))
         K_half = K // 2
-        
+
         # Generate sqrt(L) sets of K/2 random vectors and values for tensoring
-        self.a_l = np.ascontiguousarray(np.random.randn(sqrt_L, K_half, dim), dtype=np.float32) 
-        self.b_l = np.ascontiguousarray(np.random.uniform(0, r, (sqrt_L, K_half)), dtype=np.float32)
-        
-        self.a_r = np.ascontiguousarray(np.random.randn(sqrt_L, K_half, dim), dtype=np.float32)
-        self.b_r = np.ascontiguousarray(np.random.uniform(0, r, (sqrt_L, K_half)), dtype=np.float32)
-    
+        self.a_l = np.ascontiguousarray(
+            np.random.randn(sqrt_L, K_half, dim), dtype=np.float32
+        )
+        self.b_l = np.ascontiguousarray(
+            np.random.uniform(0, r, (sqrt_L, K_half)), dtype=np.float32
+        )
+
+        self.a_r = np.ascontiguousarray(
+            np.random.randn(sqrt_L, K_half, dim), dtype=np.float32
+        )
+        self.b_r = np.ascontiguousarray(
+            np.random.uniform(0, r, (sqrt_L, K_half)), dtype=np.float32
+        )
+
     def hash_vector(self, data):
-        return compute_hash(data, self.a_l, self.b_l, self.a_r, self.b_r, self.r, self.K, self.L)
+        return compute_hash(
+            data, self.a_l, self.b_l, self.a_r, self.b_r, self.r, self.K, self.L
+        )
+
 
 @jit(nopython=True, cache=True, fastmath=True)
 def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
@@ -28,7 +40,7 @@ def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
     K_half = K // 2
     hash_left_all = np.empty((sqrt_L, K_half), dtype=np.int8)
     hash_right_all = np.empty((sqrt_L, K_half), dtype=np.int8)
-    
+
     # Compute the K/2 hashes for both collections
     for l_idx in prange(sqrt_L):
         for i in range(K_half):
@@ -37,9 +49,9 @@ def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
 
             projection_r = (np.dot(a_r[l_idx, i], data) + b_r[l_idx, i]) / r
             hash_right_all[l_idx, i] = np.floor(projection_r)
-    
+
     hash_values = np.empty((L, K), dtype=np.int8)
-    
+
     # Interleave the results to get final L hashes of length K
     for j in prange(L):
         l_idx = j // sqrt_L
@@ -53,45 +65,50 @@ def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
 
     return hash_values
 
+
 @jit(nopython=True, cache=True, fastmath=True)
 def multi_compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
     dim = data.shape[0]
     sqrt_L = int(np.sqrt(L))
     K_half = K // 2
     hash_left_all = np.empty((dim, sqrt_L, K_half), dtype=np.int8)
-    hash_right_all = np.empty((dim,sqrt_L, K_half), dtype=np.int8)
+    hash_right_all = np.empty((dim, sqrt_L, K_half), dtype=np.int8)
     hash_values = np.empty((L, dim, K), dtype=np.int8)
 
-    
     # Compute the K/2 hashes for both collections
     for d in prange(dim):
         for l_idx in range(sqrt_L):
             for i in range(K_half):
-                hash_left_all[d,l_idx, i] = (np.dot(a_l[l_idx, i], data[d]) + b_l[l_idx, i]) // r
-                #hash_left_all[d,l_idx, i] = np.floor(projection_l)
+                hash_left_all[d, l_idx, i] = (
+                    np.dot(a_l[l_idx, i], data[d]) + b_l[l_idx, i]
+                ) // r
+                # hash_left_all[d,l_idx, i] = np.floor(projection_l)
 
-                hash_right_all[d,l_idx, i] = (np.dot(a_r[l_idx, i], data[d]) + b_r[l_idx, i]) // r
-                #hash_right_all[d,l_idx, i] = np.floor(projection_r)
-        
+                hash_right_all[d, l_idx, i] = (
+                    np.dot(a_r[l_idx, i], data[d]) + b_r[l_idx, i]
+                ) // r
+                # hash_right_all[d,l_idx, i] = np.floor(projection_r)
+
     # Interleave the results to get final L hashes of length K
     for d in prange(dim):
-        for j in range(L):       
+        for j in range(L):
             l_idx = j // sqrt_L
             r_idx = j % sqrt_L
 
-            hash_left = hash_left_all[d,l_idx]
-            hash_right = hash_right_all[d,r_idx]
+            hash_left = hash_left_all[d, l_idx]
+            hash_right = hash_right_all[d, r_idx]
 
-            hash_values[j,d, 0::2] = hash_left
-            hash_values[j,d, 1::2] = hash_right
-
+            hash_values[j, d, 0::2] = hash_left
+            hash_values[j, d, 1::2] = hash_right
 
     return hash_values
+
 
 def euclidean_hash(data, rp):
     return compute_hash(data, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L)
 
-'''
+
+"""
 # No tensoring version
 class RandomProjection:
     def __init__(self, dim, r, K, L, random_state=None):
@@ -121,7 +138,7 @@ def compute_hash(data, a, b, r, K, L):
 
 def euclidean_hash(data, rp):
     return compute_hash(data, rp.a, rp.b, rp.r, rp.K, rp.L)
-'''
+"""
 if __name__ == "__main__":
     dim = 5000
     r = 8
@@ -129,11 +146,9 @@ if __name__ == "__main__":
     rp = RandomProjection(dim, r, K, 100)
     data = np.ascontiguousarray(np.random.rand(dim), dtype=np.float32)
 
-
     timei = time.process_time()
     for j in range(5):
         for i in range(10000):
             hashed = euclidean_hash(data, rp)
-    print("Time elapsed: ", (time.process_time() - timei)/5)
-    #print(hashed)
-
+    print("Time elapsed: ", (time.process_time() - timei) / 5)
+    # print(hashed)

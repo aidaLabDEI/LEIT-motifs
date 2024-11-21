@@ -1,9 +1,10 @@
 import numpy as np
 from multiprocessing import shared_memory
-from numba import jit
+from numba import jit, njit
 import numba as nb
-from hash_lsh import compute_hash, multi_compute_hash
-from jitted_utilities import rolling_window
+from hash_lsh import multi_compute_hash
+from jitted_utilities import rolling_window, eq, multi_eq
+
 
 class WindowedTS:
     def __init__(
@@ -159,20 +160,16 @@ def z_normalized_euclidean_distanceg(
         raise ValueError("Time series must have the same dimensions.")
 
     # Pick the dimensions used in this iteration
-    ts1 = ts1[indices]
-    ts2 = ts2[indices]
+    ts1 = ts1[:, indices]
+    ts2 = ts2[:, indices]
 
     # Z-normalize each dimension separately
-    ts1_normalized = (ts1 - mean_ts1[indices, np.newaxis]) / std_ts1[
-        indices, np.newaxis
-    ]
-    ts2_normalized = (ts2 - mean_ts2[indices, np.newaxis]) / std_ts2[
-        indices, np.newaxis
-    ]
+    ts1_normalized = (ts1 - mean_ts1[indices]) / std_ts1[indices]
+    ts2_normalized = (ts2 - mean_ts2[indices]) / std_ts2[indices]
 
     # Compute squared differences and sum them
     squared_diff_sum = np.sqrt(
-        np.sum(np.square(ts1_normalized - ts2_normalized), axis=1)
+        np.sum(np.square(ts1_normalized - ts2_normalized), axis=0)
     )
 
     if dimensionality and dimensionality != len(indices):
@@ -270,7 +267,7 @@ def process_chunk(
         subsequence_n = (
             subsequence - mean_container[idx][:, np.newaxis]
         ) / std_container[idx][:, np.newaxis]
-        '''
+        """
         hashed_sub = np.apply_along_axis(
             compute_hash,
             1,
@@ -284,8 +281,10 @@ def process_chunk(
             rp.L,
         )
         hashed_sub = np.swapaxes(hashed_sub, 0, 1)
-        '''
-        hash_mat[idx] = multi_compute_hash(subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L)
+        """
+        hash_mat[idx] = multi_compute_hash(
+            subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L
+        )
 
     existing_shm_hash_mat.close()
     return std_container, mean_container
@@ -297,7 +296,7 @@ def process_chunk_graph(
     """
     Process a chunk of time series data.
 
-    Args:
+    Params:
       time_series (numpy.ndarray): The time series chunk.
       ranges (list): The indices of the original time series data to process.
       window (int): The size of the window.
@@ -323,28 +322,40 @@ def process_chunk_graph(
         for shm in shm_hashes
     ]
     mean_existing_shm = shared_memory.SharedMemory(name=mean.name)
-    mean_container = np.ndarray((n - window + 1, dimension), dtype=np.float32, buffer=mean_existing_shm.buf)
+    mean_container = np.ndarray(
+        (n - window + 1, dimension), dtype=np.float32, buffer=mean_existing_shm.buf
+    )
     std_existing_shm = shared_memory.SharedMemory(name=std.name)
-    std_container = np.ndarray((n - window + 1, dimension), dtype=np.float32, buffer=std_existing_shm.buf)
+    std_container = np.ndarray(
+        (n - window + 1, dimension), dtype=np.float32, buffer=std_existing_shm.buf
+    )
     exist_ts = shared_memory.SharedMemory(name=time_series_name)
     time_series = np.ndarray((n, dimension), dtype=np.float32, buffer=exist_ts.buf)
 
     # Use bottleneck to compute the mean and standard deviation
-    #print(bn.move_mean(time_series[ranges[0]:ranges[-1]+window], window, axis=0))
+    # print(bn.move_mean(time_series[ranges[0]:ranges[-1]+window], window, axis=0))
     for d in range(dimension):
-        mean_container[ranges[0]:ranges[-1], d] = np.mean(rolling_window(time_series[ranges[0]:ranges[-1]+window-1, d], window), axis=-1)
-        std_container[ranges[0]:ranges[-1], d] = np.nanstd(rolling_window(time_series[ranges[0]:ranges[-1]+window-1, d], window), axis=-1)
-
+        mean_container[ranges[0] : ranges[-1], d] = np.mean(
+            rolling_window(time_series[ranges[0] : ranges[-1] + window - 1, d], window),
+            axis=-1,
+        )
+        std_container[ranges[0] : ranges[-1], d] = np.nanstd(
+            rolling_window(time_series[ranges[0] : ranges[-1] + window - 1, d], window),
+            axis=-1,
+        )
+    # mean_container[ranges[0]:ranges[-1]], std_container[ranges[0]:ranges[-1]] = mean_std(time_series[ranges[0]:ranges[-1]+window-1], window)
     for idx in ranges:
-        subsequence =  time_series[idx : idx + window]
+        subsequence = time_series[idx : idx + window]
 
-        std_container[idx] = np.where(std_container[idx] == 0, 0.00001, std_container[idx])
-        
-        subsequence_n = (
-            subsequence - mean_container[idx]
-        ) / std_container[idx]
+        std_container[idx] = np.where(
+            std_container[idx] == 0, 0.00001, std_container[idx]
+        )
+
+        subsequence_n = (subsequence - mean_container[idx]) / std_container[idx]
         subsequence_n = np.ascontiguousarray(subsequence_n.T, dtype=np.float32)
-        hashed_sub = multi_compute_hash(subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L)
+        hashed_sub = multi_compute_hash(
+            subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L
+        )
         for rep in range(L):
             hash_arrs[rep][idx] = hashed_sub[rep]
     # Close all the shared memory objects
@@ -353,4 +364,127 @@ def process_chunk_graph(
     exist_ts.close()
     mean_existing_shm.close()
     std_existing_shm.close()
-    #return True
+    # return True
+
+
+@njit(
+    nb.types.Tuple(
+        (nb.float32[:], nb.int32[:, :], nb.int8[:, :], nb.float32[:, :], nb.int64)
+    )(
+        nb.int32,
+        nb.int32[:, :],
+        nb.int8[:, :, :],
+        nb.int8[:, :, :],
+        nb.float32[:, :],
+        nb.int32,
+        nb.int64,
+        nb.int32,
+        nb.int32,
+        nb.float32[:, :],
+        nb.float32[:, :],
+    ),
+    fastmath=True,
+    cache=True,
+)
+def inner_cycle(
+    dimensionality,
+    ordering,
+    hash_mat,
+    original_mat,
+    time_series,
+    window,
+    motif_dimensionality,
+    i,
+    k,
+    means,
+    stds,
+):
+    """
+    Use the hash matrix to find the collisions
+
+    :param int32 dimensionality: The dimensionality of the time series data.
+    :param int32[:,:] ordering: The lexicographical ordering over the dimensions of the hashes.
+    :param int8[:,:,:] hash_mat: The hash matrix, ordered for each dimension.
+    :param int8[:,:,:] original_mat: The original matrix.
+    :param float32[:,:] time_series: The time series data.
+    :param int32 window: The size of the window.
+    :param int32 motif_dimensionality: The dimensionality of the motif.
+    :param int32 i: The current iteration.
+    :param int32 k: The number of top motifs to return.
+    :param float32[:,:] means: The means of the time series data.
+    :param float32[:,:] stds: The standard deviations of the time series data.
+
+    :return: The top distances, the pairs of indices, the dimensions used, the distances, and the total number of distance computations.
+    """
+    dist_comp = 0
+    top_dist = np.full(k, np.inf, dtype=np.float32)
+    top_pairs = np.full((k, 2), -1, dtype=np.int32)
+    top_dims = np.full((k, motif_dimensionality), -1, dtype=np.int8)
+    top_dists = np.full((k, motif_dimensionality), np.inf, dtype=np.float32)
+    dimensions = np.arange(dimensionality, dtype=np.int32)
+    for curr_dim in range(dimensionality):
+        ordering_dim = ordering[curr_dim]
+        hash_mat_curr = (
+            hash_mat[:, curr_dim, :-i] if i != 0 else hash_mat[:, curr_dim, :]
+        )
+        for idx, elem1 in enumerate(hash_mat_curr):
+            for idx2, elem2 in enumerate(hash_mat_curr[idx + 1 :]):
+                sub_idx1 = ordering_dim[idx]
+                sub_idx2 = ordering_dim[idx + idx2 + 1]
+                maximum_pair = (
+                    [sub_idx1, sub_idx2]
+                    if sub_idx1 < sub_idx2
+                    else [sub_idx2, sub_idx1]
+                )
+                # No trivial match
+                if maximum_pair[1] - maximum_pair[0] <= window:
+                    continue
+                if eq(elem1, elem2):
+                    tot_hash1 = (
+                        original_mat[sub_idx1, :, :-i]
+                        if i != 0
+                        else original_mat[sub_idx1]
+                    )
+                    tot_hash2 = (
+                        original_mat[sub_idx2, :, :-i]
+                        if i != 0
+                        else original_mat[sub_idx2]
+                    )
+                    if multi_eq(tot_hash1, tot_hash2) >= motif_dimensionality:
+                        dist_comp += 1
+                        # print("Comparing: ", sub_idx1, sub_idx2)
+                        curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
+                            time_series[sub_idx1 : sub_idx1 + window],
+                            time_series[sub_idx2 : sub_idx2 + window],
+                            dimensions,
+                            means[sub_idx1],
+                            stds[sub_idx1],
+                            means[sub_idx2],
+                            stds[sub_idx2],
+                            motif_dimensionality,
+                        )
+                        # Insert the new distance into the sorted top distances
+                        if (
+                            curr_dist < top_dist[0]
+                        ):  # Check against the largest value in top k
+                            for insert_idx in range(k):
+                                if curr_dist < top_dist[insert_idx]:
+                                    # Shift elements to the right to make space for the new entry
+                                    top_dist[1 : insert_idx + 1] = top_dist[:insert_idx]
+                                    top_pairs[1 : insert_idx + 1] = top_pairs[
+                                        :insert_idx
+                                    ]
+                                    top_dims[1 : insert_idx + 1] = top_dims[:insert_idx]
+                                    top_dists[1 : insert_idx + 1] = top_dists[
+                                        :insert_idx
+                                    ]
+
+                                    # Insert new values
+                                    top_dist[insert_idx] = curr_dist
+                                    top_pairs[insert_idx] = maximum_pair
+                                    top_dims[insert_idx] = dim
+                                    top_dists[insert_idx] = stop_dist
+                                    break
+                else:
+                    break
+    return top_dist, top_pairs, top_dims, top_dists, dist_comp

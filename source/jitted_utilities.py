@@ -8,6 +8,8 @@ from numba import njit
 def eq(a, b):
     return np.all(a == b)
 
+
+@njit(fastmath=True, cache=True)
 def rolling_window(a, window):
     """
     Use strides to generate rolling/sliding windows for a numpy array.
@@ -31,7 +33,9 @@ def rolling_window(a, window):
 
     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
 
+
 # Not faster
+
 
 @njit(nb.int8(nb.int8[:, :], nb.int8[:, :]), fastmath=True, cache=True)
 def multi_eq(a, b):
@@ -40,6 +44,7 @@ def multi_eq(a, b):
         if eq(a[i], b[i]):
             sum += 1
     return sum
+
 
 @njit(nb.float32[:](nb.float32[:, :]), fastmath=True, cache=True)
 def comp_mean(a):

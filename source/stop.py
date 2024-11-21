@@ -1,28 +1,55 @@
-from scipy.stats import norm
 import numpy as np
 from numba import jit
+from math import fabs, erf, erfc
+
+NPY_SQRT1_2 = 1.0 / np.sqrt(2)
 
 
-#@jit(nopython=True, fastmath=True)
-def second_term(first, r, d):
-    second_term = -2 / (np.sqrt(2 * np.pi) * r / d) * (1 - np.exp(-r**2 / (2 * d**2)))
-    return first + second_term
+@jit(nopython=True, cache=True, fastmath=True)
+def ndtr_numba(a):
+    if np.isnan(a):
+        return np.nan
 
+    x = a * NPY_SQRT1_2
+    z = fabs(x)
+
+    if z < NPY_SQRT1_2:
+        y = 0.5 + 0.5 * erf(x)
+
+    else:
+        y = 0.5 * erfc(z)
+
+        if x > 0:
+            y = 1.0 - y
+
+    return y
+
+
+@jit(nopython=True, fastmath=True, cache=True)
 def p(d, r):
-    first_term = 1 - 2 * norm.cdf(-r / d)
-    result = second_term(first_term, r, d)
+    first_term = 1 - 2 * ndtr_numba(-r / d)
+    result = first_term + (
+        -2 / (np.sqrt(2 * np.pi) * r / d) * (1 - np.exp(-(r**2) / (2 * d**2)))
+    )
     return result
+
 
 @jit(nopython=True, fastmath=True)
 def probability(d, i, j, b, s, jacc, K, L, dim):
-  if i == K:
-    return (np.power(1-np.power(d,(K*dim)),j))*(np.power(1-np.power(jacc,s),b))
-  else:
-    return (np.power(1-np.power(d,((K-i)*dim)),j))*(np.power(1-np.power(d,((K-i+1)*dim)),L-j))* np.power((1-np.power(np.power(jacc,s),b)),2)
+    if i == K:
+        return (np.power(1 - np.power(d, (K * dim)), j)) * (
+            np.power(1 - np.power(jacc, s), b)
+        )
+    else:
+        return (
+            (np.power(1 - np.power(d, ((K - i) * dim)), j))
+            * (np.power(1 - np.power(d, ((K - i + 1) * dim)), L - j))
+            * np.power((1 - np.power(np.power(jacc, s), b)), 2)
+        )
 
 
 def stop(collision, jacc, b, s, i, j, threshold, K, L, r, dim):
-  '''
+    """
     Returns true if the probability of having missed a pair at distance d(collision)
     is less or equal than the threshold
 
@@ -47,27 +74,32 @@ def stop(collision, jacc, b, s, i, j, threshold, K, L, r, dim):
     -----
     true, if the condition is verified
 
-  '''
-  # jacc is the vector with bool that indicate where teè dimensions match
-  #jacc = sum(jacc)/len(jacc)
-  # d is p(d) for the euclidean LSH
-  d = p(abs(collision[1][3]), r)
+    """
+    # jacc is the vector with bool that indicate where teè dimensions match
+    # jacc = sum(jacc)/len(jacc)
+    # d is p(d) for the euclidean LSH
+    d = p(abs(collision[1][3]), r)
 
-  # Check the condition
-  return probability(d, i, j, b, s, jacc, K, L, dim) <= threshold
+    # Check the condition
+    return probability(d, i, j, b, s, jacc, K, L, dim) <= threshold
 
 
 def probability3(d, i, j, K, L, dim):
-  i = K - i
-  if i == K:
-    print(np.power(1-np.power(d,(K*dim)),j))
-    return (np.power(1-np.power(d,((K)*dim)),j))
-  else:
-    print(np.power(1-np.power(d,((i)*dim)),j))*(np.power(1-np.power(d,((i+1)*dim)),L-j))
-    return (np.power(1-np.power(d,((i)*dim)),j))*(np.power(1-np.power(d,((i+1)*dim)),L-j))
+    i = K - i
+    if i == K:
+        print(np.power(1 - np.power(d, (K * dim)), j))
+        return np.power(1 - np.power(d, ((K) * dim)), j)
+    else:
+        print(np.power(1 - np.power(d, ((i) * dim)), j)) * (
+            np.power(1 - np.power(d, ((i + 1) * dim)), L - j)
+        )
+        return (np.power(1 - np.power(d, ((i) * dim)), j)) * (
+            np.power(1 - np.power(d, ((i + 1) * dim)), L - j)
+        )
+
 
 def stop3(collision, i, j, threshold, K, L, r, dim):
-  '''
+    """
     Returns true if the probability of having missed a pair at distance d(collision)
     is less or equal than the threshold
 
@@ -92,24 +124,30 @@ def stop3(collision, i, j, threshold, K, L, r, dim):
     -----
     true, if the condition is verified
 
-  '''
-  # jacc is the vector with bool that indicate where teè dimensions match
-  #jacc = sum(jacc)/len(jacc)
-  # d is p(d) for the euclidean LSH
-  d = p(abs(collision[0]), r)
+    """
+    # jacc is the vector with bool that indicate where teè dimensions match
+    # jacc = sum(jacc)/len(jacc)
+    # d is p(d) for the euclidean LSH
+    d = p(abs(collision[0]), r)
 
-  # Check the condition
-  return probability3(d, i, j, K, L, dim) <= threshold
-  
+    # Check the condition
+    return probability3(d, i, j, K, L, dim) <= threshold
+
+
+@jit(nopython=True, fastmath=True)
 def probabilitygraph(d, i, j, K, L, dim):
-  i = K - i
-  if i == K:
-    return (np.power(1-np.power(d,K),j))
-  else:
-    return (np.power(1-np.power(d,((i))),j))*(np.power(1-np.power(d,((i+1))),(L-j)))
+    i = K - i
+    if i == K:
+        return np.power(1 - np.power(d, K), j)
+    else:
+        return (np.power(1 - np.power(d, (i)), j)) * (
+            np.power(1 - np.power(d, (i + 1)), (L - j))
+        )
 
+
+@jit(nopython=True, fastmath=True, cache=True)
 def stopgraph(collision, i, j, threshold, K, L, r, dim):
-  '''
+    """
     Returns true if the probability of having missed a pair at distance d(collision)
     is less or equal than the threshold
 
@@ -128,24 +166,32 @@ def stopgraph(collision, i, j, threshold, K, L, r, dim):
     -----
     true, if the condition is verified
 
-  '''
-  # jacc is the vector with bool that indicate where teè dimensions match
-  #jacc = sum(jacc)/len(jacc)
-  # d is p(d) for the euclidean LSH
-  ds = []
-  for elem in collision[1][3]:
-    ds.append(p(elem,r))
-  
-  prob = 1
-  for d in ds:
-    prob *= probabilitygraph(d, i, j, K, L, dim)
-  #print(prob)
-  # Check the condition
-  return prob <= threshold
+    """
+    # jacc is the vector with bool that indicate where teè dimensions match
+    # jacc = sum(jacc)/len(jacc)
+    # d is p(d) for the euclidean LSH
+    ds = []
+    for id in collision:
+        ds.append(p(id, r))
+
+    prob = 1
+    for d in ds:
+        prob *= probabilitygraph(d, i, j, K, L, dim)
+    # print(prob)
+    # Check the condition
+    return prob <= threshold
+
 
 if __name__ == "__main__":
-  print(((1-p(100,8)**(8))**(200))*((1-p(1,8)**(8))**(200))*((1-p(1,8)**(8))**(200)))
-  print(((1-p(34,8)**(8))**(200))*((1-p(34,8)**(8))**(200))*((1-p(34,8)**(8))**(200)))
-  print(((p(34,8))**(8*2))*(p(34,32)**8))
-  print(p(100,32)**(8)*p(1,8)**(8)*p(1,8)**(8))
-
+    print(
+        ((1 - p(100, 8) ** (8)) ** (200))
+        * ((1 - p(1, 8) ** (8)) ** (200))
+        * ((1 - p(1, 8) ** (8)) ** (200))
+    )
+    print(
+        ((1 - p(34, 8) ** (8)) ** (200))
+        * ((1 - p(34, 8) ** (8)) ** (200))
+        * ((1 - p(34, 8) ** (8)) ** (200))
+    )
+    print(((p(34, 8)) ** (8 * 2)) * (p(34, 32) ** 8))
+    print(p(100, 32) ** (8) * p(1, 8) ** (8) * p(1, 8) ** (8))
