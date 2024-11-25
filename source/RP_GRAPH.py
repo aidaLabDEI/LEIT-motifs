@@ -17,9 +17,7 @@ import time
 from stop import stopgraph
 
 
-def worker(
-    i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k, failure_thresh
-):
+def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k):
     # if i == 0 and j == 1:
     #    pr = cProfile.Profile()
     #   pr.enable()
@@ -151,13 +149,9 @@ def pmotif_findg(
     """
     # pr = cProfile.Profile()
     # pr.enable()
-    # time_series_data = shared_memory.SharedMemory(name=time_series_name)
-    # time_series = np.ndarray(
-    #    (n, dimension), dtype=np.float32, buffer=time_series_data.buf
-    # )
     # Data
     try:
-        top = []  # queue.PriorityQueue(maxsize=k+1)
+        top = []
         std_container, _ = create_shared_array(
             (n - window + 1, dimension), dtype=np.float32
         )
@@ -188,7 +182,6 @@ def pmotif_findg(
             (time_series_name, ranges, window, rp)
             for ranges in np.array_split(np.arange(n - window + 1), num_chunks)
         ]
-        # ordering = np.ndarray((dimension, n - window + 1, L), dtype=np.int32)
 
         # Hash the subsequences and order them lexigraphically
         st = time.perf_counter()
@@ -231,9 +224,8 @@ def pmotif_findg(
             for result in ord_results:
                 _ = result.get()
         # Close the time series otherwise it will be copied in all children processes
-        # time_series_data.close()
-        # std_container.close()
-        # mean_container.close()
+        std_container.close()
+        mean_container.close()
         del chunks
         hash_t = time.perf_counter() - st
         print("Hashing time: ", hash_t)
@@ -250,7 +242,7 @@ def pmotif_findg(
             bin_width,
         )
         stop_val = False
-
+        confirmations = 0
         with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
             futures = [
                 executor.submit(
@@ -262,7 +254,6 @@ def pmotif_findg(
                     indices_container[j],
                     ordered_container[j],
                     k,
-                    fail_thresh,
                 )
                 for i, j in itertools.product(range(K), range(L))
             ]
@@ -271,9 +262,8 @@ def pmotif_findg(
                     top_temp, dist_comp_temp, i, j = future.result()
                 except KeyboardInterrupt:
                     executor.shutdown(wait=False, cancel_futures=True)
-                # print(top_temp)
+                print(top_temp)
 
-                # counter_tot.update(counter)
                 dist_comp += dist_comp_temp
                 for element in top_temp:
                     add = True
@@ -289,8 +279,12 @@ def pmotif_findg(
                             or (abs(indices_1_1 - indices_2_0) < window)
                             or (abs(indices_1_1 - indices_2_1) < window)
                         ):
+                            print(element[0], stored[0])
                             if element[0] > stored[0]:
                                 top.remove(stored)
+                                confirmations += 1
+                            elif element[0] == stored[0]:
+                                confirmations += 1
                             else:
                                 add = False
                                 continue
@@ -309,7 +303,8 @@ def pmotif_findg(
                         bin_width,
                         motif_dimensionality,
                     )
-                    if stop_val and len(top) >= k:
+                    if (stop_val or confirmations >= 4) and len(top) >= k:
+                        print(confirmations)
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
 
@@ -318,6 +313,7 @@ def pmotif_findg(
     finally:
         # pr.disable()
         # pr.print_stats(sort='cumtime')
+        # Close all the shared memory
         for arr in hash_container:
             arr.close()
             arr.unlink()
@@ -327,7 +323,6 @@ def pmotif_findg(
         for arr in ordered_container:
             arr.close()
             arr.unlink()
-
         mean_container.unlink()
         std_container.unlink()
     return top, dist_comp, hash_t

@@ -1,12 +1,33 @@
 import numpy as np
 from numba import jit
-from math import fabs, erf, erfc
+from math import fabs, exp
 
 NPY_SQRT1_2 = 1.0 / np.sqrt(2)
 
 
 @jit(nopython=True, cache=True, fastmath=True)
-def ndtr_numba(a):
+def ndtr(x):
+    a1 = 0.319381530
+    a2 = -0.356563782
+    a3 = 1.781477937
+    a4 = -1.821255978
+    a5 = 1.330274429
+    g = 0.2316419
+
+    k = 1.0 / (1.0 + g * fabs(x))
+    k2 = k * k
+    k3 = k2 * k
+    k4 = k3 * k
+    k5 = k4 * k
+
+    if x >= 0.0:
+        c = a1 * k + a2 * k2 + a3 * k3 + a4 * k4 + a5 * k5
+        phi = 1.0 - c * exp(-x * x / 2.0) * NPY_SQRT1_2
+    else:
+        phi = 1.0 - ndtr(-x)
+
+    return phi
+    """
     if np.isnan(a):
         return np.nan
 
@@ -23,11 +44,12 @@ def ndtr_numba(a):
             y = 1.0 - y
 
     return y
+  """
 
 
 @jit(nopython=True, fastmath=True, cache=True)
 def p(d, r):
-    first_term = 1 - 2 * ndtr_numba(-r / d)
+    first_term = 1 - 2 * ndtr(-r / d)
     result = first_term + (
         -2 / (np.sqrt(2 * np.pi) * r / d) * (1 - np.exp(-(r**2) / (2 * d**2)))
     )

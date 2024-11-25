@@ -343,7 +343,6 @@ def process_chunk_graph(
             rolling_window(time_series[ranges[0] : ranges[-1] + window - 1, d], window),
             axis=-1,
         )
-    # mean_container[ranges[0]:ranges[-1]], std_container[ranges[0]:ranges[-1]] = mean_std(time_series[ranges[0]:ranges[-1]+window-1], window)
     for idx in ranges:
         subsequence = time_series[idx : idx + window]
 
@@ -369,7 +368,7 @@ def process_chunk_graph(
 
 @njit(
     nb.types.Tuple(
-        (nb.float32[:], nb.int32[:, :], nb.int8[:, :], nb.float32[:, :], nb.int64)
+        (nb.float32[:], nb.int32[:, :], nb.int8[:, :], nb.float32[:, :], nb.int32)
     )(
         nb.int32,
         nb.int32[:, :],
@@ -377,7 +376,7 @@ def process_chunk_graph(
         nb.int8[:, :, :],
         nb.float32[:, :],
         nb.int32,
-        nb.int64,
+        nb.int32,
         nb.int32,
         nb.int32,
         nb.float32[:, :],

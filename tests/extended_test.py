@@ -24,13 +24,13 @@ def main():
 
     current_dir = os.path.dirname(__file__)
     paths = [
-        os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
-        os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
-        os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
-        os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
+        # os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
+        # os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
+        # os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
+        # os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
         # os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
-        # os.path.join(current_dir, '..', 'Datasets', 'whales.parquet'),
-        # os.path.join(current_dir, '..', 'Datasets', 'quake.parquet'),
+        os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
+        os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
     ]
 
     r_vals_computed = [4, 8, 16, 32, 8, 20, 8]
@@ -39,7 +39,7 @@ def main():
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
-        number_r = number
+        number_r = number + 5
         results = pd.DataFrame(
             columns=[
                 "Dataset",
@@ -103,7 +103,7 @@ def main():
                 dimensionality[number_r],
                 r_vals_computed[number_r],
                 0.5,
-                200,
+                50,  # 200,
                 8,
             )
         end = (time.perf_counter() - start) / 1
@@ -133,7 +133,7 @@ def main():
         rs = [4, 8, 16, 32]
 
         # Testing on hashing
-
+        
         for K in Ks:
             start = time.perf_counter()
             for i in range(1):
@@ -239,14 +239,14 @@ def main():
             gc.collect()
 
         results.to_csv("r_dataset" + str(number_r) + ".csv", index=False)
-
+        
         print("Dataset", number_r, "finished")
         shm_ts.unlink()
 
     # Mem test
     results = pd.DataFrame(columns=["Dataset", "Mem"])
     for number, path in enumerate(paths):
-        number_r = number
+        number_r = number + 5
 
         # Load the dataset
         if number_r == 3:
@@ -293,7 +293,7 @@ def main():
             dimensionality[number_r],
             r_vals_computed[number_r],
             0.5,
-            200,
+            50,  # 200,
             8,
         )
         current, peak = tracemalloc.get_traced_memory()
