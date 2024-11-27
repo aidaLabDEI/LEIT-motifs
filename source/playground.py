@@ -67,18 +67,18 @@ def sum(a_name):
 
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
-    x = np.array([1000, 5000, 10000, 50000])
-    y = np.array([10.42, 40.18, 165.94, 4064.05])
+    x = np.array([5000, 10000, 50000])
+    y = np.array([44.9, 66.62, 224.70])
 
-    svm = SVR(kernel="poly", degree=3)
+    svm = SVR(kernel="linear", degree=2)
     svm.fit(x.reshape(-1, 1), y)
-    print(svm.predict(np.array([500000]).reshape(-1, 1)))
+    print(svm.predict(np.array([6440998]).reshape(-1, 1)))
 
     # Plot the function found by the SVM
 
     x_plot = np.linspace(
-        500, 500000, 1000
-    )  # Generate 1000 points between 500 and 500000
+        5000, 6440998, 1000
+    )  # Generate 1000 points between 5000 and 500000
     y_plot = svm.predict(x_plot.reshape(-1, 1))
 
     # Plot the results

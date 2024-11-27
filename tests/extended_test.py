@@ -133,7 +133,7 @@ def main():
         rs = [4, 8, 16, 32]
 
         # Testing on hashing
-        
+
         for K in Ks:
             start = time.perf_counter()
             for i in range(1):
@@ -239,7 +239,7 @@ def main():
             gc.collect()
 
         results.to_csv("r_dataset" + str(number_r) + ".csv", index=False)
-        
+
         print("Dataset", number_r, "finished")
         shm_ts.unlink()
 

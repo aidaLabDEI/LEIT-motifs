@@ -107,3 +107,6 @@ if __name__ == "__main__":
     fig.supxlabel("discretization parameter r")
     fig.supylabel("Distances computed")
     plt.show()
+
+    # Time complex plots
+    

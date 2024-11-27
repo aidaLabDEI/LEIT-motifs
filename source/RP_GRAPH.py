@@ -242,7 +242,7 @@ def pmotif_findg(
             bin_width,
         )
         stop_val = False
-        confirmations = 0
+        #confirmations = 0
         with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
             futures = [
                 executor.submit(
@@ -282,9 +282,9 @@ def pmotif_findg(
                             print(element[0], stored[0])
                             if element[0] > stored[0]:
                                 top.remove(stored)
-                                confirmations += 1
-                            elif element[0] == stored[0]:
-                                confirmations += 1
+                               # confirmations += 1
+                            #elif element[0] == stored[0]:
+                             #   confirmations += 1
                             else:
                                 add = False
                                 continue
@@ -303,8 +303,7 @@ def pmotif_findg(
                         bin_width,
                         motif_dimensionality,
                     )
-                    if (stop_val or confirmations >= 4) and len(top) >= k:
-                        print(confirmations)
+                    if stop_val and len(top) >=k:#(stop_val or confirmations >= 4) and len(top) >= k:
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
 

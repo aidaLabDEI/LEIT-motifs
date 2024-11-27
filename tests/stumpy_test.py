@@ -18,14 +18,15 @@ if __name__ == "__main__":
         # os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
         # os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
         # os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
-        os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
+        #os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
+        os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
     ]
 
-    windows = [50, 75, 500, 5000, 1000, 300]
+    windows = [50, 75, 500, 5000, 1000, 300, 100]
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
-        number_r = number + 5
+        number_r = number + 6
         # Load the dataset
         if number_r == 3:
             data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(path, 0)
@@ -50,9 +51,9 @@ if __name__ == "__main__":
             data = pd.read_csv(path, sep=r"\s+")
             data = data.drop(data.columns[[0]], axis=1)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float64)
-
+            
         tracemalloc.start()
-        for i in [50000, 100000]:
+        for i in [5000, 10000,50000]:
             d_temp = d[:i]
             print(d_temp.shape)
             start = time.perf_counter()
