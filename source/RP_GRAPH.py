@@ -91,7 +91,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k):
 
 
 def order_hash(
-    hash_mat_name, indices_name, ordered_name, l_current, dimension, num_s, K
+    hash_mat_name, indices_name, ordered_name, dimension, num_s, K
 ):
     for hash_name, indices_n, ordered_n in zip(
         hash_mat_name, indices_name, ordered_name
@@ -115,7 +115,6 @@ def order_hash(
         hash_mat_data.close()
         indices_data.close()
         ordered_data.close()
-    return l_current
 
 
 def pmotif_findg(
@@ -175,7 +174,7 @@ def pmotif_findg(
         # Hasher
         rp = RandomProjection(window, bin_width, K, L)  # []
 
-        chunk_sz = n // (cpu_count() * 2)  # min(int(np.sqrt(n)), 10000)
+        chunk_sz = min(int(np.sqrt(n)), 10000)  # n // (cpu_count() * 2)
         num_chunks = max(1, n // chunk_sz)
 
         chunks = [
@@ -187,14 +186,15 @@ def pmotif_findg(
         st = time.perf_counter()
         with Pool(processes=cpu_count()) as pool:
             pool.starmap(process_chunk_graph, chunks)
-
+            print("Hashing done")
             sizeL = int(np.sqrt(L))
             splitted_hash = np.array_split(hash_container, sizeL)
             splitted_indices = np.array_split(indices_container, sizeL)
             splitted_ordered = np.array_split(ordered_container, sizeL)
 
-            process = [(split, indices, ordered, sizeL, dimension, n - window + 1, K) for split, indices, ordered in zip(splitted_hash, splitted_indices, splitted_ordered)]
+            process = [(split, indices, ordered, dimension, n - window + 1, K) for split, indices, ordered in zip(splitted_hash, splitted_indices, splitted_ordered)]
             pool.starmap(order_hash, process)
+            print("Ordering done")
         # Close the time series otherwise it will be copied in all children processes
         std_container.close()
         mean_container.close()

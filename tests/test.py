@@ -86,6 +86,8 @@ if __name__ == "__main__":
         if dataset == 6:
             # fill nan values with the mean
             d = np.nan_to_num(d, nan=np.nanmean(d))
+        else:
+            d = d.T
         d += np.random.normal(0, 0.01, d.shape)
     else:
         data = pd.read_csv(paths[dataset], sep=r"\s+")
@@ -93,6 +95,7 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
     r = 8  # find_width_discr(d, window_size, K)
+    print(d.shape)
 
     thresh = min(dimensionality / d.shape[1], 0.8)
     dimensions = d.shape[1]
