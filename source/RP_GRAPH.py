@@ -179,50 +179,22 @@ def pmotif_findg(
         num_chunks = max(1, n // chunk_sz)
 
         chunks = [
-            (time_series_name, ranges, window, rp)
+            (time_series_name, ranges, window, rp, hash_container, L, dimension, n, K, mean_container, std_container)
             for ranges in np.array_split(np.arange(n - window + 1), num_chunks)
         ]
 
         # Hash the subsequences and order them lexigraphically
         st = time.perf_counter()
         with Pool(processes=cpu_count()) as pool:
-            results = []
-            ord_results = []
-
-            for chunk in chunks:
-                result = pool.apply_async(
-                    process_chunk_graph,
-                    (
-                        *chunk,
-                        hash_container,
-                        L,
-                        dimension,
-                        n,
-                        K,
-                        mean_container,
-                        std_container,
-                    ),
-                )
-                results.append(result)
-            # Wait for completion
-            for result in results:
-                _ = result.get()
+            pool.starmap(process_chunk_graph, chunks)
 
             sizeL = int(np.sqrt(L))
             splitted_hash = np.array_split(hash_container, sizeL)
             splitted_indices = np.array_split(indices_container, sizeL)
             splitted_ordered = np.array_split(ordered_container, sizeL)
-            for split, indices, ordered in zip(
-                splitted_hash, splitted_indices, splitted_ordered
-            ):
-                result = pool.apply_async(
-                    order_hash,
-                    (split, indices, ordered, sizeL, dimension, n - window + 1, K),
-                )
-                ord_results.append(result)
 
-            for result in ord_results:
-                _ = result.get()
+            process = [(split, indices, ordered, sizeL, dimension, n - window + 1, K) for split, indices, ordered in zip(splitted_hash, splitted_indices, splitted_ordered)]
+            pool.starmap(order_hash, process)
         # Close the time series otherwise it will be copied in all children processes
         std_container.close()
         mean_container.close()

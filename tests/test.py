@@ -117,6 +117,10 @@ if __name__ == "__main__":
     # top_stats = snapshot.statistics('lineno')
 
     print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
+    with open("results.txt", "a") as f:
+        f.write(
+            f"Time elapsed: {end} of which {hash_t} for hashing\nDistance computations: {num_dist}\n"
+        )
     # for stat in top_stats[:10]:
     #   print(stat)
 

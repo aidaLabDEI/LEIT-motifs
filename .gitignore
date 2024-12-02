@@ -1,9 +1,11 @@
 
 /source/__pycache__
+/.ipynb_checkpoints
 /.vscode
 *.pyc
 *.out
 *.svg
+*.wav
 *.code-workspace
 Datasets/CLEAN_House1.csv
 Datasets/*.csv
