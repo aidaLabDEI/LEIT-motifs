@@ -315,54 +315,56 @@ def process_chunk_graph(
 
     # Open all the shared memory objects
     shm_hashes = [
-        shared_memory.SharedMemory(name=hash_name.name) for hash_name in hash_names
+        shared_memory.SharedMemory(name=hash_name) for hash_name in hash_names
     ]
     hash_arrs = [
         np.ndarray((n - window + 1, dimension, K), dtype=np.int8, buffer=shm.buf)
         for shm in shm_hashes
     ]
-    mean_existing_shm = shared_memory.SharedMemory(name=mean.name)
+    mean_existing_shm = shared_memory.SharedMemory(name=mean)
     mean_container = np.ndarray(
         (n - window + 1, dimension), dtype=np.float32, buffer=mean_existing_shm.buf
     )
-    std_existing_shm = shared_memory.SharedMemory(name=std.name)
+    std_existing_shm = shared_memory.SharedMemory(name=std)
     std_container = np.ndarray(
         (n - window + 1, dimension), dtype=np.float32, buffer=std_existing_shm.buf
     )
     exist_ts = shared_memory.SharedMemory(name=time_series_name)
     time_series = np.ndarray((n, dimension), dtype=np.float32, buffer=exist_ts.buf)
+    try:
+        for d in range(dimension):
+            mean_container[ranges[0] : ranges[-1], d] = np.mean(
+                rolling_window(time_series[ranges[0] : ranges[-1] + window - 1, d], window),
+                axis=-1,
+            )
+            std_container[ranges[0] : ranges[-1], d] = np.nanstd(
+                rolling_window(time_series[ranges[0] : ranges[-1] + window - 1, d], window),
+                axis=-1,
+            )
+        for idx in ranges:
+            subsequence = time_series[idx : idx + window]
 
-    # Use bottleneck to compute the mean and standard deviation
-    # print(bn.move_mean(time_series[ranges[0]:ranges[-1]+window], window, axis=0))
-    for d in range(dimension):
-        mean_container[ranges[0] : ranges[-1], d] = np.mean(
-            rolling_window(time_series[ranges[0] : ranges[-1] + window - 1, d], window),
-            axis=-1,
-        )
-        std_container[ranges[0] : ranges[-1], d] = np.nanstd(
-            rolling_window(time_series[ranges[0] : ranges[-1] + window - 1, d], window),
-            axis=-1,
-        )
-    for idx in ranges:
-        subsequence = time_series[idx : idx + window]
+            std_container[idx] = np.where(
+                std_container[idx] == 0, 0.00001, std_container[idx]
+            )
 
-        std_container[idx] = np.where(
-            std_container[idx] == 0, 0.00001, std_container[idx]
-        )
-
-        subsequence_n = (subsequence - mean_container[idx]) / std_container[idx]
-        subsequence_n = np.ascontiguousarray(subsequence_n.T, dtype=np.float32)
-        hashed_sub = multi_compute_hash(
-            subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L
-        )
-        for rep in range(L):
-            hash_arrs[rep][idx] = hashed_sub[rep]
+            subsequence_n = (subsequence - mean_container[idx]) / std_container[idx]
+            subsequence_n = np.ascontiguousarray(subsequence_n.T, dtype=np.float32)
+            hashed_sub = multi_compute_hash(
+                subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L
+            )
+            for rep in range(L):
+                hash_arrs[rep][idx] = hashed_sub[rep]
     # Close all the shared memory objects
-    for shm in shm_hashes:
-        shm.close()
-    exist_ts.close()
-    mean_existing_shm.close()
-    std_existing_shm.close()
+    except Exception as e:
+        print(e)
+    finally:
+        for shm in shm_hashes:
+            shm.close()
+        exist_ts.close()
+        mean_existing_shm.close()
+        std_existing_shm.close()
+    #print("Finished processing chunk", ranges[0], ranges[-1])
     # return True
 
 

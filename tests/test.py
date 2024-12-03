@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 import matplotlib
 from scipy.signal import savgol_filter
 
-import tracemalloc
 
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
@@ -51,6 +50,7 @@ if __name__ == "__main__":
         "Datasets/CLEAN_House1.csv",
         "Datasets/whales.parquet",
         "Datasets/quake.parquet",
+        "Datasets/steamgen.csv"
     ]
     d = None
 
@@ -70,13 +70,9 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
         # Add some noise to remove step-like patterns
         d += np.random.normal(0, 0.1, d.shape)
-    elif dataset == 3:
+    elif dataset == 3 or dataset == 7:
         data = pd.read_csv(paths[dataset], dtype=np.float32)
-        d = (
-            np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
-            if dataset == 3
-            else np.ascontiguousarray(data.to_numpy().T, dtype=np.float32)
-        )
+        d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
         # if dataset != 3:
         # Add some noise to remove step-like patterns
         d += np.random.normal(0, 0.01, d.shape)
@@ -87,7 +83,7 @@ if __name__ == "__main__":
             # fill nan values with the mean
             d = np.nan_to_num(d, nan=np.nanmean(d))
         else:
-            d = d.T
+            d = d.T2
         d += np.random.normal(0, 0.01, d.shape)
     else:
         data = pd.read_csv(paths[dataset], sep=r"\s+")
@@ -96,7 +92,6 @@ if __name__ == "__main__":
     del data
     r = 8  # find_width_discr(d, window_size, K)
     print(d.shape)
-
     thresh = min(dimensionality / d.shape[1], 0.8)
     dimensions = d.shape[1]
     n = d.shape[0]
@@ -104,7 +99,7 @@ if __name__ == "__main__":
     ts[:] = d[:]
     del d
     # Start the timer
-    tracemalloc.start()
+    #tracemalloc.start()
     start = time.perf_counter()
     # Find the motifs
     # for i in range(5):
@@ -115,11 +110,11 @@ if __name__ == "__main__":
     end = time.perf_counter() - start
     print("Time elapsed: ", end, "of which", hash_t, "for hashing")
     print("Distance computations:", num_dist)
-    size, peak = tracemalloc.get_traced_memory()
+    #size, peak = tracemalloc.get_traced_memory()
     # snapshot = tracemalloc.take_snapshot()
     # top_stats = snapshot.statistics('lineno')
 
-    print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
+    #print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
     with open("results.txt", "a") as f:
         f.write(
             f"Time elapsed: {end} of which {hash_t} for hashing\nDistance computations: {num_dist}\n"

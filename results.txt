@@ -1,0 +1,74 @@
+Time elapsed: 2.4076164178550243 of which 1.0846157623454928 for hashing
+Distance computations: 718
+Time elapsed: 2.360528238117695 of which 1.0661406582221389 for hashing
+Distance computations: 816
+Time elapsed: 2.4762198515236378 of which 0.9749797116965055 for hashing
+Distance computations: 1080
+Time elapsed: 2.3514426853507757 of which 0.9384955028072 for hashing
+Distance computations: 836
+Time elapsed: 6.353517537936568 of which 3.0549907507374883 for hashing
+Distance computations: 690
+Time elapsed: 6.4366766614839435 of which 3.2397936983034015 for hashing
+Distance computations: 736
+Time elapsed: 39.31779403984547 of which 16.486911034211516 for hashing
+Distance computations: 268322
+Time elapsed: 36.013447182253 of which 16.48971656244248 for hashing
+Distance computations: 211210
+Time elapsed: 221.02221288718283 of which 78.59442329779267 for hashing
+Distance computations: 0
+Time elapsed: 2213.2105591222644 of which 140.65009039547294 for hashing
+Distance computations: 0
+Time elapsed: 5.1957722986117005 of which 1.979876335710287 for hashing
+Distance computations: 1056
+Time elapsed: 13.168502965942025 of which 2.185070055536926 for hashing
+Distance computations: 1818276
+Time elapsed: 6.431774113327265 of which 3.1498400326818228 for hashing
+Distance computations: 1060
+Time elapsed: 6.36042542476207 of which 3.0997660970315337 for hashing
+Distance computations: 754
+Time elapsed: 6.25368997361511 of which 3.1095562390983105 for hashing
+Distance computations: 752
+Time elapsed: 128.08326989598572 of which 123.8260676888749 for hashing
+Distance computations: 0
+Time elapsed: 6.3044476341456175 of which 3.144460102543235 for hashing
+Distance computations: 718
+Time elapsed: 6.350008497014642 of which 3.0761029543355107 for hashing
+Distance computations: 860
+Time elapsed: 3.3285958655178547 of which 0 for hashing
+Distance computations: 0
+Time elapsed: 6.268948692828417 of which 3.053901727311313 for hashing
+Distance computations: 1275
+Time elapsed: 9.27663507591933 of which 6.050764064304531 for hashing
+Distance computations: 626
+Time elapsed: 6.362433332018554 of which 3.124056724831462 for hashing
+Distance computations: 476
+Time elapsed: 6.414338769391179 of which 3.287875611335039 for hashing
+Distance computations: 378
+Time elapsed: 18.597484621219337 of which 15.198160191997886 for hashing
+Distance computations: 794
+Time elapsed: 27.40481359511614 of which 16.671601491048932 for hashing
+Distance computations: 862
+Time elapsed: 6.303854311816394 of which 3.1183519829064608 for hashing
+Distance computations: 810
+Time elapsed: 6.17687127366662 of which 3.0882718274369836 for hashing
+Distance computations: 602
+Time elapsed: 6.070261080749333 of which 3.0517911640927196 for hashing
+Distance computations: 515
+Time elapsed: 6.165257490240037 of which 3.102311928756535 for hashing
+Distance computations: 700
+Time elapsed: 6.113510985858738 of which 3.01528375223279 for hashing
+Distance computations: 466
+Time elapsed: 6.2617671843618155 of which 3.079413153231144 for hashing
+Distance computations: 7
+Time elapsed: 6.275992035865784 of which 3.096721760928631 for hashing
+Distance computations: 3
+Time elapsed: 6.130777641199529 of which 3.1056763995438814 for hashing
+Distance computations: 748
+Time elapsed: 7.586567849852145 of which 4.034002482891083 for hashing
+Distance computations: 1063985
+Time elapsed: 7.418119839392602 of which 4.028625437989831 for hashing
+Distance computations: 647598
+Time elapsed: 7.611331325024366 of which 4.0918670473620296 for hashing
+Distance computations: 955972
+Time elapsed: 9.56112590432167 of which 4.027493371628225 for hashing
+Distance computations: 476669

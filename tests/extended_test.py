@@ -12,7 +12,6 @@ from data_loader import convert_tsf_to_dataframe
 from base import create_shared_array
 from scipy.signal import savgol_filter
 import gc
-import tracemalloc
 
 
 def main():
@@ -29,17 +28,17 @@ def main():
         # os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
         # os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
         # os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
-        os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
+        #os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
         os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
     ]
 
-    r_vals_computed = [4, 8, 16, 32, 8, 20, 8]
-    windows = [50, 75, 500, 5000, 1000, 200, 150]
-    dimensionality = [8, 2, 4, 2, 6, 4, 3]
+    r_vals_computed = [4, 8, 16, 32, 8, 16, 8]
+    windows = [50, 75, 500, 5000, 1000, 200, 100]
+    dimensionality = [8, 2, 4, 2, 6, 4, 2]
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
-        number_r = number + 5
+        number_r = number + 6
         results = pd.DataFrame(
             columns=[
                 "Dataset",
@@ -78,6 +77,8 @@ def main():
             if number_r == 6:
                 # fill nan values with the mean
                 d = np.nan_to_num(d, nan=np.nanmean(d))
+            else:
+                d = d.T
             d += np.random.normal(0, 0.01, d.shape)
         else:
             data = pd.read_csv(path, sep=r"\s+")
@@ -94,6 +95,19 @@ def main():
         print("Starting")
         start = time.perf_counter()
         for i in range(1):
+            if number_r == 6:
+                motifs, num_dist, _ = pmotif_findg(
+                    shm_ts.name,
+                    n,
+                    dimensions,
+                    windows[number_r],
+                    1,
+                    dimensionality[number_r],
+                    r_vals_computed[number_r],
+                    0.5,
+                    50,
+                    8,
+                )
             motifs, num_dist, _ = pmotif_findg(
                 shm_ts.name,
                 n,
@@ -103,7 +117,7 @@ def main():
                 dimensionality[number_r],
                 r_vals_computed[number_r],
                 0.5,
-                50,  # 200,
+                200,
                 8,
             )
         end = (time.perf_counter() - start) / 1
@@ -127,11 +141,11 @@ def main():
         results = results._append(temp_df, ignore_index=True)
         results.to_csv("p1" + str(number_r) + ".csv", index=False)
         gc.collect()
-
+        """
         Ks = [4, 8, 12, 16]
         Ls = [10, 50, 100, 150, 200, 400]
         rs = [4, 8, 16, 32]
-
+        
         # Testing on hashing
 
         for K in Ks:
@@ -302,7 +316,7 @@ def main():
         results = results._append(temp_df, ignore_index=True)
 
     results.to_csv("Mem_results.csv", index=False)
-
+        """
     # Fail.to_csv('Failures2.csv', index=False)
     # Noise.to_csv('Noise.csv', index=False)
 

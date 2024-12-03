@@ -10,7 +10,7 @@ class RandomProjection:
         self.K = K
         self.L = L
         np.random.seed(random_state)
-        sqrt_L = int(np.sqrt(L))
+        sqrt_L = int(np.ceil((np.sqrt(L))))
         K_half = K // 2
 
         # Generate sqrt(L) sets of K/2 random vectors and values for tensoring
@@ -36,7 +36,7 @@ class RandomProjection:
 
 @jit(nopython=True, cache=True, fastmath=True)
 def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
-    sqrt_L = int(np.sqrt(L))
+    sqrt_L = np.ceil((np.sqrt(L)))
     K_half = K // 2
     hash_left_all = np.empty((sqrt_L, K_half), dtype=np.int8)
     hash_right_all = np.empty((sqrt_L, K_half), dtype=np.int8)
@@ -69,7 +69,7 @@ def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
 @jit(nopython=True, cache=True, fastmath=True)
 def multi_compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
     dim = data.shape[0]
-    sqrt_L = int(np.sqrt(L))
+    sqrt_L = int(np.ceil((np.sqrt(L))))
     K_half = K // 2
     hash_left_all = np.empty((dim, sqrt_L, K_half), dtype=np.int8)
     hash_right_all = np.empty((dim, sqrt_L, K_half), dtype=np.int8)

@@ -10,7 +10,8 @@ import numpy as np
 import queue
 import itertools
 import bisect
-from multiprocessing import Pool, cpu_count
+from multiprocessing import cpu_count
+import multiprocessing
 from concurrent.futures import as_completed, ProcessPoolExecutor
 from hash_lsh import RandomProjection
 import time
@@ -45,9 +46,9 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k):
         (n - window + 1, dimensionality), dtype=np.float32, buffer=stds_ex.buf
     )
     # Ordered hashes, ordering indices and unordered hashes
-    existing_arr = shared_memory.SharedMemory(name=ordered_name.name)
-    existing_ord = shared_memory.SharedMemory(name=ordering_name.name)
-    existing_hash = shared_memory.SharedMemory(name=hash_mat_name.name)
+    existing_arr = shared_memory.SharedMemory(name=ordered_name)
+    existing_ord = shared_memory.SharedMemory(name=ordering_name)
+    existing_hash = shared_memory.SharedMemory(name=hash_mat_name)
     hash_mat = np.ndarray(
         (n - window + 1, dimensionality, K), dtype=np.int8, buffer=existing_arr.buf
     )
@@ -90,21 +91,16 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k):
     return top.queue, dist_comp, i, j  # , counter
 
 
-def order_hash(
-    hash_mat_name, indices_name, ordered_name, dimension, num_s, K
-):
-    for hash_name, indices_n, ordered_n in zip(
-        hash_mat_name, indices_name, ordered_name
-    ):
-        hash_mat_data = shared_memory.SharedMemory(name=hash_name.name)
+def order_hash(hash_mat_name, indices_name, ordered_name, dimension, num_s, K):
+        hash_mat_data = shared_memory.SharedMemory(name=hash_mat_name)
         hash_mat = np.ndarray(
             (num_s, dimension, K), dtype=np.int8, buffer=hash_mat_data.buf
         )
-        indices_data = shared_memory.SharedMemory(name=indices_n.name)
+        indices_data = shared_memory.SharedMemory(name=indices_name)
         indices = np.ndarray(
             (dimension, num_s), dtype=np.int32, buffer=indices_data.buf
         )
-        ordered_data = shared_memory.SharedMemory(name=ordered_n.name)
+        ordered_data = shared_memory.SharedMemory(name=ordered_name)
         ordered = np.ndarray(
             (num_s, dimension, K), dtype=np.int8, buffer=ordered_data.buf
         )
@@ -115,6 +111,7 @@ def order_hash(
         hash_mat_data.close()
         indices_data.close()
         ordered_data.close()
+        return True
 
 
 def pmotif_findg(
@@ -151,6 +148,7 @@ def pmotif_findg(
     # Data
     try:
         top = []
+        hash_t = 0
         std_container, _ = create_shared_array(
             (n - window + 1, dimension), dtype=np.float32
         )
@@ -160,47 +158,74 @@ def pmotif_findg(
         indices_container = []
         hash_container = []
         ordered_container = []
+        close_container = []
 
         # Create shared memory for everything
         for _ in range(L):
             arrn, _ = create_shared_array((n - window + 1, dimension, K), dtype=np.int8)
-            hash_container.append(arrn)
+            hash_container.append(arrn.name)
             arro, _ = create_shared_array((n - window + 1, dimension, K), dtype=np.int8)
-            ordered_container.append(arro)
+            ordered_container.append(arro.name)
             arri, _ = create_shared_array((dimension, n - window + 1), dtype=np.int32)
-            indices_container.append(arri)
+            indices_container.append(arri.name)
+            close_container.append(arrn)
+            close_container.append(arro)
+            close_container.append(arri)
 
         dist_comp = 0
         # Hasher
         rp = RandomProjection(window, bin_width, K, L)  # []
 
-        chunk_sz = min(int(np.sqrt(n)), 10000)  # n // (cpu_count() * 2)
+        chunk_sz = min(int(np.sqrt(n)), 1000)  # n // (cpu_count() * 2)
         num_chunks = max(1, n // chunk_sz)
 
         chunks = [
-            (time_series_name, ranges, window, rp, hash_container, L, dimension, n, K, mean_container, std_container)
+            (
+                time_series_name,
+                ranges,
+                window,
+                rp,
+                hash_container,
+                L,
+                dimension,
+                n,
+                K,
+                mean_container.name,
+                std_container.name,
+            )
             for ranges in np.array_split(np.arange(n - window + 1), num_chunks)
         ]
 
         # Hash the subsequences and order them lexigraphically
         st = time.perf_counter()
-        with Pool(processes=cpu_count()) as pool:
-            pool.starmap(process_chunk_graph, chunks)
-            print("Hashing done")
-            sizeL = int(np.sqrt(L))
-            splitted_hash = np.array_split(hash_container, sizeL)
-            splitted_indices = np.array_split(indices_container, sizeL)
-            splitted_ordered = np.array_split(ordered_container, sizeL)
+        with ProcessPoolExecutor(max_workers=cpu_count(), mp_context = multiprocessing.get_context("forkserver")) as pool:
+            #pool.map(process_chunk_graph, chunks)
+            results = [pool.submit(process_chunk_graph, *chunk) for chunk in chunks]
+            for future in as_completed(results):
+                try:
+                    future.result()
+                except KeyboardInterrupt:
+                    pool.shutdown(wait=False, cancel_futures=True)
+            print("Hashed")        
 
-            process = [(split, indices, ordered, dimension, n - window + 1, K) for split, indices, ordered in zip(splitted_hash, splitted_indices, splitted_ordered)]
-            pool.starmap(order_hash, process)
-            print("Ordering done")
+            data = [ (split, indices, ordered, dimension, n - window + 1, K)
+                for split, indices, ordered in zip(
+                    hash_container, indices_container, ordered_container
+                )]
+            results = [pool.submit(order_hash, *da) for da in data]
+            for future in as_completed(results):
+                    try:
+                        _ = future.result()
+                        #future.result()
+                    except KeyboardInterrupt:
+                        pool.shutdown(wait=False, cancel_futures=True)
+            print("Ordered")
         # Close the time series otherwise it will be copied in all children processes
         std_container.close()
         mean_container.close()
         del chunks
         hash_t = time.perf_counter() - st
-        print("Hashing time: ", hash_t)
+        #print("Hashing time: ", hash_t)
         windowed_ts = WindowedTS(
             time_series_name,
             n,
@@ -214,8 +239,8 @@ def pmotif_findg(
             bin_width,
         )
         stop_val = False
-        #confirmations = 0
-        with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
+        # confirmations = 0
+        with ProcessPoolExecutor(max_workers=cpu_count(), mp_context = multiprocessing.get_context("forkserver")) as executor:
             futures = [
                 executor.submit(
                     worker,
@@ -251,12 +276,12 @@ def pmotif_findg(
                             or (abs(indices_1_1 - indices_2_0) < window)
                             or (abs(indices_1_1 - indices_2_1) < window)
                         ):
-                            print(element[0], stored[0])
+                            #print(element[0], stored[0])
                             if element[0] > stored[0]:
                                 top.remove(stored)
-                               # confirmations += 1
-                            #elif element[0] == stored[0]:
-                             #   confirmations += 1
+                            # confirmations += 1
+                            # elif element[0] == stored[0]:
+                            #   confirmations += 1
                             else:
                                 add = False
                                 continue
@@ -275,25 +300,21 @@ def pmotif_findg(
                         bin_width,
                         motif_dimensionality,
                     )
-                    if stop_val and len(top) >=k:#(stop_val or confirmations >= 4) and len(top) >= k:
+                    if (
+                        stop_val and len(top) >= k
+                    ):  # (stop_val or confirmations >= 4) and len(top) >= k:
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
-
+        return top, dist_comp, hash_t
     except (KeyboardInterrupt, FileNotFoundError, OSError):
-        pass
+        return [], 0, 0
     finally:
         # pr.disable()
         # pr.print_stats(sort='cumtime')
-        # Close all the shared memory
-        for arr in hash_container:
-            arr.close()
-            arr.unlink()
-        for arr in indices_container:
-            arr.close()
-            arr.unlink()
-        for arr in ordered_container:
+        # Close all the shared memory 
+        for arr in close_container:
             arr.close()
             arr.unlink()
         mean_container.unlink()
         std_container.unlink()
-    return top, dist_comp, hash_t
+

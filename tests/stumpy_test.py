@@ -18,8 +18,8 @@ if __name__ == "__main__":
         # os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
         # os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
         # os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
-        #os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
-        os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
+        os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
+       # os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
     ]
 
     windows = [50, 75, 500, 5000, 1000, 300, 100]
@@ -54,7 +54,7 @@ if __name__ == "__main__":
             
         tracemalloc.start()
         for i in [5000, 10000,50000]:
-            d_temp = d[:i]
+            d_temp = d[:,:i].T
             print(d_temp.shape)
             start = time.perf_counter()
             m = stumpy.mstump(d_temp.T, windows[number])
