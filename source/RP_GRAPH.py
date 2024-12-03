@@ -206,7 +206,7 @@ def pmotif_findg(
                     future.result()
                 except KeyboardInterrupt:
                     pool.shutdown(wait=False, cancel_futures=True)
-            print("Hashed")        
+            print("Hashed")    
 
             data = [ (split, indices, ordered, dimension, n - window + 1, K)
                 for split, indices, ordered in zip(

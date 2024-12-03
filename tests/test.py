@@ -90,7 +90,7 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 8  # find_width_discr(d, window_size, K)
+    r = 16  # find_width_discr(d, window_size, K)
     print(d.shape)
     thresh = min(dimensionality / d.shape[1], 0.8)
     dimensions = d.shape[1]

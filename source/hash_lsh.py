@@ -76,7 +76,7 @@ def multi_compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
     hash_values = np.empty((L, dim, K), dtype=np.int8)
 
     # Compute the K/2 hashes for both collections
-    for d in prange(dim):
+    for d in range(dim):
         for l_idx in range(sqrt_L):
             for i in range(K_half):
                 hash_left_all[d, l_idx, i] = (
@@ -90,14 +90,13 @@ def multi_compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
                 # hash_right_all[d,l_idx, i] = np.floor(projection_r)
 
     # Interleave the results to get final L hashes of length K
-    for d in prange(dim):
+    for d in range(dim):
         for j in range(L):
             l_idx = j // sqrt_L
             r_idx = j % sqrt_L
 
             hash_left = hash_left_all[d, l_idx]
             hash_right = hash_right_all[d, r_idx]
-
             hash_values[j, d, 0::2] = hash_left
             hash_values[j, d, 1::2] = hash_right
 

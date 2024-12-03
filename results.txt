@@ -72,3 +72,25 @@ Time elapsed: 7.611331325024366 of which 4.0918670473620296 for hashing
 Distance computations: 955972
 Time elapsed: 9.56112590432167 of which 4.027493371628225 for hashing
 Distance computations: 476669
+Time elapsed: 9.446648320183158 of which 4.037143666297197 for hashing
+Distance computations: 518672
+Time elapsed: 7.595031230710447 of which 2.9740568678826094 for hashing
+Distance computations: 423467
+Time elapsed: 7.261550442315638 of which 2.9839301938191056 for hashing
+Distance computations: 213933
+Time elapsed: 11.530525897629559 of which 0 for hashing
+Distance computations: 0
+Time elapsed: 10.187082783319056 of which 0 for hashing
+Distance computations: 0
+Time elapsed: 25.477516177110374 of which 0 for hashing
+Distance computations: 0
+Time elapsed: 89.12035467941314 of which 0 for hashing
+Distance computations: 0
+Time elapsed: 145.39510170463473 of which 0 for hashing
+Distance computations: 0
+Time elapsed: 7.367838914506137 of which 4.120491792447865 for hashing
+Distance computations: 53646
+Time elapsed: 8.165379633195698 of which 4.562964318320155 for hashing
+Distance computations: 183
+Time elapsed: 9.117704490199685 of which 5.525726690888405 for hashing
+Distance computations: 188
