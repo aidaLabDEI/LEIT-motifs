@@ -10,6 +10,7 @@ from RP_GRAPH import pmotif_findg
 import time
 import pandas as pd
 import numpy as np
+import wfdb
 from data_loader import convert_tsf_to_dataframe
 from base import create_shared_array
 
@@ -50,7 +51,8 @@ if __name__ == "__main__":
         "Datasets/CLEAN_House1.csv",
         "Datasets/whales.parquet",
         "Datasets/quake.parquet",
-        "Datasets/steamgen.csv"
+        "Datasets/steamgen.csv",
+        "Datasets/FL010"
     ]
     d = None
 
@@ -65,7 +67,7 @@ if __name__ == "__main__":
         # Apply a savgol filter to the data
         d = savgol_filter(d, 300, 1, axis=0)
     elif dataset == 4:
-        data = pd.read_csv(paths[dataset], dtype=np.float32)
+        data = pd.read_csv(paths[dataset])
         data = data.drop(["Time", "Unix", "Issues"], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
         # Add some noise to remove step-like patterns
@@ -85,6 +87,8 @@ if __name__ == "__main__":
         else:
             d = d.T2
         d += np.random.normal(0, 0.01, d.shape)
+    elif dataset == 8:
+        d, data = wfdb.rdsamp(paths[dataset])
     else:
         data = pd.read_csv(paths[dataset], sep=r"\s+")
         data = data.drop(data.columns[[0]], axis=1)
@@ -139,7 +143,7 @@ if __name__ == "__main__":
         "gray",
         "purple",
     ]
-    fig, axs = plt.subplots(dimensions, 1, sharex=True)
+    fig, axs = plt.subplots(dimensions, 1, sharex=True, layout = 'constrained')
     X = pd.DataFrame(ts)
     for i, dimension in enumerate(X.columns):
         axs[i].plot(X[dimension], label=dimension, linewidth=1.2, color="#6263e0")

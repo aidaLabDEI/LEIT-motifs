@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # FInd the different values in the first column
     ds_values = data["Dataset"].unique()
     r = [4, 8, 16, 32]
-    r_dc = [0, 0, 0, 0]
+    r_dc = [6, 8, 16, 32]
 
     # Create a plot with ds_values subplots
     fig, axs = plt.subplots(2, 2, figsize=(10, 10), sharex=True)
