@@ -2,18 +2,21 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import matplotlib
+from matplotlib.ticker import ScalarFormatter
 
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
+    xfmt = ScalarFormatter()
+    xfmt.set_scientific(True)
+    xfmt.set_powerlimits((1,2))
     names = ["potentials", "evaporator", "RUTH", "weather", "whales"]
-
+    r"""
     # !!!K plots
     data = pd.read_csv("results/K_results.csv")
     # FInd the different values in the first column
     ds_values = data["Dataset"].unique()
-
     # Create a plot with ds_values subplots
-    fig, axs = plt.subplots(2, 2, figsize=(10, 10), sharex=True)
+    fig, axs = plt.subplots(2, 2, figsize=(10, 5), sharex=True, layout="constrained")
     for i, ds_val in enumerate(ds_values):
         # Get the data for the current value
         K_data = data[data["Dataset"] == ds_val]
@@ -41,7 +44,7 @@ if __name__ == "__main__":
     ds_values = data["Dataset"].unique()
 
     # Create a plot with ds_values subplots
-    fig, axs = plt.subplots(2, 2, figsize=(10, 10), sharex=True)
+    fig, axs = plt.subplots(2, 2, figsize=(10, 5), sharex=True, layout="constrained")
     for i, ds_val in enumerate(ds_values):
         # Get the data for the current value
         L_data = data[data["Dataset"] == ds_val]
@@ -74,38 +77,34 @@ if __name__ == "__main__":
     fig.supxlabel("Repetitions")
     fig.supylabel("Time elapsed (s)")
     plt.show()
-
+    """
     # !!!r plots
     data = pd.read_csv("results/R_results.csv")
     # FInd the different values in the first column
     ds_values = data["Dataset"].unique()
     r = [4, 8, 16, 32]
-    r_dc = [6, 8, 16, 32]
+    r_dc = [6, 8, 15, 32]
+    r_dist = [16, 312, 212, 38106]
 
     # Create a plot with ds_values subplots
-    fig, axs = plt.subplots(2, 2, figsize=(10, 10), sharex=True)
+    fig, axs = plt.subplots(2, 2, figsize=(10, 5), sharex=True, layout="constrained")
     for i, ds_val in enumerate(ds_values):
         # Get the data for the current value
         r_data = data[data["Dataset"] == ds_val]
-        axs[i // 2, i % 2].fill_between(
-            r_data["r"], r_data["dist_computed"], color="coral", alpha=0.4
-        )
-        axs[i // 2, i % 2].plot(
-            r_data["r"],
-            r_data["dist_computed"],
-            color="firebrick",
-            alpha=0.6,
-            linewidth=1.2,
-            marker="o",
-        )
+        sns.lineplot(data=r_data, x="r", y="dist_computed", color= "coral", ax=axs[i // 2, i % 2])
+
         axs[i // 2, i % 2].vlines(
-            r[i], 0, r_dc[i], linestyle="dotted", color="crimson", label="tuned r"
+            r_dc[i], 0, r_dist[i], linestyle="dotted", color="crimson"
         )
+        axs[i//2, i%2].scatter(r_dc[i], r_dist[i], color="crimson", zorder=5, s=50, label="Self-tuned r")
         axs[i // 2, i % 2].set_title(names[i])
+        axs[i//2,i%2].yaxis.set_major_formatter(xfmt)
+        
+    plt.legend()
     sns.despine(offset=1, trim=False)
     sns.set_context("paper")
     fig.supxlabel("discretization parameter r")
-    fig.supylabel("Distances computed")
+    fig.supylabel("Compared couples")
     plt.show()
 
     # Time complex plots

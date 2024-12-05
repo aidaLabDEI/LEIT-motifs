@@ -104,3 +104,5 @@ Time elapsed: 6.355848580598831 of which 3.0043671941384673 for hashing
 Distance computations: 904
 Time elapsed: 6.307945467531681 of which 3.0190037339925766 for hashing
 Distance computations: 952
+Time elapsed: 8.115389198996127 of which 4.481412015855312 for hashing
+Distance computations: 184

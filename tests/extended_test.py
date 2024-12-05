@@ -1,3 +1,4 @@
+from itertools import product
 import os
 import sys
 
@@ -25,11 +26,11 @@ def main():
     paths = [
         # os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
         # os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
-        # os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
-        # os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
+         os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
+         os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
         # os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
-        #os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
-        os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
+        # os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
+        # os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
     ]
 
     r_vals_computed = [4, 8, 16, 32, 8, 16, 8]
@@ -38,7 +39,7 @@ def main():
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
-        number_r = number + 6
+        number_r = number +2
         results = pd.DataFrame(
             columns=[
                 "Dataset",
@@ -89,6 +90,7 @@ def main():
         shm_ts, ts = create_shared_array((n, dimensions), np.float32)
         ts[:] = d[:]
         del d
+
         if number_r == 0:
             # lauch a computation just to compile numba
             pmotif_findg(shm_ts.name, n, dimensions, 50, 1, 8, 8, 0, 10, 8)
@@ -141,7 +143,7 @@ def main():
         results = results._append(temp_df, ignore_index=True)
         results.to_csv("p1" + str(number_r) + ".csv", index=False)
         gc.collect()
-        """
+
         Ks = [4, 8, 12, 16]
         Ls = [10, 50, 100, 150, 200, 400]
         rs = [4, 8, 16, 32]
@@ -218,8 +220,7 @@ def main():
             gc.collect()
         print("L fin")
         results.to_csv("r_partial_dataset" + str(number_r) + ".csv", index=False)
-
-        for r in rs:
+        for _, r in product(range(3),rs):
             start = time.perf_counter()
             for i in range(1):
                 motifs, num_dist, _ = pmotif_findg(
@@ -256,7 +257,7 @@ def main():
 
         print("Dataset", number_r, "finished")
         shm_ts.unlink()
-
+    r"""
     # Mem test
     results = pd.DataFrame(columns=["Dataset", "Mem"])
     for number, path in enumerate(paths):
@@ -316,7 +317,7 @@ def main():
         results = results._append(temp_df, ignore_index=True)
 
     results.to_csv("Mem_results.csv", index=False)
-        """
+    """
     # Fail.to_csv('Failures2.csv', index=False)
     # Noise.to_csv('Noise.csv', index=False)
 
