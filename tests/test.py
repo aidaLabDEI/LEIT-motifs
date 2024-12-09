@@ -4,7 +4,7 @@ sys.path.append("external_dependecies")
 sys.path.append("source")
 # from RP_MH import pmotif_find2
 # from RP_DC import pmotif_find3
-from RP_GRAPH import pmotif_findg
+from RP_GRAPH import pmotif_findg, pmotif_findg_multi
 
 # from RPG_CF import pmotif_findauto
 import time
@@ -30,18 +30,28 @@ if __name__ == "__main__":
     # 3: RUTH.csv
     if len(sys.argv) < 6:
         print(
-            "Usage: python test.py <dataset> <window_size> <dimensionality_motif> <K> <L> <device>"
+            "Usage: python test.py <dataset> <window_size> <ranged search 0/1> <range_low_motif_dimensionality> <optional><range_high_motif_dimensionality> <K> <L> <device>"
         )
         sys.exit(1)
     dataset = int(sys.argv[1])
     window_size = int(sys.argv[2])
-    dimensionality = int(sys.argv[3])
-    K = int(sys.argv[4])
-    L = int(sys.argv[5])
-    if len(sys.argv) == 7:
-        device = int(sys.argv[6])
+    ranged = int(sys.argv[3])
+    if ranged:
+            dimensionality = (int(sys.argv[4]), int(sys.argv[5]))
+            K = int(sys.argv[6])
+            L = int(sys.argv[7])
+            if len(sys.argv) == 9:
+                device = int(sys.argv[8])
+            else:
+                device = 0
     else:
-        device = 0
+            dimensionality = int(sys.argv[4])
+            K = int(sys.argv[5])
+            L = int(sys.argv[6])
+            if len(sys.argv) == 8:
+                device = int(sys.argv[7])
+            else:
+                device = 0
 
     paths = [
         "Datasets/FOETAL_ECG.dat",
@@ -95,9 +105,9 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 4  # find_width_discr(d, window_size, K)
+    r = 8  # find_width_discr(d, window_size, K)
     print(d.shape)
-    thresh = min(dimensionality / d.shape[1], 0.8)
+    thresh = 0
     dimensions = d.shape[1]
     n = d.shape[0]
     shm_ts, ts = create_shared_array((n, dimensions), np.float32)
@@ -108,9 +118,14 @@ if __name__ == "__main__":
     start = time.perf_counter()
     # Find the motifs
     # for i in range(5):
-    motifs, num_dist, hash_t = pmotif_findg(
-        shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K
-    )
+    if ranged:
+        motifs, num_dist, hash_t = pmotif_findg_multi(
+            shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K
+        )
+    else:
+        motifs, num_dist, hash_t = pmotif_findg(
+            shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K
+        )
 
     end = time.perf_counter() - start
     print("Time elapsed: ", end, "of which", hash_t, "for hashing")
@@ -144,28 +159,35 @@ if __name__ == "__main__":
         "gray",
         "purple",
     ]
+    rng = np.random.default_rng(seed=42)
     fig, axs = plt.subplots(dimensions, 1, sharex=True, layout = 'constrained')
     X = pd.DataFrame(ts)
     for i, dimension in enumerate(X.columns):
         axs[i].plot(X[dimension], label=dimension, linewidth=1.2, color="#6263e0")
         axs[i].set_axis_off()
-        # axs[i].set_xlabel("Time")
-        # axs[i].set_ylabel("Dimension " + str(dimension))
-        # axs[i].legend()
-        for idx, motif in enumerate(motifs):
-            # Highlight the motifs in all dimensions
-            for m in motif[1][1]:
-                if i in motif[1][2]:
-                    axs[i].plot(
-                        X[dimension].iloc[m : m + window_size],
-                        color=colors[idx],
-                        linewidth=1.8,
-                        alpha=0.7,
-                    )
-                    # axs[i].axvspan(m, m + window_size, color=colors[idx], alpha=0.3)
-    # plt.axis('off')
-    # plt.suptitle("MultiDimensional Timeseries with Motifs Highlighted")
-    # plt.tight_layout(rect=[0, 0, 1, 0.96])
+        if ranged:
+            for j,dim_mot in enumerate(motifs):
+                for idx, motif in enumerate(dim_mot):
+                    # Highlight the motifs in all dimensions
+                    for m in motif[1][1]:
+                        if i in motif[1][2]:
+                            axs[i].plot(
+                                X[dimension].iloc[m : m + window_size],
+                                color=colors[(idx+j)%len(colors)],
+                                linewidth=1.8,
+                                alpha=0.7,
+                            )
+        else:
+            for idx, motif in enumerate(motifs):
+            # Highlight the motifs in all dimensions it appears
+                for m in motif[1][1]:
+                    if i in motif[1][2]:
+                        axs[i].plot(
+                            X[dimension].iloc[m : m + window_size],
+                            color=colors[idx],
+                            linewidth=1.8,
+                            alpha=0.7,
+                        )
     if device == 1:
         plt.savefig("motifs.svg", format="svg")
     else:

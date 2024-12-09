@@ -183,6 +183,61 @@ def z_normalized_euclidean_distanceg(
     return sum, indices.astype(np.int8), squared_diff_sum
 
 
+@jit(
+    nb.types.Tuple((nb.int8[:], nb.float32[:]))(
+        nb.float32[:, :],
+        nb.float32[:, :],
+        nb.float32[:],
+        nb.float32[:],
+        nb.float32[:],
+        nb.float32[:],
+    ),
+    nopython=True,
+    cache=True,
+    fastmath=True,
+)
+def z_normalized_euclidean_distancegmulti(
+    ts1, ts2, mean_ts1, std_ts1, mean_ts2, std_ts2
+):
+    """
+    Compute the z-normalized Euclidean distance between two subsequences, if a dimensionality is specified the algorithm
+    will find the set of dimensions that minimize the distance.
+
+    Parameters:
+    ts1 (ndarray): The first subsequence.
+    ts2 (ndarray): The second subsequence.
+    indices (ndarray): The indices of the dimensions to consider.
+    mean_ts1 (ndarray): The mean values of the first subsequence.
+    std_ts1 (ndarray): The standard deviation values of the first subsequence.
+    mean_ts2 (ndarray): The mean values of the second subsequence.
+    std_ts2 (ndarray): The standard deviation values of the second subsequence.
+    dimensionality (int, optional): The dimensionality of the result.
+
+    Returns:
+    tuple: A tuple containing the indices of the ordered dimensions and distances.
+
+    Raises:
+    ValueError: If the subsequences have different dimensions.
+
+    """
+    # Ensure both time series have the same dimensions
+    if ts1.shape != ts2.shape:
+        raise ValueError("Time series must have the same dimensions.")
+
+    # Z-normalize each dimension separately
+    ts1_normalized = (ts1 - mean_ts1) / std_ts1
+    ts2_normalized = (ts2 - mean_ts2) / std_ts2
+
+    # Compute squared differences and sum them
+    squared_diff_sum = np.sqrt(
+        np.sum(np.square(ts1_normalized - ts2_normalized), axis=0)
+    )
+
+    min_indices = np.argsort(squared_diff_sum)
+
+    return min_indices.astype(np.int8), squared_diff_sum
+
+
 def find_collisions(lsh, query_signature):
     """
     Finds potential collisions in the LSH index for a given query signature.
@@ -334,11 +389,15 @@ def process_chunk_graph(
     try:
         for d in range(dimension):
             mean_container[ranges[0] : ranges[-1], d] = np.mean(
-                rolling_window(time_series[ranges[0] : ranges[-1] + window - 1, d], window),
+                rolling_window(
+                    time_series[ranges[0] : ranges[-1] + window - 1, d], window
+                ),
                 axis=-1,
             )
             std_container[ranges[0] : ranges[-1], d] = np.nanstd(
-                rolling_window(time_series[ranges[0] : ranges[-1] + window - 1, d], window),
+                rolling_window(
+                    time_series[ranges[0] : ranges[-1] + window - 1, d], window
+                ),
                 axis=-1,
             )
         for idx in ranges:
@@ -364,7 +423,7 @@ def process_chunk_graph(
         exist_ts.close()
         mean_existing_shm.close()
         std_existing_shm.close()
-    #print("Finished processing chunk", ranges[0], ranges[-1])
+    # print("Finished processing chunk", ranges[0], ranges[-1])
     # return True
 
 
@@ -488,4 +547,146 @@ def inner_cycle(
                                     break
                 else:
                     break
+    return top_dist, top_pairs, top_dims, top_dists, dist_comp
+
+
+@njit(
+    nb.types.Tuple(
+        (
+            nb.float32[:, :],
+            nb.int32[:, :, :],
+            nb.int8[:, :, :],
+            nb.float32[:, :, :],
+            nb.int32,
+        )
+    )(
+        nb.int32,
+        nb.int32[:, :],
+        nb.int8[:, :, :],
+        nb.int8[:, :, :],
+        nb.float32[:, :],
+        nb.int32,
+        nb.int32,
+        nb.int32,
+        nb.int32,
+        nb.int32,
+        nb.float32[:, :],
+        nb.float32[:, :],
+    ),
+    fastmath=True,
+    cache=True,
+)
+def inner_cycle_multi(
+    dimensionality,
+    ordering,
+    hash_mat,
+    original_mat,
+    time_series,
+    window,
+    motif_low,
+    motif_high,
+    i,
+    k,
+    means,
+    stds,
+):
+    """
+    Use the hash matrix to find the collisions
+
+    :param int32 dimensionality: The dimensionality of the time series data.
+    :param int32[:,:] ordering: The lexicographical ordering over the dimensions of the hashes.
+    :param int8[:,:,:] hash_mat: The hash matrix, ordered for each dimension.
+    :param int8[:,:,:] original_mat: The original matrix.
+    :param float32[:,:] time_series: The time series data.
+    :param int32 window: The size of the window.
+    :param int32 motif_dimensionality: The dimensionality of the motif.
+    :param int32 i: The current iteration.
+    :param int32 k: The number of top motifs to return.
+    :param float32[:,:] means: The means of the time series data.
+    :param float32[:,:] stds: The standard deviations of the time series data.
+
+    :return: The top distances, the pairs of indices, the dimensions used, the distances, and the total number of distance computations.
+    """
+    dist_comp = 0
+    top_dist = np.full((k, motif_high - motif_low + 1), np.inf, dtype=np.float32)
+    top_pairs = np.full((k, motif_high - motif_low + 1, 2), -1, dtype=np.int32)
+    top_dims = np.full((k, motif_high - motif_low + 1, motif_high), -1, dtype=np.int8)
+    top_dists = np.full(
+        (k, motif_high - motif_low + 1, motif_high), np.inf, dtype=np.float32
+    )
+    range_dim = np.arange(motif_high - motif_low + 1)
+    for curr_dim in range(dimensionality):
+        ordering_dim = ordering[curr_dim]
+        hash_mat_curr = (
+            hash_mat[:, curr_dim, :-i] if i != 0 else hash_mat[:, curr_dim, :]
+        )
+        for idx, elem1 in enumerate(hash_mat_curr):
+            for idx2, elem2 in enumerate(hash_mat_curr[idx + 1 :]):
+                sub_idx1 = ordering_dim[idx]
+                sub_idx2 = ordering_dim[idx + idx2 + 1]
+                maximum_pair = (
+                    [sub_idx1, sub_idx2]
+                    if sub_idx1 < sub_idx2
+                    else [sub_idx2, sub_idx1]
+                )
+                # No trivial match
+                if maximum_pair[1] - maximum_pair[0] <= window:
+                    continue
+                if eq(elem1, elem2):
+                    tot_hash1 = (
+                        original_mat[sub_idx1, :, :-i]
+                        if i != 0
+                        else original_mat[sub_idx1]
+                    )
+                    tot_hash2 = (
+                        original_mat[sub_idx2, :, :-i]
+                        if i != 0
+                        else original_mat[sub_idx2]
+                    )
+                    if multi_eq(tot_hash1, tot_hash2) >= motif_low:
+                        dist_comp += 1
+                        # print("Comparing: ", sub_idx1, sub_idx2)
+                        dim, stop_dist = z_normalized_euclidean_distancegmulti(
+                            time_series[sub_idx1 : sub_idx1 + window],
+                            time_series[sub_idx2 : sub_idx2 + window],
+                            means[sub_idx1],
+                            stds[sub_idx1],
+                            means[sub_idx2],
+                            stds[sub_idx2],
+                        )
+                        for subdim in range_dim:
+                            curr_dist = np.sum(stop_dist[: subdim + motif_low])
+
+                            # Insert the new distance into the sorted top distances
+                            if (
+                                curr_dist < top_dist[0, subdim]
+                            ):  # Check against the largest value in top k
+                                for insert_idx in range(k):
+                                    if curr_dist < top_dist[insert_idx, subdim]:
+                                        # Shift elements to the right to make space for the new entry
+                                        top_dist[1 : insert_idx + 1, subdim] = top_dist[
+                                            :insert_idx, subdim
+                                        ]
+                                        top_pairs[1 : insert_idx + 1, subdim] = (
+                                            top_pairs[:insert_idx, subdim]
+                                        )
+                                        top_dims[1 : insert_idx + 1, subdim] = top_dims[
+                                            :insert_idx, subdim
+                                        ]
+                                        top_dists[1 : insert_idx + 1, subdim] = (
+                                            top_dists[:insert_idx, subdim]
+                                        )
+
+                                        # Insert new values
+                                        top_dist[insert_idx, subdim] = curr_dist
+                                        top_pairs[insert_idx, subdim] = maximum_pair
+                                        top_dims[
+                                            insert_idx, subdim, : subdim + motif_low
+                                        ] = dim[: subdim + motif_low]
+                                        top_dists[
+                                            insert_idx, subdim, : subdim + motif_low
+                                        ] = stop_dist[: subdim + motif_low]
+                                        break
+                    else:
+                        break
     return top_dist, top_pairs, top_dims, top_dists, dist_comp

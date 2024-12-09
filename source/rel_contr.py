@@ -17,14 +17,14 @@ if __name__ == "__main__":
         # os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
         # os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
         # os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
-         os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
-         os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
-         os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
-         os.path.join(current_dir, "..", "Datasets", "FL010")
+        os.path.join(current_dir, "..", "Datasets", "CLEAN_House1.csv"),
+        os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
+        os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
+        os.path.join(current_dir, "..", "Datasets", "FL010"),
     ]
 
-    windows = [50, 75, 500, 5000, 1000, 300, 100]
-    dimensionality = [8,2,4,2,6,4,5,3]
+    windows = [50, 75, 500, 5000, 1000, 300, 100, 200]
+    dimensionality = [8, 2, 4, 2, 5, 6, 4, 3]
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
@@ -49,6 +49,7 @@ if __name__ == "__main__":
         elif number_r == 5 or number_r == 6:
             data = pd.read_parquet(path)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float64)
+            d = np.nan_to_num(d, nan=np.nanmean(d))
         elif number_r == 7:
             d, data = wfdb.rdsamp(path)
         else:
@@ -56,16 +57,25 @@ if __name__ == "__main__":
             data = data.drop(data.columns[[0]], axis=1)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32).T
         d = d.astype(np.float32)
+        if d.shape[0] < d.shape[1]:
+            d = d.T
+        print(d.shape)
+        d += np.random.normal(0, 0.01, d.shape)
         rnd = np.random.default_rng()
-        indices_1 = rnd.integers(0, d.shape[0]-windows[number_r]+1, (10000))
-        indices_2 = rnd.integers(0, d.shape[0]-windows[number_r]+1, (10000))
+        indices_1 = rnd.integers(0, d.shape[0] - windows[number_r] + 1, (100))
+        indices_2 = rnd.integers(0, d.shape[0] - windows[number_r] + 1, (100))
         distances = []
-        for i,j in product(indices_1, indices_2):
+        for i, j in product(indices_1, indices_2):
             distances.append(
                 z_normalized_euclidean_distanceg(
-                    d[i:i+windows[number_r]], d[j:j+windows[number_r]], np.arange(d.shape[1], dtype=np.int32), np.mean(d[i:i+windows[number_r]], axis=1), np.std(d[i:i+windows[number_r]], axis=1),
-                    np.mean(d[j:j+windows[number_r]], axis=1), np.std(d[j:j+windows[number_r]], axis=1), dimensionality[number_r]
-                )
+                    d[i : i + windows[number_r]],
+                    d[j : j + windows[number_r]],
+                    np.arange(d.shape[1], dtype=np.int32),
+                    np.mean(d[i : i + windows[number_r]], axis=0),
+                    np.std(d[i : i + windows[number_r]], axis=0),
+                    np.mean(d[j : j + windows[number_r]], axis=0),
+                    np.std(d[j : j + windows[number_r]], axis=0),
+                    dimensionality[number_r],
+                )[0]
             )
-        print(f'Dataset {number_r}:', np.mean(distances))
-        
+        print(f"Dataset {number_r}:", np.nanmean(np.array(distances)))
