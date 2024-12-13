@@ -235,7 +235,7 @@ def z_normalized_euclidean_distancegmulti(
 
     min_indices = np.argsort(squared_diff_sum)
 
-    return min_indices.astype(np.int8), squared_diff_sum
+    return min_indices.astype(np.int8), np.sort(squared_diff_sum)
 
 
 def find_collisions(lsh, query_signature):
@@ -612,7 +612,7 @@ def inner_cycle_multi(
     top_pairs = np.full((k, motif_high - motif_low + 1, 2), -1, dtype=np.int32)
     top_dims = np.full((k, motif_high - motif_low + 1, motif_high), -1, dtype=np.int8)
     top_dists = np.full(
-        (k, motif_high - motif_low + 1, motif_high), np.inf, dtype=np.float32
+        (k, motif_high - motif_low + 1, motif_high), -1, dtype=np.float32
     )
     range_dim = np.arange(motif_high - motif_low + 1)
     for curr_dim in range(dimensionality):
@@ -656,7 +656,6 @@ def inner_cycle_multi(
                         )
                         for subdim in range_dim:
                             curr_dist = np.sum(stop_dist[: subdim + motif_low])
-
                             # Insert the new distance into the sorted top distances
                             if (
                                 curr_dist < top_dist[0, subdim]

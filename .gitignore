@@ -13,3 +13,4 @@ Datasets/*.csv
 Datasets/IrpiniaEarthquake/
 Datasets/*.mseed
 *.parquet
+results.txt

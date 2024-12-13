@@ -1,3 +1,4 @@
+import multiprocessing
 from base import (
     create_shared_array,
     WindowedTS,
@@ -93,7 +94,6 @@ def worker_multi(i, j, subsequences, hash_mat_name, ordering_name, ordered_name,
     #    pr = cProfile.Profile()
     #   pr.enable()
     # print("Worker: ", i, j)
-    dist_comp = 0
     window = subsequences.w
     n = subsequences.num_sub
     dimensionality = subsequences.dimensionality
@@ -128,7 +128,6 @@ def worker_multi(i, j, subsequences, hash_mat_name, ordering_name, ordered_name,
     original_mat = np.ndarray(
         (n - window + 1, dimensionality, K), dtype=np.int8, buffer=existing_hash.buf
     )
-
     dist, pairs, dims, dists, dist_comp = inner_cycle_multi(
         dimensionality,
         ordering,
@@ -173,7 +172,7 @@ def worker_multi(i, j, subsequences, hash_mat_name, ordering_name, ordered_name,
     # if i == 0 and j == 1:
     #    pr.disable()
     #   pr.print_stats(sort='cumtime')
-    return tops, dist_comp, i, j  # , counter
+    return tops, dist_comp, i, j
 
 
 def order_hash(hash_mat_name, indices_name, ordered_name, dimension, num_s, K):
@@ -334,7 +333,7 @@ def pmotif_findg_multi(
         # confirmations = 0
         with ProcessPoolExecutor(
             max_workers=cpu_count(),
-            # mp_context=multiprocessing.get_context("forkserver"),
+            mp_context=multiprocessing.get_context("forkserver"),
         ) as executor:
             futures = [
                 executor.submit(
@@ -356,7 +355,7 @@ def pmotif_findg_multi(
                     top_temp, dist_comp_temp, i, j = future.result()
                 except KeyboardInterrupt:
                     executor.shutdown(wait=False, cancel_futures=True)
-                # print(top_temp)
+                print(top_temp)
 
                 dist_comp += dist_comp_temp
                 for index, lis in enumerate(top_temp):
@@ -403,9 +402,9 @@ def pmotif_findg_multi(
                             bin_width,
                             dimen_range[index],
                         )
-                        if (
-                            stop_val[index] and len(tops[index]) >= k
-                        ):  # (stop_val or confirmations >= 4) and len(top) >= k:
+                        if stop_val[
+                            index
+                        ]:  # (stop_val or confirmations >= 4) and len(top) >= k:
                             print(
                                 f"Subdimensional search {dimen_range[index]} ended in",
                                 time.perf_counter() - start_time,

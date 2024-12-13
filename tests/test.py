@@ -1,6 +1,7 @@
 import sys
+import os
 
-sys.path.append("external_dependecies")
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "external_dependecies"))
 sys.path.append("source")
 # from RP_MH import pmotif_find2
 # from RP_DC import pmotif_find3
@@ -105,7 +106,8 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 8  # find_width_discr(d, window_size, K)
+    r = 16  # find_width_discr(d, window_size, K)
+   # d = np.concatenate((d, np.random.normal(0,0.01, (d.shape[0], 4))), axis=1)
     print(d.shape)
     thresh = 0
     dimensions = d.shape[1]
