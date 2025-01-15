@@ -96,7 +96,7 @@ if __name__ == "__main__":
             # fill nan values with the mean
             d = np.nan_to_num(d, nan=np.nanmean(d))
         else:
-            d = d.T2
+            d = d.T
         d += np.random.normal(0, 0.01, d.shape)
     elif dataset == 8:
         d, data = wfdb.rdsamp(paths[dataset])
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 16  # find_width_discr(d, window_size, K)
+    r = 32  # find_width_discr(d, window_size, K)
    # d = np.concatenate((d, np.random.normal(0,0.01, (d.shape[0], 4))), axis=1)
     print(d.shape)
     thresh = 0
@@ -151,9 +151,9 @@ if __name__ == "__main__":
     motifs = copy
     # motifs = find_all_occur(extract, motifs, window_size)
     colors = [
-        "red",
-        "green",
-        "pink",
+        "crimson",
+        "forestgreen",
+        "deepskyblue",
         "pink",
         "cyan",
         "yellow",
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     fig, axs = plt.subplots(dimensions, 1, sharex=True, layout = 'constrained')
     X = pd.DataFrame(ts)
     for i, dimension in enumerate(X.columns):
-        axs[i].plot(X[dimension], label=dimension, linewidth=1.2, color="#6263e0")
+        axs[i].plot(X[dimension], label=dimension, linewidth=1.2, color="lightgray")#"#6263e0")
         axs[i].set_axis_off()
         if ranged:
             for j,dim_mot in enumerate(motifs):

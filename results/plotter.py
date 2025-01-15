@@ -166,8 +166,8 @@ if __name__ == "__main__":
     # FInd the different values in the first column
     ds_values = data["Dataset"].unique()
     fig, axs = plt.subplots(1, 1, figsize=(10, 5), layout="constrained")
-    colors = ["palevioletred", "skyblue"]
-    names = ["potentials", "evaporator"]
+    colors = ["palevioletred", "skyblue", "seagreen", "darkorange"]
+    names = ["potentials", "evaporator", "ruth", "weather"]
     for val in ds_values:
         n_data = data[data["Dataset"] == val]
         sns.lineplot(
@@ -177,6 +177,7 @@ if __name__ == "__main__":
             color=colors[val],
             alpha=0.7,
             label=names[val],
+            ci= None,
         )
     axs.set_ylabel("Recall")
     axs.set_xlabel("Injected dimensions")
