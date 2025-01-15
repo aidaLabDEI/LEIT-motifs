@@ -5,7 +5,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "external_dependec
 sys.path.append("source")
 # from RP_MH import pmotif_find2
 # from RP_DC import pmotif_find3
-from RP_GRAPH import pmotif_findg, pmotif_findg_multi
+from RP_GRAPH import pmotif_findg
+from RP_GRAPH_MULTI import pmotif_findg_multi
 
 # from RPG_CF import pmotif_findauto
 import time

@@ -1,4 +1,3 @@
-import multiprocessing
 from base import (
     create_shared_array,
     WindowedTS,
@@ -223,7 +222,7 @@ def pmotif_findg_multi(
         mean_container.close()
         del chunks
         hash_t = time.perf_counter() - st
-        # print("Hashing time: ", hash_t)
+        print("Hashing time: ", hash_t)
         windowed_ts = WindowedTS(
             time_series_name,
             n,
@@ -243,7 +242,7 @@ def pmotif_findg_multi(
         start_time = time.perf_counter()
         with ProcessPoolExecutor(
             max_workers=cpu_count(),
-            mp_context=multiprocessing.get_context("fork"),
+            #mp_context=multiprocessing.get_context("fork"),
         ) as executor:
             futures = [
                 executor.submit(
@@ -320,6 +319,11 @@ def pmotif_findg_multi(
                                 "of which",
                                 hash_t,
                                 "for hashing",
+                            )
+                            # Once a lower dimensionality haşbeen found, increase the set of dimensions to search
+                            windowed_ts.d = (
+                                dimen_range[index] + 1,
+                                motif_dimensionality[1],
                             )
                             # executor.shutdown(wait=False, cancel_futures=True)
                             # break

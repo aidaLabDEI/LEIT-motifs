@@ -620,6 +620,9 @@ def inner_cycle_multi(
         hash_mat_curr = (
             hash_mat[:, curr_dim, :-i] if i != 0 else hash_mat[:, curr_dim, :]
         )
+        original_mat_curr = (
+            original_mat[:, :, :-i] if i != 0 else original_mat[:, :, :]
+        )
         for idx, elem1 in enumerate(hash_mat_curr):
             for idx2, elem2 in enumerate(hash_mat_curr[idx + 1 :]):
                 sub_idx1 = ordering_dim[idx]
@@ -633,16 +636,8 @@ def inner_cycle_multi(
                 if maximum_pair[1] - maximum_pair[0] <= window:
                     continue
                 if eq(elem1, elem2):
-                    tot_hash1 = (
-                        original_mat[sub_idx1, :, :-i]
-                        if i != 0
-                        else original_mat[sub_idx1]
-                    )
-                    tot_hash2 = (
-                        original_mat[sub_idx2, :, :-i]
-                        if i != 0
-                        else original_mat[sub_idx2]
-                    )
+                    tot_hash1 = original_mat_curr[sub_idx1]
+                    tot_hash2 = original_mat_curr[sub_idx2]
                     if multi_eq(tot_hash1, tot_hash2) >= motif_low:
                         dist_comp += 1
                         # print("Comparing: ", sub_idx1, sub_idx2)
@@ -654,8 +649,11 @@ def inner_cycle_multi(
                             means[sub_idx2],
                             stds[sub_idx2],
                         )
+
+                        curr_dists = np.cumsum(stop_dist[: motif_high])
+
                         for subdim in range_dim:
-                            curr_dist = np.sum(stop_dist[: subdim + motif_low])
+                            curr_dist = curr_dists[subdim]
                             # Insert the new distance into the sorted top distances
                             if (
                                 curr_dist < top_dist[0, subdim]
@@ -686,6 +684,6 @@ def inner_cycle_multi(
                                             insert_idx, subdim, : subdim + motif_low
                                         ] = stop_dist[: subdim + motif_low]
                                         break
-                    else:
-                        break
+                else:
+                    break
     return top_dist, top_pairs, top_dims, top_dists, dist_comp
