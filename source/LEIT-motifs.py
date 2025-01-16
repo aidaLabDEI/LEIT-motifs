@@ -11,7 +11,7 @@ def LEITmotifs(
     time_series: np.ndarray,
     window: int,
     k: int,
-    motif_dimensionality_range: tuple[int, int],
+    motif_dimensionality_range: Tuple[int, int],
     L: int = 200,
     K: int = 8,
     failure_probability: float = 0.01,
@@ -45,6 +45,17 @@ def LEITmotifs(
         The list of motifs containing elements of the type:
             ``[motif distance, [#id, [motif indices], [spanning dimensions], [dimensional distances]]] ``
         and the number of distances computed
+
+    Raises
+    ------
+    ValueError
+        If the window size is larger than the length of the time series or the motif dimensionality range is invalid
+
+
+    Examples
+    --------
+    >>> motifs, distance computations = leitmotifs(data, 50, 1, (2, 2))
+    ([ [24, [98, [30, 250], [0, 5], [10, 14]]] ], 100)
     """
 
     # Ensure data is in float32 format
@@ -53,7 +64,7 @@ def LEITmotifs(
     # Extract length and dimensionality
     length, dimensionality = time_series.shape
 
-    # Check if the time series is in the correct format
+    # Check if the time series is in the correct format else refactor it
     if dimensionality > length:
         time_series = time_series.T
         length, dimensionality = time_series.shape

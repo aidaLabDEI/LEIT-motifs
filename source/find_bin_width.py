@@ -30,7 +30,6 @@ def find_width_discr(ts: npt.ArrayLike, window: int, K: int) -> int:
     percentile_value = np.percentile(all_dot_products, 95) - np.percentile(
         all_dot_products, 5
     )
-    print(percentile_value)
     r = abs(percentile_value / (2**8))
     r = max(r, 4)
     r = min(r, 32)
