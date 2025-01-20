@@ -21,6 +21,7 @@ def worker_multi(i, j, subsequences, hash_mat_name, ordering_name, ordered_name,
     #    pr = cProfile.Profile()
     #   pr.enable()
     # print("Worker: ", i, j)
+    # Base information
     window = subsequences.w
     n = subsequences.num_sub
     dimensionality = subsequences.dimensionality
@@ -34,8 +35,8 @@ def worker_multi(i, j, subsequences, hash_mat_name, ordering_name, ordered_name,
         (n, dimensionality), dtype=np.float32, buffer=ex_time_series.buf
     )
     # Utility data
-    means_ex = shared_memory.SharedMemory(name=subsequences.avgs.name)
-    stds_ex = shared_memory.SharedMemory(name=subsequences.stds.name)
+    means_ex = shared_memory.SharedMemory(name=subsequences.avgs)
+    stds_ex = shared_memory.SharedMemory(name=subsequences.stds)
     means = np.ndarray(
         (n - window + 1, dimensionality), dtype=np.float32, buffer=means_ex.buf
     )
@@ -55,6 +56,7 @@ def worker_multi(i, j, subsequences, hash_mat_name, ordering_name, ordered_name,
     original_mat = np.ndarray(
         (n - window + 1, dimensionality, K), dtype=np.int8, buffer=existing_hash.buf
     )
+    # Call the discovery cycle
     dist, pairs, dims, dists, dist_comp = inner_cycle_multi(
         dimensionality,
         ordering,
@@ -69,6 +71,7 @@ def worker_multi(i, j, subsequences, hash_mat_name, ordering_name, ordered_name,
         means,
         stds,
     )
+    # Insert the data in a single list
     for dimen in range(motif_high - motif_low + 1):
         dist_curr = dist[:, dimen]
         pairs_curr = pairs[:, dimen]
@@ -89,7 +92,7 @@ def worker_multi(i, j, subsequences, hash_mat_name, ordering_name, ordered_name,
                     ],
                 )
             )
-
+    # Close the shared memory
     ex_time_series.close()
     existing_arr.close()
     existing_ord.close()
@@ -165,7 +168,7 @@ def pmotif_findg_multi(
             close_container.append(arri)
 
         dist_comp = 0
-        # Hasher
+        # Create the hasher object
         rp = RandomProjection(window, bin_width, K, L)  # []
 
         chunk_sz = n // (cpu_count() * 2)  # min(int(np.sqrt(n)), 1000)
@@ -194,7 +197,6 @@ def pmotif_findg_multi(
             max_workers=cpu_count(),
             # mp_context=multiprocessing.get_context("forkserver"),
         ) as pool:
-            # pool.map(process_chunk_graph, chunks)
             results = [pool.submit(process_chunk_graph, *chunk) for chunk in chunks]
             for future in as_completed(results):
                 try:
@@ -213,7 +215,6 @@ def pmotif_findg_multi(
             for future in as_completed(results):
                 try:
                     _ = future.result()
-                    # future.result()
                 except KeyboardInterrupt:
                     pool.shutdown(wait=False, cancel_futures=True)
             # print("Ordered")
@@ -228,8 +229,8 @@ def pmotif_findg_multi(
             n,
             dimension,
             window,
-            mean_container,
-            std_container,
+            mean_container.name,
+            std_container.name,
             L,
             K,
             motif_dimensionality,
@@ -260,12 +261,10 @@ def pmotif_findg_multi(
             for future in as_completed(futures):
                 if np.all(stop_val):
                     break
-                try:
-                    top_temp, dist_comp_temp, i, j = future.result()
-                except KeyboardInterrupt:
-                    executor.shutdown(wait=False, cancel_futures=True)
+                top_temp, dist_comp_temp, i, j = future.result()
 
                 dist_comp += dist_comp_temp
+                # For each dimensionality
                 for index, lis in enumerate(top_temp):
                     if stop_val[index]:
                         if np.all(stop_val):
@@ -299,6 +298,7 @@ def pmotif_findg_multi(
                             bisect.insort(tops[index], element, key=lambda x: -x[0])
                         if len(tops[index]) > k:
                             tops[index] = tops[index][:k]
+                    # If the list is full check if the stopping condition is valid
                     if len(tops[index]) == k:
                         stop_val[index] = stopgraph(
                             tops[index][-1][1][3],
@@ -320,23 +320,26 @@ def pmotif_findg_multi(
                                 hash_t,
                                 "for hashing",
                             )
-                            # Once a lower dimensionality haşbeen found, increase the set of dimensions to search
-                            windowed_ts.d = (
-                                dimen_range[index] + 1,
-                                motif_dimensionality[1],
-                            )
-                            # executor.shutdown(wait=False, cancel_futures=True)
-                            # break
+                            if index < len(stop_val) - 1:
+                                # Find the number of the the first false value in the stop_val array
+                                index_val = np.where(not stop_val)[0][0]
+                                # Once a lower dimensionality is confirmed, increase the set of dimensions to search
+                                windowed_ts.d = (
+                                    motif_dimensionality[0] + index_val,
+                                    motif_dimensionality[1],
+                                )
+
+                            # If all dimensions confirmend their motifs, stop the search
                             if np.all(stop_val):
                                 executor.shutdown(wait=False, cancel_futures=True)
                                 break
 
+
         return tops, dist_comp, hash_t
     except (KeyboardInterrupt, FileNotFoundError, OSError):
-        return [], 0, 0
+
+        return tops, dist_comp, hash_t
     finally:
-        # pr.disable()
-        # pr.print_stats(sort='cumtime')
         # Close all the shared memory
         for arr in close_container:
             arr.close()

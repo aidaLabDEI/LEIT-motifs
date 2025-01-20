@@ -1,5 +1,6 @@
 from typing import Tuple
 import numpy as np
+import time
 
 from RP_GRAPH import pmotif_findg
 from RP_GRAPH_MULTI import pmotif_findg_multi
@@ -41,10 +42,10 @@ def LEITmotifs(
 
     Returns
     -------
-    Tuple[list, int]
+    Tuple[list, int, float]
         The list of motifs containing elements of the type:
-            ``[motif distance, [#id, [motif indices], [spanning dimensions], [dimensional distances]]] ``
-        and the number of distances computed
+            ``[motif distance, [#id, [motif indices], [spanning dimensions], [dimensional distances]]] ``,
+        the number of distances computed and the time taken to find the motifs
 
     Raises
     ------
@@ -55,7 +56,7 @@ def LEITmotifs(
     Examples
     --------
     >>> motifs, distance computations = leitmotifs(data, 50, 1, (2, 2))
-    ([ [24, [98, [30, 250], [0, 5], [10, 14]]] ], 100)
+    ([ [24, [98, [30, 250], [0, 5], [10, 14]]] ], 100, 10.5)
     """
 
     # Ensure data is in float32 format
@@ -104,6 +105,7 @@ def LEITmotifs(
     shm_ts, ts = create_shared_array((length, dimensionality), np.float32)
     ts[:] = time_series[:]
 
+    time_tot = time.perf_counter()
     # Find the motifs calling the correct algorithm based on range
     if motif_dimensionality_range[0] == motif_dimensionality_range[1]:
         motifs, num_dist, hash_t = pmotif_findg(
@@ -134,7 +136,7 @@ def LEITmotifs(
             failure_probability,
         )
 
-    return motifs, num_dist
+    return motifs, num_dist, time.perf_counter() - time_tot
 
 if __name__ == "__main__":
     import pandas as pd

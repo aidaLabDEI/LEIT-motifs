@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib
@@ -96,7 +95,6 @@ if __name__ == "__main__":
     fig.supylabel("Compared couples")
     plt.show()
 
-    """
     # Multi subdimensional search plots
     data = pd.read_csv("results/multi_results.csv")
     fig, axs = plt.subplots(4, 1, figsize=(5, 6), sharex=True, layout="constrained")
@@ -183,4 +181,67 @@ if __name__ == "__main__":
     axs.set_xlabel("Injected dimensions")
     sns.despine(offset=10.2)
     plt.ylim((0, 1.1))
+    plt.show()
+    
+
+    # Multidim plot
+    mstumptime=[3.65, 4.45, 38, 40] # 
+    mtimeread = [3.65, 4.45,84.04, 1035.73]
+    data = pd.read_csv("results/dist_time.csv")
+    ds_values = data["dataset"].unique()
+    fig, axs = plt.subplots(1, 1, figsize=(5, 6), layout="constrained")
+    colors = ["palevioletred", "skyblue", "seagreen", "darkorange"]
+    names = ["potentials", "evaporator", "ruth", "weather"]
+    for val in ds_values:
+        n_data = data[data["dataset"] == val]
+        sns.lineplot(
+            data=n_data,
+            x="Distance",
+            y="Time(s)",
+            color=colors[val],
+            alpha=0.9,
+            label=names[val],
+            ci=None,
+        )
+        sns.scatterplot(
+            data=n_data,
+            x="Distance",
+            y="Time(s)",
+            color=colors[val],
+            alpha=0.75,
+            marker='x'
+        )
+        axs.axhline(mstumptime[val], color=colors[val], linestyle='dotted')
+        if val == 0: 
+            axs.text(300, mstumptime[val]-2, f"MSTUMP: {mtimeread[val]} s", color=colors[val])
+        elif val==1:
+            axs.text(300, mstumptime[val]+0.9, f"MSTUMP: {mtimeread[val]} s", color=colors[val])
+        else:
+            axs.text(300, mstumptime[val]-0.5, f"MSTUMP: {mtimeread[val]} s", color=colors[val], backgroundcolor='white')
+    plt.yscale("log")
+    sns.despine()
+    plt.show()
+    """
+
+    # Scalability plot
+    data = pd.read_csv("results/scalability.csv")
+    fig, axs = plt.subplots(1, 1, figsize=(10, 5), layout="constrained")
+    colors = ["dimgrey", "yellowgreen", "indianred"]
+    names = ["MSTUMP","LEIT-motifs (easy)", "LEIT-motifs (hard)"]
+    for val in range(3):
+        n_data = data[data["Algo"] == val]
+
+        sns.lineplot(
+            data=n_data,
+            x="Size",
+            y="Tot Time (s)",
+            color=colors[val],
+            alpha=0.7,
+            label=names[val],
+            ci=None,
+        )
+
+    plt.yscale("log")
+    plt.xscale("log")
+    sns.despine(trim=True)
     plt.show()

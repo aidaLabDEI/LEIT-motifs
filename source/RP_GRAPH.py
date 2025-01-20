@@ -35,8 +35,8 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k):
         (n, dimensionality), dtype=np.float32, buffer=ex_time_series.buf
     )
     # Utility data
-    means_ex = shared_memory.SharedMemory(name=subsequences.avgs.name)
-    stds_ex = shared_memory.SharedMemory(name=subsequences.stds.name)
+    means_ex = shared_memory.SharedMemory(name=subsequences.avgs)
+    stds_ex = shared_memory.SharedMemory(name=subsequences.stds)
     means = np.ndarray(
         (n - window + 1, dimensionality), dtype=np.float32, buffer=means_ex.buf
     )
@@ -227,8 +227,8 @@ def pmotif_findg(
             n,
             dimension,
             window,
-            mean_container,
-            std_container,
+            mean_container.name,
+            std_container.name,
             L,
             K,
             motif_dimensionality,

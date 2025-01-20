@@ -5,8 +5,7 @@ import numba as nb
 from hash_lsh import multi_compute_hash
 from jitted_utilities import rolling_window, eq, multi_eq
 
-
-class WindowedTS:
+class WindowedTS(object):
     def __init__(
         self,
         subsequences,
@@ -20,6 +19,24 @@ class WindowedTS:
         motif_dimensionality: int,
         bin_width: int,
     ):
+        """
+        Initialize the WindowedTS object.
+
+        Parameters:
+        - subsequences: The time series data.
+        - n: The number of subsequences.
+        - d: The dimensionality of the time series data.
+        - window: The size of the window.
+        - rolling_avg: The rolling average of the subsequences of the time series.
+        - rolling_std: The rolling standard deviation of the subsequences of the time series.
+        - L: The number of LSH repetitions.
+        - K: The number of LSH concatenations.
+        - motif_dimensionality: The dimensionality of the motif.
+        - bin_width: The bin width for the LSH.
+
+        Returns:
+        - None
+        """
         self.subsequences = subsequences
         self.w = window
         self.avgs = rolling_avg
@@ -31,6 +48,7 @@ class WindowedTS:
         self.d = motif_dimensionality
         self.r = bin_width
 
+    # Helper functions
     def sub(self, i: int):
         return self.subsequences[i : i + self.w].T
 
@@ -149,7 +167,7 @@ def z_normalized_euclidean_distanceg(
     dimensionality (int, optional): The dimensionality of the result.
 
     Returns:
-    tuple: A tuple containing the sum of the distances, the indices of the dimensions used, and the maximum distance.
+    tuple: A tuple containing the sum of the distances, the indices of the dimensions used, and the dimensional distances.
 
     Raises:
     ValueError: If the subsequences have different dimensions.
@@ -200,6 +218,7 @@ def z_normalized_euclidean_distancegmulti(
     ts1, ts2, mean_ts1, std_ts1, mean_ts2, std_ts2
 ):
     """
+    Alternative method for the ranged search.
     Compute the z-normalized Euclidean distance between two subsequences, if a dimensionality is specified the algorithm
     will find the set of dimensions that minimize the distance.
 
@@ -322,21 +341,7 @@ def process_chunk(
         subsequence_n = (
             subsequence - mean_container[idx][:, np.newaxis]
         ) / std_container[idx][:, np.newaxis]
-        """
-        hashed_sub = np.apply_along_axis(
-            compute_hash,
-            1,
-            subsequence_n,
-            rp.a_l,
-            rp.b_l,
-            rp.a_r,
-            rp.b_r,
-            rp.r,
-            rp.K,
-            rp.L,
-        )
-        hashed_sub = np.swapaxes(hashed_sub, 0, 1)
-        """
+        
         hash_mat[idx] = multi_compute_hash(
             subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L
         )
@@ -640,7 +645,6 @@ def inner_cycle_multi(
                     tot_hash2 = original_mat_curr[sub_idx2]
                     if multi_eq(tot_hash1, tot_hash2) >= motif_low:
                         dist_comp += 1
-                        # print("Comparing: ", sub_idx1, sub_idx2)
                         dim, stop_dist = z_normalized_euclidean_distancegmulti(
                             time_series[sub_idx1 : sub_idx1 + window],
                             time_series[sub_idx2 : sub_idx2 + window],

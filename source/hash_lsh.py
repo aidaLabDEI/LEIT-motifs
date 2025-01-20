@@ -76,7 +76,7 @@ def multi_compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
     hash_values = np.empty((L, dim, K), dtype=np.int8)
 
     # Compute the K/2 hashes for both collections
-    for d in range(dim):
+    for d in prange(dim):
         for l_idx in range(sqrt_L):
             for i in range(K_half):
                 hash_left_all[d, l_idx, i] = (
@@ -90,7 +90,7 @@ def multi_compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
                 # hash_right_all[d,l_idx, i] = np.floor(projection_r)
 
     # Interleave the results to get final L hashes of length K
-    for d in range(dim):
+    for d in prange(dim):
         for j in range(L):
             l_idx = j // sqrt_L
             r_idx = j % sqrt_L
@@ -104,7 +104,7 @@ def multi_compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
 
 
 def euclidean_hash(data, rp):
-    return compute_hash(data, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L)
+    return multi_compute_hash(data, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L)
 
 
 """
@@ -143,11 +143,12 @@ if __name__ == "__main__":
     r = 8
     K = 8  # Length of the hash
     rp = RandomProjection(dim, r, K, 100)
-    data = np.ascontiguousarray(np.random.rand(dim), dtype=np.float32)
+    data = np.ascontiguousarray(np.random.rand(dim, 10).T, dtype=np.float32)
+    print(data.shape)
 
-    timei = time.process_time()
+    timei = time.perf_counter()
     for j in range(5):
         for i in range(10000):
             hashed = euclidean_hash(data, rp)
-    print("Time elapsed: ", (time.process_time() - timei) / 5)
+    print("Time elapsed: ", (time.perf_counter() - timei) / 5)
     # print(hashed)

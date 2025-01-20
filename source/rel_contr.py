@@ -3,20 +3,20 @@ import pandas as pd
 import numpy as np
 import os
 import wfdb
-from itertools import product
+import stumpy
 
 sys.path.append("external_dependecies")
 from data_loader import convert_tsf_to_dataframe
 from scipy.signal import savgol_filter
-from base import z_normalized_euclidean_distanceg
+from base import z_normalized_euclidean_distancegmulti
 
 if __name__ == "__main__":
     current_dir = os.path.dirname(__file__)
     paths = [
-        # os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
-        # os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
-        # os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
-        # os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
+         #os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
+         #os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
+         #os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
+         #os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
         os.path.join(current_dir, "..", "Datasets", "CLEAN_House1.csv"),
         os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
         os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     ]
 
     windows = [50, 75, 500, 5000, 1000, 300, 100, 200]
-    dimensionality = [8, 2, 4, 2, 5, 6, 4, 3]
+    dimensionality = [8, 2, 4, 2, 3, 6, 3, 3]
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
@@ -55,27 +55,51 @@ if __name__ == "__main__":
         else:
             data = pd.read_csv(path, sep=r"\s+")
             data = data.drop(data.columns[[0]], axis=1)
-            d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32).T
-        d = d.astype(np.float32)
-        if d.shape[0] < d.shape[1]:
+            d = np.ascontiguousarray(data.to_numpy(), dtype=np.float64).T
+        d = d.astype(np.float64)
+
+        if d.shape[0] > d.shape[1]:
             d = d.T
         print(d.shape)
+        # Cut to the first 10000 samples
+        if d.shape[1] > 20000:
+            num = np.random.randint(0, d.shape[1]-20000)
+            d = d[:, num:num+20000]
         d += np.random.normal(0, 0.01, d.shape)
-        rnd = np.random.default_rng()
-        indices_1 = rnd.integers(0, d.shape[0] - windows[number_r] + 1, (100))
-        indices_2 = rnd.integers(0, d.shape[0] - windows[number_r] + 1, (100))
-        distances = []
-        for i, j in product(indices_1, indices_2):
-            distances.append(
-                z_normalized_euclidean_distanceg(
-                    d[i : i + windows[number_r]],
-                    d[j : j + windows[number_r]],
-                    np.arange(d.shape[1], dtype=np.int32),
-                    np.mean(d[i : i + windows[number_r]], axis=0),
-                    np.std(d[i : i + windows[number_r]], axis=0),
-                    np.mean(d[j : j + windows[number_r]], axis=0),
-                    np.std(d[j : j + windows[number_r]], axis=0),
-                    dimensionality[number_r],
-                )[0]
-            )
-        print(f"Dataset {number_r}:", np.nanmean(np.array(distances)))
+        # COmpute the matrix profile
+        MP, I_prof = stumpy.mstump(d, m=windows[number_r])
+        # Find the indices of the min at the dimensionality expressed in the variable and the dimensions of the min
+        MP_dim = MP[dimensionality[number_r] - 1]
+        I_dim = I_prof[dimensionality[number_r] - 1]
+        # Find the indices of the min
+        min_index = np.argmin(MP_dim)
+        nn_index = I_dim[min_index]
+        d = d.astype(np.float32)
+        # Compute the distances for each dimension between the min and the nearest neighbor
+        k_maxdist = z_normalized_euclidean_distancegmulti(
+            d[:, min_index:min_index + windows[number_r]].T, d[:, nn_index:nn_index + windows[number_r]].T,
+            np.mean(d[:, min_index:min_index + windows[number_r]], axis=1),
+            np.std(d[:, min_index:min_index + windows[number_r]], axis=1),
+            np.mean(d[:, nn_index:nn_index + windows[number_r]], axis=1),
+              np.std(d[:, nn_index:nn_index + windows[number_r]], axis=1)
+        )
+        ordered_distances = k_maxdist[1]
+        k_maxdist = ordered_distances[dimensionality[number_r] - 1]
+
+        # Find the n-th min
+        n_min_index = np.argsort(MP_dim)[-1]
+        nn_index = I_dim[n_min_index]
+
+        # Compute the distances for each dimension between the min and the nearest neighbor
+        n_maxdist = z_normalized_euclidean_distancegmulti(
+            d[:, n_min_index:n_min_index + windows[number_r]].T, d[:, nn_index:nn_index + windows[number_r]].T,
+            np.mean(d[:, n_min_index:n_min_index + windows[number_r]], axis=1),
+            np.std(d[:, n_min_index:n_min_index + windows[number_r]], axis=1),
+            np.mean(d[:, nn_index:nn_index + windows[number_r]], axis=1),
+            np.std(d[:, nn_index:nn_index + windows[number_r]], axis=1)
+        )
+        ordered_distances = n_maxdist[1]
+        n_maxdist = ordered_distances[dimensionality[number_r] - 1]
+ 
+        print("Dataset: ", number_r, "contrast:", (n_maxdist)/k_maxdist)
+
