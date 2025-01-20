@@ -41,9 +41,9 @@ if __name__ == "__main__":
     motif_dimensions = 2
     
     # LEIT-motifs or Stumpy
-    engine = 1
+    engine = 0
     # Easy or hard
-    f = 0
+    f = 1
     random_indices = np.random.randint(0, lengths[0]- window, 2)
     # Check they don't overlap
     while random_indices[1] - random_indices[0] < window:
