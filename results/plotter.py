@@ -27,7 +27,7 @@ if __name__ == "__main__":
     sns.despine(offset=10, trim=True)
     sns.set_context("paper")
     fig.supxlabel("Concatenations - K")
-    fig.supylabel("Time elapsed (s)")
+    fig.supylabel("Time (s)")
     plt.show()
 
     # !!!L plots
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     sns.despine(offset=10, trim=True)
     sns.set_context("paper")
     fig.supxlabel("Repetitions - L")
-    fig.supylabel("Time elapsed (s)")
+    fig.supylabel("Time (s)")
     plt.show()
     # !!!r plots
     data = pd.read_csv("results/R_results.csv")
@@ -183,7 +183,6 @@ if __name__ == "__main__":
     plt.ylim((0, 1.1))
     plt.show()
 
-    
     # Multidim plot
     mstumptime=[3.65, 4.45, 37, 39] # 
     mtimeread = [3.65, 4.45,84.04, 1035.73]
@@ -197,7 +196,7 @@ if __name__ == "__main__":
         sns.lineplot(
             data=n_data,
             x="Distance",
-            y="Time(s)",
+            y="Time (s)",
             color=colors[val],
             alpha=0.95,
             label=names[val],
@@ -206,18 +205,19 @@ if __name__ == "__main__":
         sns.scatterplot(
             data=n_data,
             x="Distance",
-            y="Time(s)",
+            y="Time (s)",
             color=colors[val],
             alpha=0.7,
             marker='X',
         )
-        axs.axhline(mstumptime[val], color=colors[val], linestyle='dotted')
         if val == 0: 
+            axs.axhline(mstumptime[val], color=colors[val], linestyle='dotted')
             axs.text(300, mstumptime[val]-2, f"MSTUMP: {mtimeread[val]} s", color=colors[val])
         elif val==1:
+            axs.axhline(mstumptime[val], color=colors[val], linestyle='dotted')
             axs.text(300, mstumptime[val]+0.9, f"MSTUMP: {mtimeread[val]} s", color=colors[val])
         else:
-            axs.text(300, mstumptime[val]-0.5, f"MSTUMP: {mtimeread[val]} s", color=colors[val], backgroundcolor='white')
+            axs.text(300, mstumptime[val]-0.5, f"↑ MSTUMP: {mtimeread[val]} s", color=colors[val], backgroundcolor='white')
     axs.set_ylim(0, 39)
     axs.spines["left"].set_bounds(0, 35)
     sns.despine(offset={"left": 10.2})
@@ -226,15 +226,16 @@ if __name__ == "__main__":
     # Scalability plot
     data = pd.read_csv("results/scalability.csv")
     fig, axs = plt.subplots(1, 1, figsize=(10, 5), layout="constrained")
-    colors = ["dimgray", "mediumseagreen", "crimson"]
-    names = ["MSTUMP","LEIT-motifs (easy)", "LEIT-motifs (hard)"]
-    for val in range(3):
+    colors = ["dimgray", "cornflowerblue", "crimson", "mediumseagreen"]
+    names = ["MSTUMP","LEIT-motifs (medium)", "LEIT-motifs (hard)", "LEIT-motifs (easy)"]
+    num = [0, 3, 1, 2]
+    for val in num:
         n_data = data[data["Algo"] == val]
 
         sns.lineplot(
             data=n_data,
             x="Size",
-            y="Tot Time (s)",
+            y="Time (s)",
             color=colors[val],
             alpha=0.7,
             label=names[val],
@@ -245,7 +246,7 @@ if __name__ == "__main__":
         sns.scatterplot(
             data=n_data,
             x="Size",
-            y="Tot Time (s)",
+            y="Time (s)",
             color=colors[val],
             alpha=0.8,
             marker='o',

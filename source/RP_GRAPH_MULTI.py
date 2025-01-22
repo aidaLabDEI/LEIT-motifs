@@ -223,7 +223,6 @@ def pmotif_findg_multi(
         mean_container.close()
         del chunks
         hash_t = time.perf_counter() - st
-        print("Hashing time: ", hash_t)
         windowed_ts = WindowedTS(
             time_series_name,
             n,
@@ -320,15 +319,16 @@ def pmotif_findg_multi(
                                 hash_t,
                                 "for hashing",
                             )
-                            if index < len(stop_val) - 1:
-                                # Find the number of the the first false value in the stop_val array
-                                index_val = np.where(not stop_val)[0][0]
-                                # Once a lower dimensionality is confirmed, increase the set of dimensions to search
-                                windowed_ts.d = (
-                                    motif_dimensionality[0] + index_val,
-                                    motif_dimensionality[1],
-                                )
-
+                    
+                            #Find the number of the the first false value in the stop_val array
+                            # index_val = np.where(stop_val == False)[0]
+                            # if len(index_val) > 0:
+                            #     # Once a lower dimensionality is confirmed, increase the minimum weight for collision consideration
+                            #     windowed_ts.d = (
+                            #             motif_dimensionality[0] + index_val[0],
+                            #             motif_dimensionality[1],
+                            #     )
+                        
                             # If all dimensions confirmend their motifs, stop the search
                             if np.all(stop_val):
                                 executor.shutdown(wait=False, cancel_futures=True)

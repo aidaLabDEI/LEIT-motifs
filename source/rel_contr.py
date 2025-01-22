@@ -13,10 +13,10 @@ from base import z_normalized_euclidean_distancegmulti
 if __name__ == "__main__":
     current_dir = os.path.dirname(__file__)
     paths = [
-         #os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
-         #os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
-         #os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
-         #os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
+         os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
+         os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
+         os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
+         os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
         os.path.join(current_dir, "..", "Datasets", "CLEAN_House1.csv"),
         os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
         os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
-        number_r = number + 4
+        number_r = number
         # Load the dataset
         if number_r == 3:
             data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(path, 0)
@@ -84,7 +84,7 @@ if __name__ == "__main__":
               np.std(d[:, nn_index:nn_index + windows[number_r]], axis=1)
         )
         ordered_distances = k_maxdist[1]
-        k_maxdist = ordered_distances[dimensionality[number_r] - 1]
+        k_maxdist = ordered_distances[0]#[dimensionality[number_r] - 1]
 
         # Find the n-th min
         n_min_index = np.argsort(MP_dim)[-1]
@@ -99,7 +99,7 @@ if __name__ == "__main__":
             np.std(d[:, nn_index:nn_index + windows[number_r]], axis=1)
         )
         ordered_distances = n_maxdist[1]
-        n_maxdist = ordered_distances[dimensionality[number_r] - 1]
+        n_maxdist = ordered_distances[0]#[dimensionality[number_r] - 1]
  
         print("Dataset: ", number_r, "contrast:", (n_maxdist)/k_maxdist)
 
