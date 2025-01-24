@@ -1,0 +1,7 @@
+requests>2
+numpy
+numba
+matplotlib
+seaborn
+scipy
+stumpy

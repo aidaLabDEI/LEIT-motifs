@@ -23,3 +23,9 @@ not fit in the paper due to space limitations, the scripts produce *.csv* files 
 The file `results/plotter.py` collects all the raw results and plots them.
 
 Additional tests are described in the file [`Supplementary.pdf`](https://github.com/FrancescoMonaco/LEIT-motifs/blob/main/Supplementary.pdf).
+
+## Installation
+
+```bash
+pip install https://github.com/FrancescoMonaco/LEIT-motifs
+
