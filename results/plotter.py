@@ -95,68 +95,6 @@ if __name__ == "__main__":
     fig.supxlabel("Discretization parameter - r")
     fig.supylabel("Compared couples")
     plt.show()
-    # Multi subdimensional search plots
-    data = pd.read_csv("results/multi_results.csv")
-    fig, axs = plt.subplots(4, 1, figsize=(5, 6), sharex=True, layout="constrained")
-    for i, row in data.iterrows():
-        sns.lineplot(
-            x=[0, data["mstumptime"][i]],
-            y=[0, 0],
-            ax=axs[i],
-            linewidth=1.5,
-            color="slategrey",
-        )
-        if i != 3:
-            axs[i].annotate(
-                f'MSTUMP: {data["mstumptime"][i]} s',
-                (0.5, 0.01),
-                xycoords=("axes fraction", "data"),
-                color="slategray",
-            )
-        else:
-            axs[i].annotate(
-                f'MSTUMP: {data["mstumptime"][i]} s →',
-                (0.65, 0.01),
-                xycoords=("axes fraction", "data"),
-                color="slategray",
-            )
-
-        plot = data.iloc[i]
-        plot = plot.drop(["mstumptime"])
-        hash_t = plot.values[-1]
-        last_val = np.nanmax(plot.values)
-        sns.scatterplot(
-            x=plot.values[:-1],
-            y=np.zeros(7),
-            ax=axs[i],
-            style=True,
-            markers="|",
-            legend=False,
-            s=150.5,
-            color="cornflowerblue",
-        )
-        sns.lineplot(
-            x=[0, last_val], y=[0, 0], ax=axs[i], linewidth=4.5, color="mediumslateblue"
-        )
-        sns.lineplot(
-            x=[0, hash_t], y=[0, 0], ax=axs[i], linewidth=5, color="darkslateblue"
-        )
-
-        sns.despine()
-        axs[i].set_title(
-            names[i], fontdict={"fontweight": "heavy", "fontsize": 10}, loc="left"
-        )
-        # Hide axes for all subplots except the last one
-        if i < len(axs) - 1:  # For all but the last subplot
-            axs[i].set_axis_off()
-        else:  # For the last subplot
-            axs[i].xaxis.set_visible(True)
-            axs[i].spines["top"].set_visible(False)
-            axs[i].spines["right"].set_visible(False)
-            axs[i].spines["left"].set_visible(False)
-            axs[i].yaxis.set_visible(False)  # Hide y-axis and its values
-            axs[i].set_xlabel("time (s)")
-    plt.show()
 
     # Noise plot
 

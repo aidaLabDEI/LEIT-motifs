@@ -10,7 +10,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "external_dependencies")
 from data_loader import convert_tsf_to_dataframe
 from base import create_shared_array
 from scipy.signal import savgol_filter
-import matplotlib.pyplot as plt
 import matplotlib
 
 
@@ -87,54 +86,38 @@ if __name__ == "__main__":
         data = pd.read_csv(path, sep=r"\s+")
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
-    noise_dim = 5
-    d = np.concatenate((d, generate_random_walk(noise_dim, d.shape[0])), axis=1)
-    dimensions = d.shape[1]
-    n = d.shape[0]
-    shm_ts, ts = create_shared_array((n, dimensions), np.float32)
-    ts[:] = d[:]
-    del d
 
-    motifs, num_dist, _ = pmotif_findg(
-        shm_ts.name,
-        n,
-        dimensions,
-        windows[number_r],
-        1,
-        dimensionality[number_r],
-        r_vals_computed[number_r],
-        0.5,
-        200,
-        8,
-    )
-    colors = [
-        "red",
-        "green",
-        "pink",
-        "pink",
-        "cyan",
-        "yellow",
-        "orange",
-        "gray",
-        "purple",
-    ]
+    noise_dims = [4, 16, 32, 128, 256]
+    dataframe = pd.DataFrame(columns=["Dataset", "Noise", "Motif"])
+    for noise_dim in noise_dims:
+        d = np.concatenate((d, generate_random_walk(noise_dim, d.shape[0])), axis=1)
+        dimensions = d.shape[1]
+        n = d.shape[0]
+        shm_ts, ts = create_shared_array((n, dimensions), np.float32)
+        ts[:] = d[:]
+        del d
 
-    fig, axs = plt.subplots(dimensions, 1, sharex=True)
-    X = pd.DataFrame(ts)
-    for i, dimension in enumerate(X.columns):
-        axs[i].plot(X[dimension], label=dimension, linewidth=1.2, color="#6263e0")
-        axs[i].set_axis_off()
-        # axs[i].set_xlabel("Time")
-        # axs[i].set_ylabel("Dimension " + str(dimension))
-        # axs[i].legend()
-        for idx, motif in enumerate(motifs):
-            # Highlight the motifs in all dimensions
-            for m in motif[1][1]:
-                if i in motif[1][2][0]:
-                    axs[i].plot(
-                        X[dimension].iloc[m : m + windows[number_r]],
-                        color=colors[idx],
-                        linewidth=1.8,
-                        alpha=0.7,
-                    )
-    plt.show()
+        motifs, num_dist, _ = pmotif_findg(
+            shm_ts.name,
+            n,
+            dimensions,
+            windows[number_r],
+            1,
+            dimensionality[number_r],
+            r_vals_computed[number_r],
+            0.5,
+            200,
+            8,
+        )
+
+        dataframe = dataframe.append(
+            {
+                "Dataset": number_r,
+                "Noise": noise_dim,
+                "Motif": len(motifs),
+            },
+            ignore_index=True,
+        )
+
+
+    dataframe.to_csv("Results/noise.csv", index=False)
