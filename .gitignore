@@ -14,3 +14,4 @@ Datasets/IrpiniaEarthquake/
 Datasets/*.mseed
 *.parquet
 results.txt
+tests/data_loader.py
