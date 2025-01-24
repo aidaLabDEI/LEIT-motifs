@@ -27,5 +27,5 @@ Additional tests are described in the file [`Supplementary.pdf`](https://github.
 ## Installation
 
 ```bash
-pip install https://github.com/FrancescoMonaco/LEIT-motifs
+pip install git+https://github.com/FrancescoMonaco/LEIT-motifs
 
