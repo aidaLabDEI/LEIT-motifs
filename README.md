@@ -1,7 +1,7 @@
-# LEIT-motifs
-**Scalable discovery of multidimensional motifs in time series**.
+# <div align = "center"> LEIT-motifs </div>
+<div align = "center"> **Scalable discovery of multidimensional motifs in time series**.
 
-The algorithm employs `LSH` to prune the number of distance computations required to discover subdimensional motifs in multidimensional time series.
+The algorithm employs `LSH` to prune the number of distance computations required to discover subdimensional motifs in multidimensional time series. </div>
 
 ## Implementation details
 The code is implemented in Python 3.12, and it heavily relies on the 
