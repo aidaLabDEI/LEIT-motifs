@@ -36,6 +36,32 @@ def main():
     windows = [50, 75, 500, 5000, 1000, 200, 100]
     dimensionality = [8, 2, 4, 2, 6, 4, 2]
 
+    K_results = pd.DataFrame(
+        columns=[
+            "Dataset",
+            "K",
+            "Time elapsed",
+            "dist_computed",
+        ]
+    )
+    L_results = pd.DataFrame(
+        columns=[
+            "Dataset",
+            "L",
+            "Time elapsed",
+            "Time int",
+            "dist_computed",
+        ]
+    )
+    R_results = pd.DataFrame(
+        columns=[
+            "Dataset",
+            "r",
+            "Time elapsed",
+            "dist_computed",
+        ]
+    )
+
     # Base test for time elapsed
     for number, path in enumerate(paths):
         number_r = number
@@ -89,7 +115,7 @@ def main():
         shm_ts, ts = create_shared_array((n, dimensions), np.float32)
         ts[:] = d[:]
         del d
-        r'''
+        
         if number_r == 0:
             # lauch a computation just to compile numba
             pmotif_findg(shm_ts.name, n, dimensions, 50, 1, 8, 8, 0, 10, 8)
@@ -142,7 +168,7 @@ def main():
         results = results._append(temp_df, ignore_index=True)
         results.to_csv("p1" + str(number_r) + ".csv", index=False)
         gc.collect()
-        '''
+        
         Ks = [4, 8, 12, 16]
         Ls = [10, 50, 100, 150, 200, 400]
         rs = [4, 8, 16, 32]
@@ -180,6 +206,8 @@ def main():
                 ]
             )
             results = results._append(temp_df, ignore_index=True)
+
+            K_results = K_results._append({"Dataset": number_r, "K": K, "Time elapsed": end, "dist_computed": num_dist}, ignore_index=True)
             gc.collect()
 
         print("K fin")
@@ -216,6 +244,8 @@ def main():
                 ]
             )
             results = results._append(temp_df, ignore_index=True)
+
+            L_results = L_results._append({"Dataset": number_r, "L": L, "Time elapsed": end, "Time int": ht, "dist_computed": num_dist}, ignore_index=True)
             gc.collect()
         print("L fin")
         results.to_csv("r_partial_dataset" + str(number_r) + ".csv", index=False)
@@ -251,11 +281,18 @@ def main():
                 ]
             )
             results = results._append(temp_df, ignore_index=True)
+
+            R_results = R_results._append({"Dataset": number_r, "r": r, "Time elapsed": end, "dist_computed": num_dist}, ignore_index=True)
             gc.collect()
 
         results.to_csv("r_dataset" + str(number_r) + ".csv", index=False)
         print("Dataset", number_r, "finished")
         shm_ts.unlink()
+    
+    K_results.to_csv("Results/K_results.csv", index=False)
+    L_results.to_csv("Results/L_results.csv", index=False)
+    R_results.to_csv("Results/R_results.csv", index=False)
+
     r"""
     # Mem test
     results = pd.DataFrame(columns=["Dataset", "Mem"])
@@ -317,9 +354,6 @@ def main():
 
     results.to_csv("Mem_results.csv", index=False)
     """
-    # Fail.to_csv('Failures2.csv', index=False)
-    # Noise.to_csv('Noise.csv', index=False)
-
 
 if __name__ == "__main__":
     # from multiprocessing import freeze_support
