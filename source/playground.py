@@ -2,7 +2,6 @@ import numpy as np
 from numba import njit, prange
 import numba as nb
 import matplotlib
-from scipy.stats import t
 
 
 
@@ -108,7 +107,9 @@ if __name__ == "__main__":
     plt.show()
     '''
     """
-
+    a = np.pad(np.flip(np.array([1,2,3])), (0, 10))
+    print(a)
+    """
 data_multi = [[0.7403949191793799, 0.509541136212647, 0.4503219509497285, 0.3500115992501378],
               [0.8709742920473218, 0.43884406983852386, 0.45436591748148203, 0.4526366014033556],
               [8.947684995830059, 8.947684995830059, 7.905856471508741, 6.5974732814356685],
@@ -136,4 +137,4 @@ for data in data_multi:
 
     print(f"Mean: {mean}")
     print(f"95% Confidence Interval: ({ci_lower}, {ci_upper})")
-
+    """

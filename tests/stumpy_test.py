@@ -18,9 +18,9 @@ if __name__ == "__main__":
         # os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
         # os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
         # os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
-        # os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
-        # os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
-        # os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
+         os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
+         os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
+         os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
          os.path.join(current_dir, "..", "Datasets", "FL010")
     ]
 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     # Base test for time elapsed
     for number, path in enumerate(paths):
-        number_r = number
+        number_r = number + 4
         # Load the dataset
         if number_r == 3:
             data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(path, 0)
@@ -69,15 +69,16 @@ if __name__ == "__main__":
         else:         
             tracemalloc.start()
             # Test for different window sizes in order to give an estimate on the full dataset
-            for i in [5000, 10000,50000]:
-                d_temp = d[:i,:]
-                print(d_temp.shape)
-                start = time.perf_counter()
-                m = stumpy.mstump(d_temp.T, windows[number])
-                #
-                end = time.perf_counter() - start
-                size, peak = tracemalloc.get_traced_memory()
-                print("Dataset", number, "prefix", i, "time elapsed:", end, "seconds")
-                print(
-                    f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB"
-                )
+            #for i in [5000, 10000,50000]:
+            i=0
+            d_temp = d#[:i,:]
+            print(d_temp.shape)
+            start = time.perf_counter()
+            m = stumpy.mstump(d_temp.T, windows[number])
+            #
+            end = time.perf_counter() - start
+            size, peak = tracemalloc.get_traced_memory()
+            print("Dataset", number, "prefix", i, "time elapsed:", end, "seconds")
+            print(
+                f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB"
+            )

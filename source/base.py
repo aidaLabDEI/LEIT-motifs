@@ -5,6 +5,7 @@ import numba as nb
 from hash_lsh import multi_compute_hash
 from jitted_utilities import rolling_window, eq, multi_eq
 
+
 class WindowedTS(object):
     def __init__(
         self,
@@ -341,13 +342,46 @@ def process_chunk(
         subsequence_n = (
             subsequence - mean_container[idx][:, np.newaxis]
         ) / std_container[idx][:, np.newaxis]
-        
+
         hash_mat[idx] = multi_compute_hash(
             subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L
         )
 
     existing_shm_hash_mat.close()
     return std_container, mean_container
+
+
+def hash_timeseries_cyclicconv(
+    time_series_name, ranges, window, rp, hash_names, L, dimension, n, K
+):
+    exist_ts = shared_memory.SharedMemory(name=time_series_name)
+    time_series = np.ndarray((n, dimension), dtype=np.float32, buffer=exist_ts.buf)
+
+    # Compute the fourier transform of the time series and of the reversed vectors padded with zeros so to have the same length as the time series
+    fft_ts = np.fft.fft(time_series, axis=0)
+    vectors_l = rp.a_l  # (sqrt(L), K/2, window)
+    vectors_r = rp.a_r  # (sqrt(L), K/2, window)
+    products_l = np.zeros((n, K // 2, int(np.sqrt(L)), dimension), dtype=np.complex64)
+    products_r = np.zeros((n, K // 2, int(np.sqrt(L)), dimension), dtype=np.complex64)
+
+    for dim in range(dimension):
+        for i in range(K // 2):
+            for j in range(int(np.sqrt(L))):
+                products_l[:, i, j, dim] = np.fft.ifft(
+                    np.fft.fft(np.pad(np.flip(vectors_l[j, i])), (0, n))
+                    * fft_ts[:, dim]
+                )
+                products_r[:, i, j, dim] = np.fft.ifft(
+                    np.fft.fft(np.pad(np.flip(vectors_r[j, i])), (0, n))
+                )
+
+    # The element- wise product of the vector holds in position i the dot product of the vector with Ts[i:i+window]
+
+    # Compute the K/2 hashes for both collections
+
+    # Use the results to construct L hashes of length K for each subsequence of length window for each dimension of the time series
+
+    pass
 
 
 def process_chunk_graph(
@@ -625,9 +659,7 @@ def inner_cycle_multi(
         hash_mat_curr = (
             hash_mat[:, curr_dim, :-i] if i != 0 else hash_mat[:, curr_dim, :]
         )
-        original_mat_curr = (
-            original_mat[:, :, :-i] if i != 0 else original_mat[:, :, :]
-        )
+        original_mat_curr = original_mat[:, :, :-i] if i != 0 else original_mat[:, :, :]
         for idx, elem1 in enumerate(hash_mat_curr):
             for idx2, elem2 in enumerate(hash_mat_curr[idx + 1 :]):
                 sub_idx1 = ordering_dim[idx]
@@ -654,7 +686,7 @@ def inner_cycle_multi(
                             stds[sub_idx2],
                         )
 
-                        curr_dists = np.cumsum(stop_dist[: motif_high])
+                        curr_dists = np.cumsum(stop_dist[:motif_high])
 
                         for subdim in range_dim:
                             curr_dist = curr_dists[subdim]
