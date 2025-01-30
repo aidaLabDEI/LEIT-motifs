@@ -82,12 +82,10 @@ def multi_compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
                 hash_left_all[d, l_idx, i] = (
                     np.dot(a_l[l_idx, i], data[d]) + b_l[l_idx, i]
                 ) // r
-                # hash_left_all[d,l_idx, i] = np.floor(projection_l)
 
                 hash_right_all[d, l_idx, i] = (
                     np.dot(a_r[l_idx, i], data[d]) + b_r[l_idx, i]
                 ) // r
-                # hash_right_all[d,l_idx, i] = np.floor(projection_r)
     """
     for d in prange(dim):
         # Compute dot products for all l_idx and K_half in one go

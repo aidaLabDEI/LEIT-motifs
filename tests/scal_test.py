@@ -45,7 +45,7 @@ if __name__ == "__main__":
                               "Size": int(),
                               "Time (s)": float()}, index = [])
     # LEIT-motifs or Stumpy
-    engines = [0,1]
+    engines = [1]
     # Easy, medium or hard
     f = [1,2,3]
     random_indices = np.random.randint(0, lengths[0]- window, 2)

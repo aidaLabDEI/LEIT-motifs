@@ -7,18 +7,18 @@ from matplotlib.ticker import ScalarFormatter
 
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
+    matplotlib.rcParams.update({"text.usetex":True,"font.variant": "small-caps"})
     xfmt = ScalarFormatter()
     xfmt.set_scientific(True)
     xfmt.set_powerlimits((1, 2))
     names = ["potentials", "evaporator", "RUTH", "weather", "whales"]
-
     r"""
     # !!!K plots
     data = pd.read_csv("results/K_results.csv")
     # FInd the different values in the first column
     ds_values = data["Dataset"].unique()
     # Create a plot with ds_values subplots
-    fig, axs = plt.subplots(2, 2, figsize=(5, 3), sharex=True, layout="constrained")
+    fig, axs = plt.subplots(2, 2, figsize=(5.9, 3.9), sharex=True, layout="constrained")
     for i, ds_val in enumerate(ds_values):
         # Get the data for the current value
         K_data = data[data["Dataset"] == ds_val]
@@ -34,44 +34,42 @@ if __name__ == "__main__":
     fig.supylabel("Time (s)")
     #plt.xticks(xticks)
     plt.show()
-
     # !!!L plots
     data = pd.read_csv("results/L_results.csv")
     # FInd the different values in the first column
     ds_values = data["Dataset"].unique()
-    data = data.groupby(["Dataset", "L"]).mean().reset_index()
+    #data = data.groupby(["Dataset", "L"]).mean().reset_index()
     # Create a plot with ds_values subplots
-    fig, axs = plt.subplots(2, 2, figsize=(5, 3), sharex=True, layout="constrained")
+    fig, axs = plt.subplots(2, 2, figsize=(5.9, 3.9), sharex=True, layout="constrained")
     for i, ds_val in enumerate(ds_values):
         # Get the data for the current value
         L_data = data[data["Dataset"] == ds_val]
 
-        axs[i // 2, i % 2].stackplot(
-            L_data["L"],
-            L_data["Time elapsed"],
-            color="cornflowerblue",
-            alpha=0.65,
-            labels=["Search"],
-        )
-        axs[i // 2, i % 2].stackplot(
-            L_data["L"],
-            L_data["Time int"],
-            color="mediumslateblue",
-            alpha=0.55,
-            labels=["Hash"],
-        )
+        sns.lineplot(data=L_data, x="L", y="Time elapsed", color= "cornflowerblue", ax=axs[i // 2, i % 2], legend=False)
+        axs[i // 2, i % 2].spines["bottom"].set_bounds(10, 400)
+        axs[i // 2, i % 2].set_xticks([10, 50, 100, 150, 200, 400])
+        # axs[i // 2, i % 2].stackplot(
+        #     L_data["L"],
+        #     L_data["Time elapsed"],
+        #     color="cornflowerblue",
+        #     alpha=0.65,
+        #     labels=["Search"],
+        # )
+        # axs[i // 2, i % 2].stackplot(
+        #     L_data["L"],
+        #     L_data["Time int"],
+        #     color="mediumslateblue",
+        #     alpha=0.55,
+        #     labels=["Hash"],
+        # )
         axs[i // 2, i % 2].set_title(names[i])
         axs[i // 2, i % 2].set_xlabel('')
         axs[i // 2, i % 2].set_ylabel('')
-
-        if i == 0:
-            axs[i // 2, i % 2].legend(loc="upper left")
-    sns.despine(offset=10, trim=True)
+    sns.despine(trim=True)
     sns.set_context("paper")
     fig.supxlabel("Repetitions - L")
     fig.supylabel("Time (s)")
     plt.show()
-
 
     # !!!r plots
     data = pd.read_csv("results/R_results.csv")
@@ -82,7 +80,7 @@ if __name__ == "__main__":
     r_dist = [16, 312, 212, 38106]
 
     # Create a plot with ds_values subplots
-    fig, axs = plt.subplots(2, 2, figsize=(5, 3), sharex=True, layout="constrained")
+    fig, axs = plt.subplots(2, 2, figsize=(5.4, 3.4), sharex=True, layout="constrained")
     for i, ds_val in enumerate(ds_values):
         # Get the data for the current value
         r_data = data[data["Dataset"] == ds_val]
@@ -99,14 +97,13 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].spines["bottom"].set_bounds(2, 32)   
         axs[i // 2, i % 2].set_xticks([2, 4, 8, 16, 32])
     plt.legend()
-    sns.despine(offset=1, trim=True)
+    sns.despine(trim=True)
     sns.set_context("paper")
     fig.supxlabel("Discretization parameter - r")
     fig.supylabel("Compared couples")
     plt.show()
 
     # Noise plot
-
     data = pd.read_csv("results/noise.csv")
     # FInd the different values in the first column
     ds_values = data["Dataset"].unique()
@@ -120,16 +117,14 @@ if __name__ == "__main__":
             x=" noise",
             y=" val",
             color=colors[val],
-            alpha=0.7,
             label=names[val],
-            ci= None,
+            legend=False,
         )
     axs.set_ylabel("Recall")
     axs.set_xlabel("Injected dimensions")
-    sns.despine(offset=10.2)
-    plt.ylim((0, 1.1))
+    sns.despine(trim=True)
     plt.show()
-
+    """
     # Multidim plot
     mstumptime=[3.65, 4.45, 37, 39] # 
     mtimeread = [3.65, 4.45,84.04, 1035.73, 2.7*24*60*60, 7.2*24*60*60, 8.4*24*60*60, 11.8*24*60*60]
@@ -137,7 +132,7 @@ if __name__ == "__main__":
     ds_values = data["dataset"].unique()
     fig, axs = plt.subplots(1, 1, figsize=(5, 6), layout="constrained")
     colors = ["crimson", "cornflowerblue", "mediumseagreen", "darkorange", "darkcyan","xkcd:dull green", "firebrick", "xkcd:marigold"]
-    names = ["potentials", "evaporator", "ruth", "weather", "whales", "quake", "el_load", "ltmm"]
+    names = ["potentials", "evaporator", "RUTH", "weather", "whales", "quake", "el_load", "ltmm"]
     for val in ds_values:
         n_data = data[data["dataset"] == val]
         sns.lineplot(
@@ -176,7 +171,6 @@ if __name__ == "__main__":
     # axs.spines["left"].set_bounds(0, 35)
     # sns.despine(offset={"left": 10.2})
     # plt.show()
-    """
 
     # Scalability plot
     data = pd.read_csv("results/scalability.csv")
@@ -184,6 +178,18 @@ if __name__ == "__main__":
     colors = ["dimgray", "cornflowerblue", "crimson", "mediumseagreen"]
     names = ["MSTUMP","LEIT-motifs (medium)", "LEIT-motifs (hard)", "LEIT-motifs (easy)"]
     num = [0, 3, 1, 2]
+    # Generate reference complexity curves
+    size_range = np.logspace(np.log10(data["Size"].min()), np.log10(data["Size"].max()), 100)
+    min_time = data["Time (s)"].min()
+    max_time = data["Time (s)"].max()
+
+    # Scale the reference curves for visualization
+    linear_time = min_time * (size_range / size_range.min())  # O(n)
+    quadratic_time = min_time * (size_range / size_range.min())**2  # O(n^2)
+
+    # Plot reference lines
+    #plt.plot(size_range, linear_time, 'k-.', linewidth=1, label="O(n)", alpha= 0.8)  # Dashed black line
+   # plt.plot(size_range, quadratic_time, 'k:', linewidth=1, label="O(n²)", alpha=0.8)  # Dotted black line
     for val in num:
         n_data = data[data["Algo"] == val]
         if val == 1: 
@@ -208,18 +214,7 @@ if __name__ == "__main__":
             marker='o',
             s=50,
             )
-        # Generate reference complexity curves
-    size_range = np.logspace(np.log10(data["Size"].min()), np.log10(data["Size"].max()), 100)
-    min_time = data["Time (s)"].min()
-    max_time = data["Time (s)"].max()
 
-    # Scale the reference curves for visualization
-    linear_time = min_time * (size_range / size_range.min())  # O(n)
-    quadratic_time = min_time * (size_range / size_range.min())**2  # O(n^2)
-
-    # Plot reference lines
-    plt.plot(size_range, linear_time, 'k-.', linewidth=1, label="O(n)", alpha= 0.8)  # Dashed black line
-    plt.plot(size_range, quadratic_time, 'k:', linewidth=1, label="O(n²)", alpha=0.8)  # Dotted black line
 
     plt.yscale("log")
     plt.xscale("log")
