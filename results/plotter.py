@@ -7,12 +7,12 @@ from matplotlib.ticker import ScalarFormatter
 
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
-    matplotlib.rcParams.update({"text.usetex":True,"font.variant": "small-caps"})
+    matplotlib.rcParams.update({"text.usetex":True, "text.latex.preamble": r"\usepackage{siunitx} \usepackage{sansmath} \sansmath"})
     xfmt = ScalarFormatter()
     xfmt.set_scientific(True)
     xfmt.set_powerlimits((1, 2))
     names = ["potentials", "evaporator", "RUTH", "weather", "whales"]
-    r"""
+
     # !!!K plots
     data = pd.read_csv("results/K_results.csv")
     # FInd the different values in the first column
@@ -23,7 +23,7 @@ if __name__ == "__main__":
         # Get the data for the current value
         K_data = data[data["Dataset"] == ds_val]
         sns.lineplot(data=K_data, x="K", y="Time elapsed", color= "mediumseagreen", ax=axs[i // 2, i % 2], legend=False)
-        axs[i // 2, i % 2].set_title(names[i])
+        axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}", fontsize=10)
         axs[i // 2, i % 2].set_xlabel('')
         axs[i // 2, i % 2].set_ylabel('')
         axs[i // 2, i % 2].spines["bottom"].set_bounds(4, 16)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         #     alpha=0.55,
         #     labels=["Hash"],
         # )
-        axs[i // 2, i % 2].set_title(names[i])
+        axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}", fontsize=10)
         axs[i // 2, i % 2].set_xlabel('')
         axs[i // 2, i % 2].set_ylabel('')
     sns.despine(trim=True)
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     r_dist = [16, 312, 212, 38106]
 
     # Create a plot with ds_values subplots
-    fig, axs = plt.subplots(2, 2, figsize=(5.4, 3.4), sharex=True, layout="constrained")
+    fig, axs = plt.subplots(2, 2, figsize=(5.9, 3.9), sharex=True, layout="constrained")
     for i, ds_val in enumerate(ds_values):
         # Get the data for the current value
         r_data = data[data["Dataset"] == ds_val]
@@ -90,7 +90,7 @@ if __name__ == "__main__":
             r_dc[i], 0, r_dist[i], linestyle="dotted", color="coral"
         )
         axs[i//2, i%2].scatter(r_dc[i], r_dist[i], color="crimson", zorder=5, s=40, label="Self-tuned r")
-        axs[i // 2, i % 2].set_title(names[i])
+        axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}")
         axs[i//2,i%2].yaxis.set_major_formatter(xfmt)
         axs[i // 2, i % 2].set_xlabel('')
         axs[i // 2, i % 2].set_ylabel('')
@@ -124,7 +124,6 @@ if __name__ == "__main__":
     axs.set_xlabel("Injected dimensions")
     sns.despine(trim=True)
     plt.show()
-    """
     # Multidim plot
     mstumptime=[3.65, 4.45, 37, 39] # 
     mtimeread = [3.65, 4.45,84.04, 1035.73, 2.7*24*60*60, 7.2*24*60*60, 8.4*24*60*60, 11.8*24*60*60]
@@ -132,7 +131,7 @@ if __name__ == "__main__":
     ds_values = data["dataset"].unique()
     fig, axs = plt.subplots(1, 1, figsize=(5, 6), layout="constrained")
     colors = ["crimson", "cornflowerblue", "mediumseagreen", "darkorange", "darkcyan","xkcd:dull green", "firebrick", "xkcd:marigold"]
-    names = ["potentials", "evaporator", "RUTH", "weather", "whales", "quake", "el_load", "ltmm"]
+    names = ["potentials", "evaporator", "RUTH", "weather", "whales", "quake", "el_load", "LTMM"]
     for val in ds_values:
         n_data = data[data["dataset"] == val]
         sns.lineplot(
@@ -154,6 +153,9 @@ if __name__ == "__main__":
         )
 
         axs.axhline(mtimeread[val], color=colors[val], linestyle='dotted')
+    legend = axs.legend()
+    for text in legend.get_texts():
+        text.set_text(r"\textsc{" + text.get_text() + "}")
     plt.xscale("log")
     plt.yscale("log")
     sns.despine(trim=True)
@@ -219,6 +221,8 @@ if __name__ == "__main__":
     plt.yscale("log")
     plt.xscale("log")
     sns.despine(trim=True)
-    plt.legend()
+    legend = axs.legend()
+    for text in legend.get_texts():
+        text.set_text(r"\textsc{" + text.get_text() + "}")
     plt.minorticks_off()
     plt.show()
