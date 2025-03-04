@@ -26,7 +26,7 @@ The file `results/plotter.py` collects all the raw results and plots them.
 ## Installation as a Python package
 
 ```bash
-pip install git+https://github.com/FrancescoMonaco/LEIT-motifs
+pip install git+https://github.com/aidaLabDEI/LEIT-motifs
 ```
 ```python
 from LEITmotifs import LEITmotifs
