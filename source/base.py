@@ -475,6 +475,7 @@ def process_chunk_graph(
         nb.int8[:, :, :],
         nb.int8[:, :, :],
         nb.float32[:, :],
+        nb.int32[: , :, :],
         nb.int32,
         nb.int32,
         nb.int32,
@@ -491,6 +492,7 @@ def inner_cycle(
     hash_mat,
     original_mat,
     time_series,
+    bookmark,
     window,
     motif_dimensionality,
     i,
@@ -526,6 +528,10 @@ def inner_cycle(
         hash_mat_curr = (
             hash_mat[:, curr_dim, :-i] if i != 0 else hash_mat[:, curr_dim, :]
         )
+        # Merge the bookmark indices that share the same hash, bookmark is (dimensionality, n - window + 1, 2)
+        new_bookmark = np.zeros((bookmark.shape), dtype=np.int32)
+        for 
+
         for idx, elem1 in enumerate(hash_mat_curr):
             for idx2, elem2 in enumerate(hash_mat_curr[idx + 1 :]):
                 sub_idx1 = ordering_dim[idx]

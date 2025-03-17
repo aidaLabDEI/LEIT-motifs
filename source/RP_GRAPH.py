@@ -16,7 +16,7 @@ import time
 from stop import stopgraph
 
 
-def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k):
+def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookmark_name, k):
     # if i == 0 and j == 1:
     #    pr = cProfile.Profile()
     #   pr.enable()
@@ -43,6 +43,10 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k):
     stds = np.ndarray(
         (n - window + 1, dimensionality), dtype=np.float32, buffer=stds_ex.buf
     )
+    bookmark_ex = shared_memory.SharedMemory(name=bookmark_name)
+    bookmark = np.ndarray(
+        (dimensionality, n - window + 1, 2), dtype=np.int32, buffer=bookmark_ex.buf)
+    
     # Ordered hashes, ordering indices and unordered hashes
     existing_arr = shared_memory.SharedMemory(name=ordered_name)
     existing_ord = shared_memory.SharedMemory(name=ordering_name)
@@ -63,6 +67,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k):
         hash_mat,
         original_mat,
         time_series,
+        bookmark,
         window,
         motif_dimensionality,
         i,
@@ -86,7 +91,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k):
     #   pr.print_stats(sort='cumtime')
     return top, dist_comp, i, j  # , counter
 
-def order_hash(hash_mat_name, indices_name, ordered_name, dimension, num_s, K):
+def order_hash(hash_mat_name, indices_name, ordered_name, bookmark_name, dimension, num_s, K):
     hash_mat_data = shared_memory.SharedMemory(name=hash_mat_name)
     hash_mat = np.ndarray(
         (num_s, dimension, K), dtype=np.int8, buffer=hash_mat_data.buf
@@ -95,9 +100,29 @@ def order_hash(hash_mat_name, indices_name, ordered_name, dimension, num_s, K):
     indices = np.ndarray((dimension, num_s), dtype=np.int32, buffer=indices_data.buf)
     ordered_data = shared_memory.SharedMemory(name=ordered_name)
     ordered = np.ndarray((num_s, dimension, K), dtype=np.int8, buffer=ordered_data.buf)
+    bookmark_data = shared_memory.SharedMemory(name=bookmark_name)
+    bookmark = np.ndarray((dimension, num_s, 2), dtype=np.int32, buffer=bookmark_data.buf)
+    
+    # Introduce a bookmark to separate the subsequences for each dimension we have where the indices indicate sections that have equal hash
+    #  [first index, first invalid index], [second index, second invalid index]...
+
     for curr_dim in range(dimension):
         indices[curr_dim, :] = np.lexsort(hash_mat[:, curr_dim, :].T[::-1])
         ordered[:, curr_dim, :] = hash_mat[indices[curr_dim, :], curr_dim, :]
+        current = 0
+        offset = 0
+        for i in range(num_s):
+            while offset > 0:
+                offset -= 1
+                continue
+            for j in range(i + 1, num_s):
+                if np.array_equal(ordered[i, curr_dim, :], ordered[j, curr_dim, :]):
+                    offet += 1
+                else:
+                    boomark[curr_dim, current] = [i, j]
+                    current += 1                 
+                
+
 
     hash_mat_data.close()
     indices_data.close()
@@ -149,6 +174,7 @@ def pmotif_findg(
         indices_container = []
         hash_container = []
         ordered_container = []
+        bookmark_container = []
         close_container = []
 
         # Create shared memory for everything
@@ -159,9 +185,12 @@ def pmotif_findg(
             ordered_container.append(arro.name)
             arri, _ = create_shared_array((dimension, n - window + 1), dtype=np.int32)
             indices_container.append(arri.name)
+            arru, _ = create_shared_array((dimension, n - window + 1, 2), dtype=np.int32)
+            bookmark_container.append(arru.name)
             close_container.append(arrn)
             close_container.append(arro)
             close_container.append(arri)
+            close_container.append(arru)
 
         dist_comp = 0
         # Hasher
@@ -203,9 +232,9 @@ def pmotif_findg(
             # print("Hashed")
 
             data = [
-                (split, indices, ordered, dimension, n - window + 1, K)
+                (split, indices, ordered, bookmark, dimension, n - window + 1, K)
                 for split, indices, ordered in zip(
-                    hash_container, indices_container, ordered_container
+                    hash_container, indices_container, ordered_container, bookmark_container
                 )
             ]
             results = [pool.submit(order_hash, *da) for da in data]
@@ -249,6 +278,7 @@ def pmotif_findg(
                     hash_container[j],
                     indices_container[j],
                     ordered_container[j],
+                    bookmark_container[j],
                     k,
                 )
                 for i, j in itertools.product(range(K), range(L))
