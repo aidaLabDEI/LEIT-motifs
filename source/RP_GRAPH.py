@@ -21,6 +21,8 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     #    pr = cProfile.Profile()
     #   pr.enable()
     # print("Worker: ", i, j)
+    #Print all the names
+    print("Hash mat name: ", hash_mat_name, "Ordering name: ", ordering_name, "Ordered name: ", ordered_name, "Bookmark name: ", bookmark_name)
     dist_comp = 0
     top = []
     window = subsequences.w
@@ -112,22 +114,25 @@ def order_hash(hash_mat_name, indices_name, ordered_name, bookmark_name, dimensi
         ordered[:, curr_dim, :] = hash_mat[indices[curr_dim, :], curr_dim, :]
         current = 0
         offset = 0
-        for i in range(num_s):
+
+        for i in range(num_s-1):
             while offset > 0:
                 offset -= 1
                 continue
             for j in range(i + 1, num_s):
-                if np.array_equal(ordered[i, curr_dim, :], ordered[j, curr_dim, :]):
-                    offet += 1
+                if np.all(ordered[i, curr_dim, :] == ordered[j, curr_dim, :]):
+                    offset += 1
                 else:
-                    boomark[curr_dim, current] = [i, j]
-                    current += 1                 
+                    bookmark[curr_dim, current] = np.array([i, j])
+                    current += 1
+                    break           
                 
 
 
     hash_mat_data.close()
     indices_data.close()
     ordered_data.close()
+    bookmark_data.close()
     return True
 
 
@@ -186,7 +191,7 @@ def pmotif_findg(
             ordered_container.append(arro.name)
             arri, _ = create_shared_array((dimension, n - window + 1), dtype=np.int32)
             indices_container.append(arri.name)
-            arru, _ = create_shared_array((dimension, n - window + 1, 2), dtype=np.int32)
+            arru, _ = create_shared_array((dimension, (n - window + 1), 2), dtype=np.int32)
             bookmark_container.append(arru.name)
             close_container.append(arrn)
             close_container.append(arro)
@@ -234,7 +239,7 @@ def pmotif_findg(
 
             data = [
                 (split, indices, ordered, bookmark, dimension, n - window + 1, K)
-                for split, indices, ordered in zip(
+                for split, indices, ordered, bookmark in zip(
                     hash_container, indices_container, ordered_container, bookmark_container
                 )
             ]
@@ -338,7 +343,8 @@ def pmotif_findg(
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
         return top, dist_comp, hash_t
-    except (KeyboardInterrupt, FileNotFoundError, OSError):
+    except Exception as e:
+        print(e)
         return [], 0, 0
     finally:
         # pr.disable()

@@ -542,18 +542,20 @@ def inner_cycle(
                 if hash_mat_curr[indices_list[0]] == hash_mat_curr[subsequent[0]]:
                     offset += 1
                 else:
-                    new_bookmark[merged] = [indices_list[0], indices_list[1]]
+                    new_bookmark[merged][0] = indices_list[0]
+                    new_bookmark[merged][1] = subsequent[0]
                     merged += 1
                     break
         # Assign the new bookmark
         bookmark[curr_dim] = new_bookmark
 
-        for elem1, elem2 in new_bookmark:
+        for index in range(new_bookmark.shape[0]):
+            elem1, elem2 = new_bookmark[index]
             if elem1 == -1:
                 break
-            for idx1 in range(elem1, elem2):
+            for idx1 in range(elem1[0], elem2[0]):
                 sub_idx1 = ordering_dim[idx1]
-                for idx2 in range(idx1 + 1, elem2):
+                for idx2 in range(idx1 + 1, elem2[0]):
                     sub_idx2 = ordering_dim[idx2]
                     maximum_pair = [sub_idx1, sub_idx2] if sub_idx1 < sub_idx2 else [sub_idx2, sub_idx1]
                     # No trivial match

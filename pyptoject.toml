@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "LEITmotifs"
+version = "0.2.0"
+description = "Scalable discovery of multidimensional motifs in time series"
+authors = [{ name = "Francesco Pio Monaco", email = "monacofran@dei.unipd.it" }]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "tornado",
+    "numba",
+    "numpy",
+    "pandas",
+    "setuptools",
+    "scipy",
+    "matplotlib",
+    "seaborn",
+    "wfdb"
+]
+
+[tool.setuptools]
+packages = ["LEITmotifs"]  # Replace with your actual package name

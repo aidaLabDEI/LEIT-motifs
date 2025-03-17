@@ -23,7 +23,7 @@ from scipy.signal import savgol_filter
 
 
 if __name__ == "__main__":
-    matplotlib.use("WebAgg")
+    #matplotlib.use("WebAgg")
 
     # Get from command line arguments the number of the dataset to be used, the window size, dimensionality, K and L
     # 0: FOETAL_ECG.dat
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 32  # find_width_discr(d, window_size, K)
+    r = 8  # find_width_discr(d, window_size, K)
    # d = np.concatenate((d, np.random.normal(0,0.01, (d.shape[0], 4))), axis=1)
     print(d.shape)
     thresh = 0
