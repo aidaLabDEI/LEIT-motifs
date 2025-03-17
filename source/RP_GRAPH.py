@@ -46,6 +46,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     bookmark_ex = shared_memory.SharedMemory(name=bookmark_name)
     bookmark = np.ndarray(
         (dimensionality, n - window + 1, 2), dtype=np.int32, buffer=bookmark_ex.buf)
+    bookmark = -1 * np.ones((dimensionality, n - window + 1, 2), dtype=np.int32)
     
     # Ordered hashes, ordering indices and unordered hashes
     existing_arr = shared_memory.SharedMemory(name=ordered_name)
