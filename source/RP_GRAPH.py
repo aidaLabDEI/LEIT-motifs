@@ -45,10 +45,13 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     stds = np.ndarray(
         (n - window + 1, dimensionality), dtype=np.float32, buffer=stds_ex.buf
     )
+    # Bookmark structure
     bookmark_ex = shared_memory.SharedMemory(name=bookmark_name)
     bookmark = np.ndarray(
-        (dimensionality, n - window + 1, 2), dtype=np.int32, buffer=bookmark_ex.buf)
-    bookmark = -1 * np.ones((dimensionality, n - window + 1, 2), dtype=np.int32)
+        (dimensionality, n - window + 1, 2), dtype=np.int32, buffer=bookmark_ex.buf
+    )
+    if i == K:
+        bookmark = -1 * np.ones((dimensionality, n - window + 1, 2), dtype=np.int32)
     
     # Ordered hashes, ordering indices and unordered hashes
     existing_arr = shared_memory.SharedMemory(name=ordered_name)
@@ -87,6 +90,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     existing_arr.close()
     existing_ord.close()
     existing_hash.close()
+    bookmark_ex.close()
     means_ex.close()
     stds_ex.close()
     # if i == 0 and j == 1:
@@ -106,7 +110,7 @@ def order_hash(hash_mat_name, indices_name, ordered_name, bookmark_name, dimensi
     bookmark_data = shared_memory.SharedMemory(name=bookmark_name)
     bookmark = np.ndarray((dimension, num_s, 2), dtype=np.int32, buffer=bookmark_data.buf)
     
-    # Introduce a bookmark to separate the subsequences for each dimension we have where the indices indicate sections that have equal hash
+    # Introduce a bookmark to separate the subsequences for each dimension, where the indices indicate sections that have equal hash
     #  [first index, first invalid index], [second index, second invalid index]...
 
     for curr_dim in range(dimension):
@@ -345,11 +349,11 @@ def pmotif_findg(
         return top, dist_comp, hash_t
     except Exception as e:
         print(e)
-        return [], 0, 0
+        return [], dist_comp, hash_t
     finally:
         # pr.disable()
         # pr.print_stats(sort='cumtime')
-        # Close all the shared memory
+        #Close all the shared memory
         for arr in close_container:
             arr.close()
             arr.unlink()
