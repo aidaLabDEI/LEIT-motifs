@@ -20,9 +20,8 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     # if i == 0 and j == 1:
     #    pr = cProfile.Profile()
     #   pr.enable()
-    # print("Worker: ", i, j)
+    print("Worker: ", i, j)
     #Print all the names
-    print("Hash mat name: ", hash_mat_name, "Ordering name: ", ordering_name, "Ordered name: ", ordered_name, "Bookmark name: ", bookmark_name)
     dist_comp = 0
     top = []
     window = subsequences.w
@@ -30,7 +29,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     dimensionality = subsequences.dimensionality
     motif_dimensionality = subsequences.d
     K = subsequences.K
-
+    #Print all the names 
     # Time Series
     ex_time_series = shared_memory.SharedMemory(name=subsequences.subsequences)
     time_series = np.ndarray(
@@ -93,6 +92,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     bookmark_ex.close()
     means_ex.close()
     stds_ex.close()
+    print("Worker done: ", i, j)
     # if i == 0 and j == 1:
     #    pr.disable()
     #   pr.print_stats(sort='cumtime')
@@ -256,8 +256,8 @@ def pmotif_findg(
                     pool.shutdown(wait=False, cancel_futures=True)
             # print("Ordered")
         # Close the time series otherwise it will be copied in all children processes
-        std_container.close()
-        mean_container.close()
+        #std_container.close()
+        #mean_container.close()
         del chunks
         hash_t = time.perf_counter() - st
         print("Hashing time: ", hash_t)

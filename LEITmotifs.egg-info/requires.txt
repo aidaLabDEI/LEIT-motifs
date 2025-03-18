@@ -1,0 +1,10 @@
+tornado
+numba
+numpy
+pandas
+setuptools
+scipy
+matplotlib
+seaborn
+wfdb
+intel-cmplr-lib-rt

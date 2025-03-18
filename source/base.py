@@ -529,7 +529,7 @@ def inner_cycle(
             hash_mat[:, curr_dim, :-i] if i != 0 else hash_mat[:, curr_dim, :]
         )
         # Merge the bookmark indices that share the same hash, the bookmark shape is (dimensionality, n - window + 1, 2)
-        new_bookmark = np.full((bookmark.shape), -1, dtype=np.int32)
+        new_bookmark = np.full((bookmark.shape[1:]), -1, dtype=np.int32)
         offset = 0
         merged = 0
         for idx, indices_list in enumerate(bookmark[curr_dim]):
@@ -539,7 +539,7 @@ def inner_cycle(
             if indices_list[0] == -1:
                 break
             for subsequent in bookmark[curr_dim][idx:]:
-                if hash_mat_curr[indices_list[0]] == hash_mat_curr[subsequent[0]]:
+                if eq(hash_mat_curr[indices_list[0]], hash_mat_curr[subsequent[0]]):
                     offset += 1
                 else:
                     new_bookmark[merged][0] = indices_list[0]
@@ -548,14 +548,14 @@ def inner_cycle(
                     break
         # Assign the new bookmark
         bookmark[curr_dim] = new_bookmark
-
+        
         for index in range(new_bookmark.shape[0]):
             elem1, elem2 = new_bookmark[index]
             if elem1 == -1:
                 break
-            for idx1 in range(elem1[0], elem2[0]):
+            for idx1 in range(elem1, elem2):
                 sub_idx1 = ordering_dim[idx1]
-                for idx2 in range(idx1 + 1, elem2[0]):
+                for idx2 in range(idx1 + 1, elem2):
                     sub_idx2 = ordering_dim[idx2]
                     maximum_pair = [sub_idx1, sub_idx2] if sub_idx1 < sub_idx2 else [sub_idx2, sub_idx1]
                     # No trivial match

@@ -149,7 +149,7 @@ if __name__ == "__main__":
     # motifs = queue.PriorityQueue()
     #print(motifs)
     for motif in motifs:
-        print(motif[0][0])
+        print(motif[0])
     copy = motifs
     motifs = copy
     # motifs = find_all_occur(extract, motifs, window_size)
