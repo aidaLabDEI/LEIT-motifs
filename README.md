@@ -1,7 +1,7 @@
 # <div align = "center"> LEIT-motifs </div>
-<div align = "center"> **Scalable discovery of multidimensional motifs in time series**.
+<div align = "center"> <strong>Scalable discovery of multidimensional motifs in time series</strong>
 
-The algorithm employs `LSH` to prune the number of distance computations required to discover subdimensional motifs in multidimensional time series. </div>
+The algorithm employs Locality Sensitive Hashing `(LSH)` to prune the number of distance computations required to discover subdimensional motifs in multidimensional time series. </div>
 
 ## Implementation details
 The code is implemented in Python 3.12, and it heavily relies on the 
@@ -11,7 +11,7 @@ The code is implemented in Python 3.12, and it heavily relies on the
 
 The algorithm has **anytime** properties, computation can be stopped at any given point and the algorithm will return the best results it achieved.
 
-**Discretized Random Projections LSH** has been implemented with the use of *tensoring* to minimize the computations.
+**Discretized Random Projections LSH** has been implemented with the use of *tensoring* to minimize the hash evaluations.
 
 For general use the `LEITmotifs` function does all the heavy lifting (i.e., deals with NaN values, transforms the time series in the correct format for the algorithm, etc.).
 
@@ -22,10 +22,18 @@ not fit in the paper due to space limitations, the scripts produce *.csv* files 
 
 The file `results/plotter.py` collects all the raw results and plots them.
 
-Additional tests are described in the file [`Supplementary.pdf`](https://github.com/FrancescoMonaco/LEIT-motifs/blob/main/Supplementary.pdf).
 
-## Installation
+## Installation as a Python package
 
 ```bash
-pip install git+https://github.com/FrancescoMonaco/LEIT-motifs
+pip install git+https://github.com/aidaLabDEI/LEIT-motifs
+```
+```python
+from LEITmotifs import LEITmotifs
+# Example usage:
+# let Ts be a D-dimensional time series as a numpy array,
+# window the length of the motifs to discover,
+# and k the number of motifs to discover
+motifs, _ = LEITmotifs(Ts, window, k, (2,D))
+```
 
