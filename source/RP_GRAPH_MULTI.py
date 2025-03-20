@@ -171,7 +171,7 @@ def pmotif_findg_multi(
         # Create the hasher object
         rp = RandomProjection(window, bin_width, K, L)  # []
 
-        chunk_sz = n // (cpu_count() * 2)  # min(int(np.sqrt(n)), 1000)
+        chunk_sz = n // (cpu_count() * 8)  # min(int(np.sqrt(n)), 1000)
         num_chunks = max(1, n // chunk_sz)
 
         chunks = [
@@ -203,7 +203,7 @@ def pmotif_findg_multi(
                     future.result()
                 except KeyboardInterrupt:
                     pool.shutdown(wait=False, cancel_futures=True)
-            # print("Hashed")
+            print("Hashed")
 
             data = [
                 (split, indices, ordered, dimension, n - window + 1, K)
@@ -217,7 +217,7 @@ def pmotif_findg_multi(
                     _ = future.result()
                 except KeyboardInterrupt:
                     pool.shutdown(wait=False, cancel_futures=True)
-            # print("Ordered")
+                print("Ordered")
         # Close the time series otherwise it will be copied in all children processes
         std_container.close()
         mean_container.close()

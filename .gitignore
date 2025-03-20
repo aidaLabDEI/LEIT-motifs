@@ -16,3 +16,4 @@ Datasets/*.mseed
 results.txt
 tests/data_loader.py
 pyproject.toml.*
+arc/

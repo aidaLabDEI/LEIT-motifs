@@ -12,7 +12,7 @@ if __name__ == "__main__":
     xfmt.set_scientific(True)
     xfmt.set_powerlimits((1, 2))
     names = ["potentials", "evaporator", "RUTH", "weather", "whales"]
-
+    r"""
     # !!!K plots
     data = pd.read_csv("results/K_results.csv")
     # FInd the different values in the first column
@@ -124,6 +124,7 @@ if __name__ == "__main__":
     axs.set_xlabel("Injected dimensions")
     sns.despine(trim=True)
     plt.show()
+    """
     # Multidim plot
     mstumptime=[3.65, 4.45, 37, 39] # 
     mtimeread = [3.65, 4.45,84.04, 1035.73, 2.7*24*60*60, 7.2*24*60*60, 8.4*24*60*60, 11.8*24*60*60]
@@ -190,8 +191,8 @@ if __name__ == "__main__":
     quadratic_time = min_time * (size_range / size_range.min())**2  # O(n^2)
 
     # Plot reference lines
-    #plt.plot(size_range, linear_time, 'k-.', linewidth=1, label="O(n)", alpha= 0.8)  # Dashed black line
-   # plt.plot(size_range, quadratic_time, 'k:', linewidth=1, label="O(n²)", alpha=0.8)  # Dotted black line
+    plt.plot(size_range, linear_time, 'k-.', linewidth=1, label="O(n)", alpha= 0.8)  # Dashed black line
+    plt.plot(size_range, quadratic_time, 'k:', linewidth=1, label="O(n²)", alpha=0.8)  # Dotted black line
     for val in num:
         n_data = data[data["Algo"] == val]
         if val == 1: 
