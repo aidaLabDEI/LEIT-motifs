@@ -17,7 +17,7 @@ def LEITmotifs(
     K: int = 8,
     failure_probability: float = 0.01,
     r: int = 0,
-) -> Tuple[list, int]:
+) -> Tuple[list, int, float]:
     """
     Find the motifs in a time series using the LEIT-motifs algorithm
 

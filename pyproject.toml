@@ -22,5 +22,9 @@ dependencies = [
     "intel-cmplr-lib-rt"
 ]
 
+[project.urls]
+Homepage = "https://github.com/aidaLabDEI/LEIT-motifs"
+Paper = "https://doi.org/10.48550/arXiv.2502.14446"
+
 [tool.setuptools]
 packages = ["source"]  # Replace with your actual package name

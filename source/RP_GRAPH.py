@@ -20,7 +20,6 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     # if i == 0 and j == 1:
     #    pr = cProfile.Profile()
     #   pr.enable()
-    print("Worker: ", i, j)
     #Print all the names
     dist_comp = 0
     top = []
@@ -92,7 +91,6 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     bookmark_ex.close()
     means_ex.close()
     stds_ex.close()
-    print("Worker done: ", i, j)
     # if i == 0 and j == 1:
     #    pr.disable()
     #   pr.print_stats(sort='cumtime')
@@ -130,8 +128,6 @@ def order_hash(hash_mat_name, indices_name, ordered_name, bookmark_name, dimensi
                     bookmark[curr_dim, current] = np.array([i, j])
                     current += 1
                     break           
-                
-
 
     hash_mat_data.close()
     indices_data.close()
@@ -229,10 +225,9 @@ def pmotif_findg(
         # Hash the subsequences and order them lexigraphically
         st = time.perf_counter()
         with ProcessPoolExecutor(
-            max_workers=cpu_count(),
+            max_workers=1#cpu_count(),
             # mp_context = multiprocessing.get_context("forkserver")
         ) as pool:
-            # pool.map(process_chunk_graph, chunks)
             results = [pool.submit(process_chunk_graph, *chunk) for chunk in chunks]
             for future in as_completed(results):
                 try:
@@ -276,7 +271,7 @@ def pmotif_findg(
         stop_val = False
         # confirmations = 0
         with ProcessPoolExecutor(
-            max_workers=cpu_count(),
+            max_workers=1#cpu_count(),
             # mp_context = multiprocessing.get_context("forkserver")
         ) as executor:
             futures = [
@@ -303,6 +298,7 @@ def pmotif_findg(
                     executor.shutdown(wait=False, cancel_futures=True)
 
                 dist_comp += dist_comp_temp
+                print(dist_comp_temp, len(top_temp))
                 for element in top_temp:
                     add = True
                     # Check is there's already an overlapping sequence, in that case keep the best match
@@ -330,7 +326,7 @@ def pmotif_findg(
                         bisect.insort(top, element, key=lambda x: -x[0])
                     if len(top) > k:
                         top = top[:k]
-                if len(top) == k:
+                if len(top) >= k:
                     stop_val = stopgraph(
                         top[-1][1][3],
                         i,
@@ -341,9 +337,11 @@ def pmotif_findg(
                         bin_width,
                         motif_dimensionality,
                     )
+                    # The condition for stopping is having the motif confirmed, the correct number of motifs and j is L/2 or L
                     if (
                         stop_val and len(top) >= k
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
+                        print("Stopping")
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
         return top, dist_comp, hash_t

@@ -3,6 +3,8 @@ Name: LEITmotifs
 Version: 0.2.0
 Summary: Scalable discovery of multidimensional motifs in time series
 Author-email: Francesco Pio Monaco <monacofran@dei.unipd.it>
+Project-URL: Homepage, https://github.com/aidaLabDEI/LEIT-motifs
+Project-URL: Paper, https://doi.org/10.48550/arXiv.2502.14446
 Requires-Python: >=3.12
 Description-Content-Type: text/markdown
 License-File: LICENSE
