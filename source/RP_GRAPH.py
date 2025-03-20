@@ -13,7 +13,6 @@ from multiprocessing import cpu_count
 from concurrent.futures import as_completed, ProcessPoolExecutor
 from hash_lsh import RandomProjection
 import time
-import psutil
 from stop import stopgraph
 
 
@@ -98,38 +97,38 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     return top, dist_comp, i, j  # , counter
 
 def order_hash(hash_mat_name, indices_name, ordered_name, bookmark_name, dimension, num_s, K):
+    # Attach to shared memory
     hash_mat_data = shared_memory.SharedMemory(name=hash_mat_name)
-    hash_mat = np.ndarray(
-        (num_s, dimension, K), dtype=np.int8, buffer=hash_mat_data.buf
-    )
+    hash_mat = np.ndarray((num_s, dimension, K), dtype=np.int8, buffer=hash_mat_data.buf)
+
     indices_data = shared_memory.SharedMemory(name=indices_name)
     indices = np.ndarray((dimension, num_s), dtype=np.int32, buffer=indices_data.buf)
+
     ordered_data = shared_memory.SharedMemory(name=ordered_name)
     ordered = np.ndarray((num_s, dimension, K), dtype=np.int8, buffer=ordered_data.buf)
+
     bookmark_data = shared_memory.SharedMemory(name=bookmark_name)
     bookmark = np.ndarray((dimension, num_s, 2), dtype=np.int32, buffer=bookmark_data.buf)
-    
-    # Introduce a bookmark to separate the subsequences for each dimension, where the indices indicate sections that have equal hash
-    #  [first index, first invalid index], [second index, second invalid index]...
 
     for curr_dim in range(dimension):
+        # Sort and reorder hash matrix
         indices[curr_dim, :] = np.lexsort(hash_mat[:, curr_dim, :].T[::-1])
         ordered[:, curr_dim, :] = hash_mat[indices[curr_dim, :], curr_dim, :]
-        current = 0
-        offset = 0
 
-        for i in range(num_s-1):
-            while offset > 0:
-                offset -= 1
-                continue
-            for j in range(i + 1, num_s):
-                if np.all(ordered[i, curr_dim, :] == ordered[j, curr_dim, :]):
-                    offset += 1
-                else:
-                    bookmark[curr_dim, current] = np.array([i, j])
-                    current += 1
-                    break           
+        # Find unique positions more efficiently
+        unique_mask = np.any(np.diff(ordered[:, curr_dim, :], axis=0) != 0, axis=1)
+        unique_indices = np.where(unique_mask)[0] + 1
+        # Ensure correct array size
+        start_points = np.concatenate(([0], unique_indices))
+        end_points = np.concatenate((unique_indices, [num_s]))
 
+        # Adjust length because the bookmark could be shorter
+        min_length = min(len(start_points), num_s)
+
+        bookmark[curr_dim, :min_length, 0] = start_points[:min_length]
+        bookmark[curr_dim, :min_length, 1] = end_points[:min_length]
+
+    # Close shared memory
     hash_mat_data.close()
     indices_data.close()
     ordered_data.close()
@@ -280,9 +279,10 @@ def pmotif_findg(
                 for i, j in itertools.product(range(K), range(L))
             ]
             for future in as_completed(futures):
+                if stop_val:
+                    break
                 top_temp, dist_comp_temp, i, j = future.result()
                 executor.shutdown(wait=False, cancel_futures=True)
-
                 dist_comp += dist_comp_temp
                 for element in top_temp:
                     add = True
@@ -325,12 +325,9 @@ def pmotif_findg(
                     print (stop_val, top[-1][1][3])
                     # The condition for stopping is having the motif confirmed, the correct number of motifs and j is L/2 or L
                     if (
-                        stop_val and len(top) >= k and j >= L // 2
+                        stop_val and len(top) >= k
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
                         print("Stopping")
-                        parent = psutil.Process()  # Get current process
-                        for child in parent.children(recursive=True):  # Kill all subprocesses
-                            child.terminate()
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
                         
@@ -341,10 +338,6 @@ def pmotif_findg(
     finally:
         # pr.disable()
         # pr.print_stats(sort='cumtime')
-        # Kill all subprocesses
-        parent = psutil.Process()  # Get current process
-        for child in parent.children(recursive=True):  # Kill all subprocesses
-            child.terminate()
         #Close all the shared memory
         for arr in close_container:
             arr.close()
