@@ -539,16 +539,12 @@ def inner_cycle(
                 if maximum_pair[1] - maximum_pair[0] <= window:
                     continue
                 if eq(elem1, elem2):
-                    tot_hash1 = (
-                        original_mat[sub_idx1, :, :-i]
-                        if i != 0
-                        else original_mat[sub_idx1]
-                    )
-                    tot_hash2 = (
-                        original_mat[sub_idx2, :, :-i]
-                        if i != 0
-                        else original_mat[sub_idx2]
-                    )
+                    if i == 0:
+                        tot_hash1 = original_mat[sub_idx1]
+                        tot_hash2 = original_mat[sub_idx2]
+                    else:
+                        tot_hash1 = original_mat[sub_idx1, :, :-i]
+                        tot_hash2 = original_mat[sub_idx2, :, :-i]
                     if multi_eq(tot_hash1, tot_hash2) >= motif_dimensionality:
                         dist_comp += 1
                         # print("Comparing: ", sub_idx1, sub_idx2)
