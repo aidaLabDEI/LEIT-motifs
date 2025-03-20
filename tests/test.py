@@ -23,7 +23,7 @@ from scipy.signal import savgol_filter
 
 
 if __name__ == "__main__":
-    #matplotlib.use("WebAgg")
+    matplotlib.use("WebAgg")
 
     # Get from command line arguments the number of the dataset to be used, the window size, dimensionality, K and L
     # 0: FOETAL_ECG.dat

@@ -466,26 +466,26 @@ def process_chunk_graph(
     # return True
 
 
-@njit(
-    nb.types.Tuple(
-        (nb.float32[:], nb.int32[:, :], nb.int8[:, :], nb.float32[:, :], nb.int32)
-    )(
-        nb.int32,
-        nb.int32[:, :],
-        nb.int8[:, :, :],
-        nb.int8[:, :, :],
-        nb.float32[:, :],
-        nb.int32[: , :, :],
-        nb.int32,
-        nb.int32,
-        nb.int32,
-        nb.int32,
-        nb.float32[:, :],
-        nb.float32[:, :],
-    ),
-    fastmath=True,
-    cache=True,
-)
+# @njit(
+#     nb.types.Tuple(
+#         (nb.float32[:], nb.int32[:, :], nb.int8[:, :], nb.float32[:, :], nb.int32)
+#     )(
+#         nb.int32,
+#         nb.int32[:, :],
+#         nb.int8[:, :, :],
+#         nb.int8[:, :, :],
+#         nb.float32[:, :],
+#         nb.int32[: , :, :],
+#         nb.int32,
+#         nb.int32,
+#         nb.int32,
+#         nb.int32,
+#         nb.float32[:, :],
+#         nb.float32[:, :],
+#     ),
+#     fastmath=True,
+#     cache=True,
+# )
 def inner_cycle(
     dimensionality,
     ordering,
@@ -760,6 +760,7 @@ def inner_cycle(
                                     top_dims[insert_idx] = dim
                                     top_dists[insert_idx] = stop_dist
                                     break
+    print ("worker",top_pairs)
     return top_dist, top_pairs, top_dims, top_dists, dist_comp
 
 

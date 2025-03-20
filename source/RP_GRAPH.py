@@ -5,7 +5,7 @@ from base import (
     inner_cycle,
 )
 from typing import Tuple
-from multiprocessing import shared_memory
+from multiprocessing import Pool, shared_memory
 import numpy as np
 import itertools
 import bisect
@@ -13,6 +13,7 @@ from multiprocessing import cpu_count
 from concurrent.futures import as_completed, ProcessPoolExecutor
 from hash_lsh import RandomProjection
 import time
+import psutil
 from stop import stopgraph
 
 
@@ -202,7 +203,7 @@ def pmotif_findg(
         # Hasher
         rp = RandomProjection(window, bin_width, K, L)  # []
 
-        chunk_sz = n // (cpu_count() * 2)  # min(int(np.sqrt(n)), 1000)
+        chunk_sz = max(1000, n//cpu_count())
         num_chunks = max(1, n // chunk_sz)
 
         chunks = [
@@ -224,31 +225,21 @@ def pmotif_findg(
 
         # Hash the subsequences and order them lexigraphically
         st = time.perf_counter()
-        with ProcessPoolExecutor(
-            max_workers=1#cpu_count(),
-            # mp_context = multiprocessing.get_context("forkserver")
-        ) as pool:
-            results = [pool.submit(process_chunk_graph, *chunk) for chunk in chunks]
-            for future in as_completed(results):
-                try:
-                    future.result()
-                except KeyboardInterrupt:
-                    pool.shutdown(wait=False, cancel_futures=True)
-            # print("Hashed")
 
+        with Pool(processes=cpu_count()) as pool:
+            # Process chunks in parallel using starmap
+            pool.starmap(process_chunk_graph, chunks)  # starmap automatically unpacks arguments
+
+            # Prepare data for order_hash
             data = [
                 (split, indices, ordered, bookmark, dimension, n - window + 1, K)
                 for split, indices, ordered, bookmark in zip(
                     hash_container, indices_container, ordered_container, bookmark_container
                 )
             ]
-            results = [pool.submit(order_hash, *da) for da in data]
-            for future in as_completed(results):
-                try:
-                    _ = future.result()
-                    # future.result()
-                except KeyboardInterrupt:
-                    pool.shutdown(wait=False, cancel_futures=True)
+            
+            # Order hash in parallel
+            pool.starmap(order_hash, data)
             # print("Ordered")
         # Close the time series otherwise it will be copied in all children processes
         #std_container.close()
@@ -269,10 +260,10 @@ def pmotif_findg(
             bin_width,
         )
         stop_val = False
-        # confirmations = 0
+        
         with ProcessPoolExecutor(
-            max_workers=1#cpu_count(),
-            # mp_context = multiprocessing.get_context("forkserver")
+            max_workers=cpu_count(),
+            #mp_context = multiprocessing.get_context("forkserver")
         ) as executor:
             futures = [
                 executor.submit(
@@ -289,16 +280,10 @@ def pmotif_findg(
                 for i, j in itertools.product(range(K), range(L))
             ]
             for future in as_completed(futures):
-                if stop_val:
-                    break
-
-                try:
-                    top_temp, dist_comp_temp, i, j = future.result()
-                except KeyboardInterrupt:
-                    executor.shutdown(wait=False, cancel_futures=True)
+                top_temp, dist_comp_temp, i, j = future.result()
+                executor.shutdown(wait=False, cancel_futures=True)
 
                 dist_comp += dist_comp_temp
-                print(dist_comp_temp, len(top_temp))
                 for element in top_temp:
                     add = True
                     # Check is there's already an overlapping sequence, in that case keep the best match
@@ -337,23 +322,33 @@ def pmotif_findg(
                         bin_width,
                         motif_dimensionality,
                     )
+                    print (stop_val, top[-1][1][3])
                     # The condition for stopping is having the motif confirmed, the correct number of motifs and j is L/2 or L
                     if (
-                        stop_val and len(top) >= k
+                        stop_val and len(top) >= k and j >= L // 2
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
                         print("Stopping")
+                        parent = psutil.Process()  # Get current process
+                        for child in parent.children(recursive=True):  # Kill all subprocesses
+                            child.terminate()
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
+                        
         return top, dist_comp, hash_t
     except Exception as e:
         print(e)
-        return [], dist_comp, hash_t
+        return top, dist_comp, hash_t
     finally:
         # pr.disable()
         # pr.print_stats(sort='cumtime')
+        # Kill all subprocesses
+        parent = psutil.Process()  # Get current process
+        for child in parent.children(recursive=True):  # Kill all subprocesses
+            child.terminate()
         #Close all the shared memory
         for arr in close_container:
             arr.close()
             arr.unlink()
         mean_container.unlink()
         std_container.unlink()
+        
