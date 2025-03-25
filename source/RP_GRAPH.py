@@ -254,9 +254,6 @@ def pmotif_findg(
                 for i, j in itertools.product(range(K), range(L))
             ]
             for future in as_completed(futures):
-                if stop_val:
-                    break
-
                 try:
                     top_temp, dist_comp_temp, i, j = future.result()
                 except KeyboardInterrupt:
@@ -302,13 +299,13 @@ def pmotif_findg(
                         motif_dimensionality,
                     )
                     if (
-                        stop_val and len(top) >= k
+                        stop_val and len(top) >= k #and (j+1 == L or j+1 == (L//2))
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
         return top, dist_comp, hash_t
     except (KeyboardInterrupt, FileNotFoundError, OSError):
-        return [], 0, 0
+        return top, dist_comp, hash_t
     finally:
         # pr.disable()
         # pr.print_stats(sort='cumtime')

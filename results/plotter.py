@@ -125,7 +125,55 @@ if __name__ == "__main__":
     sns.despine(trim=True)
     plt.show()
     """
+    # Fusion LK plot
+    K_data = pd.read_csv("results/K_results.csv")
+    L_data = pd.read_csv("results/L_results.csv")
+    ds_values = K_data["Dataset"].unique()
+    fig, axs = plt.subplots(2, 2, figsize=(6.5, 5), sharex=True, layout="constrained")
+
+    colors = {"K": "mediumseagreen", "L": "cornflowerblue"}
+
+    for i, ds_val in enumerate(ds_values):
+        ax = axs[i // 2, i % 2]
+        
+        # Get subsets
+        subset_K = K_data[K_data["Dataset"] == ds_val]
+        subset_L = L_data[L_data["Dataset"] == ds_val]
+
+        # Normalize the x-axis of K and L
+        K_norm_x = (subset_K["K"]-4) / 12  # Scale to 0-1
+        L_norm_x = subset_L["L"] / 400  # Scale to 0-1
+
+        # K Plot
+        sns.lineplot(x=K_norm_x, y=subset_K["Time elapsed"], color=colors["K"], ax=ax, label="K", legend=False, errorbar=("pi", 50))
+
+        # L Plot (same y-axis, different x-axis)
+        ax.set_xticks(np.linspace(0, 1, 4))
+        ax.set_xticklabels(np.linspace(4, 16, 4, dtype=int))  # Restore original scale
+
+        ax2 = ax.twiny()  
+        sns.lineplot(x=L_norm_x, y=subset_L["Time elapsed"], color=colors["L"], ax=ax, label="L", legend=False, errorbar=("pi", 50))
+
+        # Adjust x-ticks
+        ax2.set_xticks(np.linspace(0, 1, 5))
+        ax2.set_xticklabels(np.linspace(0, 400, 5, dtype=int))  # Restore original scale
+
+        # Labels and titles
+        ax.set_xlabel("Concatenations - K", color=colors["K"])
+        ax2.set_xlabel("Repetitions - L", color=colors["L"])
+        ax.set_ylabel("Time (s)")
+        ax.set_title(r"\textsc{" + names[ds_val] + "}", fontsize=10)
+
+        # Match tick colors
+        ax.tick_params(axis="x", colors=colors["K"])
+        ax2.tick_params(axis="x", colors=colors["L"])
+
+    sns.despine(top=False, trim=True)
+    sns.set_context("paper")
+
+    plt.show()
     # Multidim plot
+    """
     mstumptime=[3.65, 4.45, 37, 39] # 
     mtimeread = [3.65, 4.45,84.04, 1035.73, 2.7*24*60*60, 7.2*24*60*60, 8.4*24*60*60, 11.8*24*60*60]
     data = pd.read_csv("results/dist_time.csv")
@@ -227,3 +275,4 @@ if __name__ == "__main__":
         text.set_text(r"\textsc{" + text.get_text() + "}")
     plt.minorticks_off()
     plt.show()
+    """
