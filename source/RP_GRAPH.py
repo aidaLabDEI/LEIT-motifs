@@ -279,10 +279,11 @@ def pmotif_findg(
                 for i, j in itertools.product(range(K), range(L))
             ]
             for future in as_completed(futures):
-                if stop_val:
-                    break
-                top_temp, dist_comp_temp, i, j = future.result()
-                executor.shutdown(wait=False, cancel_futures=True)
+                try:
+                    top_temp, dist_comp_temp, i, j = future.result()
+                except KeyboardInterrupt:
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    
                 dist_comp += dist_comp_temp
                 for element in top_temp:
                     add = True
@@ -322,12 +323,10 @@ def pmotif_findg(
                         bin_width,
                         motif_dimensionality,
                     )
-                    print (stop_val, top[-1][1][3])
                     # The condition for stopping is having the motif confirmed, the correct number of motifs and j is L/2 or L
                     if (
-                        stop_val and len(top) >= k
+                        stop_val #and (j+1 == L or j+1 == (L//2))
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
-                        print("Stopping")
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
                         
