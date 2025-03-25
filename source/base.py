@@ -535,7 +535,7 @@ def inner_cycle(
                 elem1, elem2 = new_bookmark[index]
                 if elem2 == -1:
                     break
-                for idx1 in range(elem1, elem2):
+                for idx1 in range(elem1, elem2-1):
                     sub_idx1 = ordering_dim[idx1]
                     for idx2 in range(idx1 + 1, elem2):
                         sub_idx2 = ordering_dim[idx2]
@@ -546,7 +546,7 @@ def inner_cycle(
 
                         tot_hash1 = original_mat[sub_idx1]
                         tot_hash2 = original_mat[sub_idx2]
-                        if np.sum(tot_hash1 == tot_hash2) >= motif_dimensionality:
+                        if multi_eq(tot_hash1, tot_hash2) >= motif_dimensionality:
                             dist_comp += 1
                             curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
                                 time_series[sub_idx1 : sub_idx1 + window],
@@ -623,7 +623,7 @@ def inner_cycle(
                                     # Compare the hashes on all dimensions except the last i columns
                                     tot_hash1 = original_mat[sub_idx1, :, :-i]
                                     tot_hash2 = original_mat[sub_idx2, :, :-i]
-                                    if np.sum(tot_hash1 == tot_hash2) >= motif_dimensionality:
+                                    if multi_eq(tot_hash1, tot_hash2) >= motif_dimensionality:
                                         dist_comp += 1
                                         curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
                                             time_series[sub_idx1: sub_idx1 + window],

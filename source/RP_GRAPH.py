@@ -118,14 +118,13 @@ def order_hash(hash_mat_name, indices_name, ordered_name, bookmark_name, dimensi
         unique_indices = np.where(unique_mask)[0] + 1
         # Ensure correct array size
         start_points = np.concatenate(([0], unique_indices))
-        end_points = np.concatenate((unique_indices, [num_s]))
+        end_points = np.concatenate((unique_indices, [num_s-1]))
 
         # Adjust length because the bookmark could be shorter
-        min_length = min(len(start_points), num_s)
+        min_length = len(start_points)
 
-        bookmark[curr_dim, :min_length, 0] = start_points[:min_length]
-        bookmark[curr_dim, :min_length, 1] = end_points[:min_length]
-
+        bookmark[curr_dim, :min_length, 0] = start_points
+        bookmark[curr_dim, :min_length, 1] = end_points
     # Close shared memory
     hash_mat_data.close()
     indices_data.close()
@@ -281,7 +280,7 @@ def pmotif_findg(
                     top_temp, dist_comp_temp, i, j = future.result()
                 except KeyboardInterrupt:
                     executor.shutdown(wait=False, cancel_futures=True)
-                print(top)
+                #print(top)
                 
                 dist_comp += dist_comp_temp
                 for element in top_temp:
