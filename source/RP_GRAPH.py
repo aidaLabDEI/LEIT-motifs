@@ -258,7 +258,6 @@ def pmotif_findg(
                     top_temp, dist_comp_temp, i, j = future.result()
                 except KeyboardInterrupt:
                     executor.shutdown(wait=False, cancel_futures=True)
-                print(top_temp)
                 dist_comp += dist_comp_temp
                 for element in top_temp:
                     add = True
@@ -301,6 +300,7 @@ def pmotif_findg(
                     if (
                         stop_val and len(top) >= k #and (j+1 == L or j+1 == (L//2))
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
+                        print("i,j: ", i, j)
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
         return top, dist_comp, hash_t
