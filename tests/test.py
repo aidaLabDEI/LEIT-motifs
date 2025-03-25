@@ -115,7 +115,7 @@ if __name__ == "__main__":
     n = d.shape[0]
     shm_ts, ts = create_shared_array((n, dimensions), np.float32)
     ts[:] = d[:]
-    del d
+    #del d
     # Start the timer
     #tracemalloc.start()
     start = time.perf_counter()

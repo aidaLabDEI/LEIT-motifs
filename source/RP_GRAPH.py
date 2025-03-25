@@ -258,7 +258,7 @@ def pmotif_findg(
                     top_temp, dist_comp_temp, i, j = future.result()
                 except KeyboardInterrupt:
                     executor.shutdown(wait=False, cancel_futures=True)
-
+                print(top_temp)
                 dist_comp += dist_comp_temp
                 for element in top_temp:
                     add = True

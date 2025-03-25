@@ -20,7 +20,8 @@ dependencies = [
     "seaborn",
     "wfdb",
     "intel-cmplr-lib-rt",
-    "build"
+    "build",
+    "pyarrow"
 ]
 
 [project.urls]
