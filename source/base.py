@@ -533,7 +533,7 @@ def inner_cycle(
             new_bookmark = bookmark[curr_dim]
             for index in range(new_bookmark.shape[0]):
                 elem1, elem2 = new_bookmark[index]
-                if elem1 == -1:
+                if elem2 == -1:
                     break
                 for idx1 in range(elem1, elem2):
                     sub_idx1 = ordering_dim[idx1]
@@ -543,12 +543,9 @@ def inner_cycle(
                         # No trivial match
                         if maximum_pair[1] - maximum_pair[0] <= window:
                             continue
-                        if i == 0:
-                            tot_hash1 = original_mat[sub_idx1]
-                            tot_hash2 = original_mat[sub_idx2]
-                        else:
-                            tot_hash1 = original_mat[sub_idx1, :, :-i]
-                            tot_hash2 = original_mat[sub_idx2, :, :-i]
+
+                        tot_hash1 = original_mat[sub_idx1]
+                        tot_hash2 = original_mat[sub_idx2]
                         if np.sum(tot_hash1 == tot_hash2) >= motif_dimensionality:
                             dist_comp += 1
                             curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
@@ -581,120 +578,90 @@ def inner_cycle(
                                         break
 
         else:
-            # Otherwise we just compute the cross product between the bookmarked segments that share the same hash
-            # Merge the bookmark indices that share the same hash, the bookmark shape is (dimensionality, n - window + 1, 2)
-            new_bookmark = np.full((bookmark.shape[1:]), -1, dtype=np.int32)
-            offset = 0
+            # Initialize new bookmark for the current dimension
+            new_bookmark = np.full(bookmark[curr_dim].shape, -1, dtype=np.int32)
             merged = 0
-            for idx, indices_list in enumerate(bookmark[curr_dim]):
-                while offset >= 1:
-                    offset -= 1
 
-                    # Compare the cross product with the subsequent segments in the range of offset
-                    for neighbor in range(1, offset+1):
-                        for idx1 in range(indices_list[0], indices_list[1]):
-                            sub_idx1 = ordering_dim[idx1]
-                            for idx2 in range(bookmark[curr_dim][idx+neighbor][0], bookmark[curr_dim][idx+neighbor][1]):
-                                sub_idx2 = ordering_dim[idx2]
-                                maximum_pair = [sub_idx1, sub_idx2] if sub_idx1 < sub_idx2 else [sub_idx2, sub_idx1]
-                                # No trivial match
-                                if maximum_pair[1] - maximum_pair[0] <= window:
-                                    continue
-                                if i == 0:
-                                    tot_hash1 = original_mat[sub_idx1]
-                                    tot_hash2 = original_mat[sub_idx2]
-                                else:
-                                    tot_hash1 = original_mat[sub_idx1, :, :-i]
-                                    tot_hash2 = original_mat[sub_idx2, :, :-i]
-                                if np.sum(tot_hash1 == tot_hash2) >= motif_dimensionality:
-                                    dist_comp += 1
-                                    curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
-                                        time_series[sub_idx1 : sub_idx1 + window],
-                                        time_series[sub_idx2 : sub_idx2 + window],
-                                        dimensions,
-                                        means[sub_idx1],
-                                        stds[sub_idx1],
-                                        means[sub_idx2],
-                                        stds[sub_idx2],
-                                        motif_dimensionality,
-                                    )
-                                    # Insert the new distance into the sorted top distances
-                                    if (
-                                        curr_dist < top_dist[0]
-                                    ):
-                                        for insert_idx in range(k):
-                                            if curr_dist < top_dist[insert_idx]:
-                                                # Shift elements to the right to make space for the new entry
-                                                top_dist[1 : insert_idx + 1] = top_dist[:insert_idx]
-                                                top_pairs[1 : insert_idx + 1] = top_pairs[:insert_idx]
-                                                top_dims[1 : insert_idx + 1] = top_dims[:insert_idx]
-                                                top_dists[1 : insert_idx + 1] = top_dists[:insert_idx]
-
-                                                # Insert new values
-                                                top_dist[insert_idx] = curr_dist
-                                                top_pairs[insert_idx] = maximum_pair
-                                                top_dims[insert_idx] = dim
-                                                top_dists[insert_idx] = stop_dist
-                                                break
-                            
-                    continue
-                if indices_list[0] == -1:
+            # Collect valid segments from the current bookmark
+            segments = []
+            for seg in bookmark[curr_dim]:
+                if seg[0] == -1:
                     break
-                for subsequent in bookmark[curr_dim][idx:]:
-                    if eq(hash_mat_curr[indices_list[0]], hash_mat_curr[subsequent[0]]):
-                        offset += 1
-                        # Compare the cross product of the two segments
-                        for idx1 in range(indices_list[0], indices_list[1]):
-                            sub_idx1 = ordering_dim[idx1]
-                            for idx2 in range(subsequent[0], subsequent[1]):
-                                sub_idx2 = ordering_dim[idx2]
-                                maximum_pair = [sub_idx1, sub_idx2] if sub_idx1 < sub_idx2 else [sub_idx2, sub_idx1]
-                                # No trivial match
-                                if maximum_pair[1] - maximum_pair[0] <= window:
-                                    continue
-                                if i == 0:
-                                    tot_hash1 = original_mat[sub_idx1]
-                                    tot_hash2 = original_mat[sub_idx2]
-                                else:
+                segments.append(seg)
+
+            # Group segments with equal hash values based on the first index of each segment
+            groups = []
+            if segments:
+                current_group = [segments[0]]
+                for seg in segments[1:]:
+                    # Use the hash of the first element as representative
+                    if eq(hash_mat_curr[current_group[0][0]], hash_mat_curr[seg[0]]):
+                        current_group.append(seg)
+                    else:
+                        groups.append(current_group)
+                        current_group = [seg]
+                groups.append(current_group)
+
+            # For each group, compare all unique pairs first
+            for group in groups:
+                if len(group) >= 2:
+                    # Unique pairwise comparisons in the group
+                    for g1 in range(len(group) - 1):
+                        for g2 in range(g1 + 1, len(group)):
+                            seg1 = group[g1]
+                            seg2 = group[g2]
+                            for idx1 in range(seg1[0], seg1[1]):
+                                sub_idx1 = ordering_dim[idx1]
+                                for idx2 in range(seg2[0], seg2[1]):
+                                    sub_idx2 = ordering_dim[idx2]
+                                    # Ensure proper order of the indices
+                                    maximum_pair = [sub_idx1, sub_idx2] if sub_idx1 < sub_idx2 else [sub_idx2, sub_idx1]
+                                    # Skip trivial matches
+                                    if maximum_pair[1] - maximum_pair[0] <= window:
+                                        continue
+
+                                    # Compare the hashes on all dimensions except the last i columns
                                     tot_hash1 = original_mat[sub_idx1, :, :-i]
                                     tot_hash2 = original_mat[sub_idx2, :, :-i]
-                                if np.sum(tot_hash1 == tot_hash2) >= motif_dimensionality:
-                                    dist_comp += 1
-                                    curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
-                                        time_series[sub_idx1 : sub_idx1 + window],
-                                        time_series[sub_idx2 : sub_idx2 + window],
-                                        dimensions,
-                                        means[sub_idx1],
-                                        stds[sub_idx1],
-                                        means[sub_idx2],
-                                        stds[sub_idx2],
-                                        motif_dimensionality,
-                                    )
-                                    # Insert the new distance into the sorted top distances
-                                    if (
-                                        curr_dist < top_dist[0]
-                                    ):
-                                        for insert_idx in range(k):
-                                            if curr_dist < top_dist[insert_idx]:
-                                                # Shift elements to the right to make space for the new entry
-                                                top_dist[1 : insert_idx + 1] = top_dist[:insert_idx]
-                                                top_pairs[1 : insert_idx + 1] = top_pairs[:insert_idx]
-                                                top_dims[1 : insert_idx + 1] = top_dims[:insert_idx]
-                                                top_dists[1 : insert_idx + 1] = top_dists[:insert_idx]
+                                    if np.sum(tot_hash1 == tot_hash2) >= motif_dimensionality:
+                                        dist_comp += 1
+                                        curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
+                                            time_series[sub_idx1: sub_idx1 + window],
+                                            time_series[sub_idx2: sub_idx2 + window],
+                                            dimensions,
+                                            means[sub_idx1],
+                                            stds[sub_idx1],
+                                            means[sub_idx2],
+                                            stds[sub_idx2],
+                                            motif_dimensionality,
+                                        )
+                                        if curr_dist < top_dist[0]:
+                                            for insert_idx in range(k):
+                                                if curr_dist < top_dist[insert_idx]:
+                                                    # Shift elements right to make room
+                                                    top_dist[1: insert_idx + 1] = top_dist[:insert_idx]
+                                                    top_pairs[1: insert_idx + 1] = top_pairs[:insert_idx]
+                                                    top_dims[1: insert_idx + 1] = top_dims[:insert_idx]
+                                                    top_dists[1: insert_idx + 1] = top_dists[:insert_idx]
+                                                    # Insert the new values
+                                                    top_dist[insert_idx] = curr_dist
+                                                    top_pairs[insert_idx] = maximum_pair
+                                                    top_dims[insert_idx] = dim
+                                                    top_dists[insert_idx] = stop_dist
+                                                    break
+                    # Merge the entire group into one bookmark entry
+                    merged_start = group[0][0]
+                    merged_end = group[-1][1]
+                    new_bookmark[merged] = [merged_start, merged_end]
+                    merged += 1
+                else:
+                    # For a single segment, simply carry it over
+                    new_bookmark[merged] = group[0]
+                    merged += 1
 
-                                                # Insert new values
-                                                top_dist[insert_idx] = curr_dist
-                                                top_pairs[insert_idx] = maximum_pair
-                                                top_dims[insert_idx] = dim
-                                                top_dists[insert_idx] = stop_dist
-                                                break
-                    else:
-                        new_bookmark[merged][0] = indices_list[0]
-                        new_bookmark[merged][1] = subsequent[0]
-                        merged += 1
-                        break
-            # Assign the new bookmark
+            # Replace the current bookmark with the merged one
             bookmark[curr_dim] = new_bookmark
+
     return top_dist, top_pairs, top_dims, top_dists, dist_comp
 
 

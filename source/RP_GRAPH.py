@@ -48,9 +48,6 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     bookmark = np.ndarray(
         (dimensionality, n - window + 1, 2), dtype=np.int32, buffer=bookmark_ex.buf
     )
-    if i == K:
-        bookmark = -1 * np.ones((dimensionality, n - window + 1, 2), dtype=np.int32)
-    
     # Ordered hashes, ordering indices and unordered hashes
     existing_arr = shared_memory.SharedMemory(name=ordered_name)
     existing_ord = shared_memory.SharedMemory(name=ordering_name)
@@ -109,6 +106,7 @@ def order_hash(hash_mat_name, indices_name, ordered_name, bookmark_name, dimensi
 
     bookmark_data = shared_memory.SharedMemory(name=bookmark_name)
     bookmark = np.ndarray((dimension, num_s, 2), dtype=np.int32, buffer=bookmark_data.buf)
+    bookmark.fill(-1)
 
     for curr_dim in range(dimension):
         # Sort and reorder hash matrix
@@ -202,7 +200,7 @@ def pmotif_findg(
         # Hasher
         rp = RandomProjection(window, bin_width, K, L)  # []
 
-        chunk_sz = max(1000, n//cpu_count())
+        chunk_sz = max(1000, n//cpu_count()*2)
         num_chunks = max(1, n // chunk_sz)
 
         chunks = [
@@ -283,7 +281,8 @@ def pmotif_findg(
                     top_temp, dist_comp_temp, i, j = future.result()
                 except KeyboardInterrupt:
                     executor.shutdown(wait=False, cancel_futures=True)
-                    
+                print(top)
+                
                 dist_comp += dist_comp_temp
                 for element in top_temp:
                     add = True
@@ -327,6 +326,7 @@ def pmotif_findg(
                     if (
                         stop_val #and (j+1 == L or j+1 == (L//2))
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
+                        print(i,j)
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
                         
