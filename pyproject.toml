@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "LEITmotifs"
+version = "0.2.0"
+description = "Scalable discovery of multidimensional motifs in time series"
+authors = [{ name = "Francesco Pio Monaco", email = "monacofran@dei.unipd.it" }]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "tornado",
+    "numba",
+    "numpy",
+    "pandas",
+    "setuptools",
+    "scipy",
+    "matplotlib",
+    "seaborn",
+    "wfdb",
+    "intel-cmplr-lib-rt",
+    "build"
+]
+
+[project.urls]
+Homepage = "https://github.com/aidaLabDEI/LEIT-motifs"
+Paper = "https://doi.org/10.48550/arXiv.2502.14446"
+
+[tool.setuptools]
+packages = ["source"]
