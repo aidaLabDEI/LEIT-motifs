@@ -256,7 +256,8 @@ def pmotif_findg(
             bin_width,
         )
         stop_val = False
-        
+        confirmations = 0
+        old_top = None
         with ProcessPoolExecutor(
             max_workers=cpu_count(),
             #mp_context = multiprocessing.get_context("forkserver")
@@ -311,7 +312,7 @@ def pmotif_findg(
                     if len(top) > k:
                         top = top[:k]
                 if len(top) >= k:
-                    stop_val = stopgraph(
+                    stop_value = stopgraph(
                         top[-1][1][3],
                         i,
                         j,
@@ -321,11 +322,17 @@ def pmotif_findg(
                         bin_width,
                         motif_dimensionality,
                     )
+                    stop_val = stop_value <= fail_thresh
+                    if top[-1] == old_top:
+                        confirmations += 1
+                    else:
+                        confirmations = 0
+                        old_top = top[-1]
                     # The condition for stopping is having the motif confirmed, the correct number of motifs and j is L/2 or L
                     if (
-                        stop_val #and (j+1 == L or j+1 == (L//2))
+                        (stop_val or confirmations > 4) #and (j+1 == L or j+1 == (L//2))
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
-                        print(i,j)
+                        print(i,j, stop_value)
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
                         

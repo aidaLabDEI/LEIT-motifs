@@ -30,7 +30,9 @@ if __name__ == "__main__":
         ["RUTH", 0.2, 3.22],
         ["weather", 0.01, 33.37],
         ["weather", 0.1, 32.45],
-        ["weather", 0.2, 30.75],  ]     
+        ["weather", 0.2, 30.75],
+        ["whales", 0.1, 6798.66],
+        ["whales", 0.2, 823.73]]     
     )
     colors = ["r", "g", "b"]
     for i, dataset in enumerate(data["Dataset"].unique()):
@@ -46,7 +48,6 @@ if __name__ == "__main__":
                 va='center', 
                 fontsize=10, 
                 color=colors[j],
-                #fontweight='bold'
             )
     # sns.stripplot(
     # data=data, x="distance", y="Dataset", hue="delta",

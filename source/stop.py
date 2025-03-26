@@ -200,7 +200,7 @@ def stopgraph(collision, i, j, threshold, K, L, r, dim):
     for d in ds:
         prob *= probabilitygraph(d, i, j, K, L, dim)
     # Check the condition
-    return prob <= threshold
+    return prob
 
 
 if __name__ == "__main__":

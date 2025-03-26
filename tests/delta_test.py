@@ -19,7 +19,7 @@ if __name__ == "__main__":
          #os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
          #os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
          #os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
-         os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
+         #os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
          os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
         # os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
     ]
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     delta_results = pd.DataFrame(columns=["Dataset", "delta", "distance", "fail_prob"])
 
     for number, path in enumerate(paths):  
-        number_r = number +4
+        number_r = number +5
         # Load the dataset
         if number_r == 3:
             data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(path, 0)
@@ -94,8 +94,8 @@ if __name__ == "__main__":
                     },
                     ignore_index=True,
                 )
-                delta_results.to_csv("delta_results.csv", index=False, mode="a")
+                delta_results.to_csv("delta_results.csv", index=False, header=False, mode="a")
     
     
     
-    delta_results.to_csv("delta_results.csv", index=False, mode="a")
+    delta_results.to_csv("delta_results.csv", index=False, header=False, mode="a")
