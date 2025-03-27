@@ -12,11 +12,12 @@ if __name__ == "__main__":
     xfmt.set_powerlimits((1, 2))
     sns.set_theme(style="ticks", palette="muted")
     
-    # !!!Violin delta plots
+    # !!! Delta plots
     data = pd.read_csv("results/delta_results.csv")
-    # FInd the different values in the first column
+    # Find the different values in the first column
     ds_values = data["Dataset"].unique()
-    sns.boxenplot(data=data, x="distance", y="Dataset", hue="delta", palette=["r", "g", "b"], width=.8, gap=0.1, width_method='linear')
+    sns.boxplot(data=data, x="distance", y="Dataset", hue="delta", palette=["r", "g", "b"], width=.8, gap=0.1,)
+
     
     means = pd.DataFrame(columns=["Dataset", "delta", "time"], data=[
         ["potentials", 0.01, 0.51],
@@ -31,7 +32,8 @@ if __name__ == "__main__":
         ["weather", 0.01, 33.37],
         ["weather", 0.1, 32.45],
         ["weather", 0.2, 30.75],
-        ["whales", 0.1, 6798.66],
+        ["whales", 0.01, 6798.66],
+        ["whales", 0.1, 1447.23],
         ["whales", 0.2, 823.73]]     
     )
     colors = ["r", "g", "b"]

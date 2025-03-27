@@ -107,7 +107,7 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 16  # find_width_discr(d, window_size, K)
+    r = 32  # find_width_discr(d, window_size, K)
    # d = np.concatenate((d, np.random.normal(0,0.01, (d.shape[0], 4))), axis=1)
     print(d.shape)
     thresh = 0

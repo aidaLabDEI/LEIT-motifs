@@ -301,9 +301,9 @@ def pmotif_findg(
                             # print(element[0], stored[0])
                             if element[0] > stored[0]:
                                 top.remove(stored)
-                            # confirmations += 1
-                            # elif element[0] == stored[0]:
-                            #   confirmations += 1
+                              #  confirmations += 1
+                            #elif element[0] == stored[0]:
+                             #  confirmations += 1
                             else:
                                 add = False
                                 continue
@@ -330,9 +330,9 @@ def pmotif_findg(
                         old_top = top[-1]
                     # The condition for stopping is having the motif confirmed, the correct number of motifs and j is L/2 or L
                     if (
-                        (stop_val or confirmations > 4) #and (j+1 == L or j+1 == (L//2))
-                    ):  # (stop_val or confirmations >= 4) and len(top) >= k:
-                        print(i,j, stop_value)
+                        (stop_val or confirmations >= L//2) #and (j+1 == L or j+1 == (L//2))
+                    ): 
+                        print(i,j, stop_value, confirmations)
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
                         
