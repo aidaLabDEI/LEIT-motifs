@@ -57,7 +57,7 @@ if __name__ == "__main__":
     r_vals_computed = [4, 8, 16, 32, 8, 16, 8]
     windows = [50, 75, 500, 5000, 1000, 200, 150]
     dimensionality = [8, 2, 4, 2, 6, 6, 3]
-    
+
     dataframe = pd.DataFrame(columns=["Dataset", "Noise", "Motif"])
 
     for number_r in range(4):
@@ -92,7 +92,9 @@ if __name__ == "__main__":
         noise_dims = [4, 16, 32, 128, 256]
         collected = []
         for noise_dim in noise_dims:
-            d_temp = np.concatenate((d, np.random.normal(0,0.01, (d.shape[0], noise_dim))), axis=1)
+            d_temp = np.concatenate(
+                (d, np.random.normal(0, 0.01, (d.shape[0], noise_dim))), axis=1
+            )
             print(d_temp.shape)
             dimensions = d_temp.shape[1]
             n = d_temp.shape[0]
@@ -119,19 +121,22 @@ if __name__ == "__main__":
             # If the motif overlaps with the other collected ones, we put a 1
             res = 0
             for other in collected:
-                if (motifs[0] < other[0] + windows[number_r] or motifs[0] > other[0] - windows[number_r] or
-                    motifs[1] < other[1] + windows[number_r] or motifs[1] > other[1] - windows[number_r]):
+                if (
+                    motifs[0] < other[0] + windows[number_r]
+                    or motifs[0] > other[0] - windows[number_r]
+                    or motifs[1] < other[1] + windows[number_r]
+                    or motifs[1] > other[1] - windows[number_r]
+                ):
                     res = 1
                     break
 
             dataframe = dataframe._append(
-                    {
-                        "Dataset": number_r,
-                        "Noise": noise_dim,
-                        "Motif": res,
-                    },
-                    ignore_index=True,
-                )
-
+                {
+                    "Dataset": number_r,
+                    "Noise": noise_dim,
+                    "Motif": res,
+                },
+                ignore_index=True,
+            )
 
     dataframe.to_csv("Results/noise.csv", index=False)

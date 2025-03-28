@@ -4,7 +4,6 @@ import numba as nb
 import matplotlib
 
 
-
 @njit(nb.bool(nb.int8[:], nb.int8[:]), fastmath=True, cache=True)
 def eq(a, b):
     return (a == b).all()
@@ -107,7 +106,7 @@ if __name__ == "__main__":
     plt.show()
     '''
     """
-    a = np.pad(np.flip(np.array([1,2,3])), (0, 10))
+    a = np.pad(np.flip(np.array([1, 2, 3])), (0, 10))
     print(a)
     """
 data_multi = [[0.7403949191793799, 0.509541136212647, 0.4503219509497285, 0.3500115992501378],

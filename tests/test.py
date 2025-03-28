@@ -39,21 +39,21 @@ if __name__ == "__main__":
     window_size = int(sys.argv[2])
     ranged = int(sys.argv[3])
     if ranged:
-            dimensionality = (int(sys.argv[4]), int(sys.argv[5]))
-            K = int(sys.argv[6])
-            L = int(sys.argv[7])
-            if len(sys.argv) == 9:
-                device = int(sys.argv[8])
-            else:
-                device = 0
+        dimensionality = (int(sys.argv[4]), int(sys.argv[5]))
+        K = int(sys.argv[6])
+        L = int(sys.argv[7])
+        if len(sys.argv) == 9:
+            device = int(sys.argv[8])
+        else:
+            device = 0
     else:
-            dimensionality = int(sys.argv[4])
-            K = int(sys.argv[5])
-            L = int(sys.argv[6])
-            if len(sys.argv) == 8:
-                device = int(sys.argv[7])
-            else:
-                device = 0
+        dimensionality = int(sys.argv[4])
+        K = int(sys.argv[5])
+        L = int(sys.argv[6])
+        if len(sys.argv) == 8:
+            device = int(sys.argv[7])
+        else:
+            device = 0
 
     paths = [
         "Datasets/FOETAL_ECG.dat",
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         "Datasets/whales.parquet",
         "Datasets/quake.parquet",
         "Datasets/steamgen.csv",
-        "Datasets/FL010"
+        "Datasets/FL010",
     ]
     d = None
 
@@ -107,17 +107,17 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 32  # find_width_discr(d, window_size, K)
-   # d = np.concatenate((d, np.random.normal(0,0.01, (d.shape[0], 4))), axis=1)
+    r = 8  # find_width_discr(d, window_size, K)
+    # d = np.concatenate((d, np.random.normal(0,0.01, (d.shape[0], 4))), axis=1)
     print(d.shape)
     thresh = 0
     dimensions = d.shape[1]
     n = d.shape[0]
     shm_ts, ts = create_shared_array((n, dimensions), np.float32)
     ts[:] = d[:]
-    #del d
+    # del d
     # Start the timer
-    #tracemalloc.start()
+    # tracemalloc.start()
     start = time.perf_counter()
     # Find the motifs
     # for i in range(5):
@@ -127,17 +127,27 @@ if __name__ == "__main__":
         )
     else:
         motifs, num_dist, hash_t = pmotif_findg(
-            shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K
+            shm_ts.name,
+            n,
+            dimensions,
+            window_size,
+            1,
+            dimensionality,
+            r,
+            thresh,
+            L,
+            K,
+            0.2,
         )
 
     end = time.perf_counter() - start
     print("Time elapsed: ", end, "of which", hash_t, "for hashing")
     print("Distance computations:", num_dist)
-    #size, peak = tracemalloc.get_traced_memory()
+    # size, peak = tracemalloc.get_traced_memory()
     # snapshot = tracemalloc.take_snapshot()
     # top_stats = snapshot.statistics('lineno')
 
-    #print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
+    # print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
     with open("results.txt", "a") as f:
         f.write(
             f"Time elapsed: {end} of which {hash_t} for hashing\nDistance computations: {num_dist}\n"
@@ -147,7 +157,7 @@ if __name__ == "__main__":
 
     # Plot
     # motifs = queue.PriorityQueue()
-    #print(motifs)
+    # print(motifs)
     for motif in motifs:
         print(motif[0])
     copy = motifs
@@ -165,26 +175,28 @@ if __name__ == "__main__":
         "purple",
     ]
     rng = np.random.default_rng(seed=42)
-    fig, axs = plt.subplots(dimensions, 1, sharex=True, layout = 'constrained')
+    fig, axs = plt.subplots(dimensions, 1, sharex=True, layout="constrained")
     X = pd.DataFrame(ts)
     for i, dimension in enumerate(X.columns):
-        axs[i].plot(X[dimension], label=dimension, linewidth=1.2, color="lightgray")#"#6263e0")
+        axs[i].plot(
+            X[dimension], label=dimension, linewidth=1.2, color="lightgray"
+        )  # "#6263e0")
         axs[i].set_axis_off()
         if ranged:
-            for j,dim_mot in enumerate(motifs):
+            for j, dim_mot in enumerate(motifs):
                 for idx, motif in enumerate(dim_mot):
                     # Highlight the motifs in all dimensions
                     for m in motif[1][1]:
                         if i in motif[1][2]:
                             axs[i].plot(
                                 X[dimension].iloc[m : m + window_size],
-                                color=colors[(idx+j)%len(colors)],
+                                color=colors[(idx + j) % len(colors)],
                                 linewidth=1.8,
                                 alpha=0.7,
                             )
         else:
             for idx, motif in enumerate(motifs):
-            # Highlight the motifs in all dimensions it appears
+                # Highlight the motifs in all dimensions it appears
                 for m in motif[1][1]:
                     if i in motif[1][2]:
                         axs[i].plot(

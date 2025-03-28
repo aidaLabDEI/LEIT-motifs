@@ -18,10 +18,10 @@ if __name__ == "__main__":
         # os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
         # os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
         # os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
-         os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
-         os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
-         os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
-         os.path.join(current_dir, "..", "Datasets", "FL010")
+        os.path.join(current_dir, "..", "Datasets", "CLEAN_House1.csv"),
+        os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
+        os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
+        os.path.join(current_dir, "..", "Datasets", "FL010"),
     ]
 
     windows = [50, 75, 500, 5000, 1000, 300, 100]
@@ -66,12 +66,12 @@ if __name__ == "__main__":
             print(
                 f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB"
             )
-        else:         
+        else:
             tracemalloc.start()
             # Test for different window sizes in order to give an estimate on the full dataset
-            #for i in [5000, 10000,50000]:
-            i=0
-            d_temp = d#[:i,:]
+            # for i in [5000, 10000,50000]:
+            i = 0
+            d_temp = d  # [:i,:]
             print(d_temp.shape)
             start = time.perf_counter()
             m = stumpy.mstump(d_temp.T, windows[number])

@@ -7,7 +7,12 @@ from matplotlib.ticker import ScalarFormatter
 
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
-    matplotlib.rcParams.update({"text.usetex":True, "text.latex.preamble": r"\usepackage{siunitx} \usepackage{sansmath} \sansmath"})
+    matplotlib.rcParams.update(
+        {
+            "text.usetex": True,
+            "text.latex.preamble": r"\usepackage{siunitx} \usepackage{sansmath} \sansmath",
+        }
+    )
     xfmt = ScalarFormatter()
     xfmt.set_scientific(True)
     xfmt.set_powerlimits((1, 2))
@@ -135,24 +140,40 @@ if __name__ == "__main__":
 
     for i, ds_val in enumerate(ds_values):
         ax = axs[i // 2, i % 2]
-        
+
         # Get subsets
         subset_K = K_data[K_data["Dataset"] == ds_val]
         subset_L = L_data[L_data["Dataset"] == ds_val]
 
         # Normalize the x-axis of K and L
-        K_norm_x = (subset_K["K"]-4) / 12  # Scale to 0-1
+        K_norm_x = (subset_K["K"] - 4) / 12  # Scale to 0-1
         L_norm_x = subset_L["L"] / 400  # Scale to 0-1
 
         # K Plot
-        sns.lineplot(x=K_norm_x, y=subset_K["Time elapsed"], color=colors["K"], ax=ax, label="K", legend=False, errorbar=("pi", 50))
+        sns.lineplot(
+            x=K_norm_x,
+            y=subset_K["Time elapsed"],
+            color=colors["K"],
+            ax=ax,
+            label="K",
+            legend=False,
+            errorbar=("pi", 50),
+        )
 
         # L Plot (same y-axis, different x-axis)
         ax.set_xticks(np.linspace(0, 1, 4))
         ax.set_xticklabels(np.linspace(4, 16, 4, dtype=int))  # Restore original scale
 
-        ax2 = ax.twiny()  
-        sns.lineplot(x=L_norm_x, y=subset_L["Time elapsed"], color=colors["L"], ax=ax, label="L", legend=False, errorbar=("pi", 50))
+        ax2 = ax.twiny()
+        sns.lineplot(
+            x=L_norm_x,
+            y=subset_L["Time elapsed"],
+            color=colors["L"],
+            ax=ax,
+            label="L",
+            legend=False,
+            errorbar=("pi", 50),
+        )
 
         # Adjust x-ticks
         ax2.set_xticks(np.linspace(0, 1, 5))

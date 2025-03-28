@@ -23,10 +23,10 @@ def main():
 
     current_dir = os.path.dirname(__file__)
     paths = [
-         os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
-         os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
-         os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
-         os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
+        os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
+        os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
+        os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
+        os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
         # os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
         # os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
         # os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
@@ -115,7 +115,7 @@ def main():
         shm_ts, ts = create_shared_array((n, dimensions), np.float32)
         ts[:] = d[:]
         del d
-        
+
         if number_r == 0:
             # lauch a computation just to compile numba
             pmotif_findg(shm_ts.name, n, dimensions, 50, 1, 8, 8, 0, 10, 8)
@@ -168,11 +168,11 @@ def main():
         results = results._append(temp_df, ignore_index=True)
         results.to_csv("p1" + str(number_r) + ".csv", index=False)
         gc.collect()
-        
+
         Ks = [4, 8, 12, 16]
         Ls = [10, 50, 100, 150, 200, 400]
         rs = [4, 8, 16, 32]
-        
+
         # Testing on hashing
 
         for K in Ks:
@@ -207,7 +207,15 @@ def main():
             )
             results = results._append(temp_df, ignore_index=True)
 
-            K_results = K_results._append({"Dataset": number_r, "K": K, "Time elapsed": end, "dist_computed": num_dist}, ignore_index=True)
+            K_results = K_results._append(
+                {
+                    "Dataset": number_r,
+                    "K": K,
+                    "Time elapsed": end,
+                    "dist_computed": num_dist,
+                },
+                ignore_index=True,
+            )
             gc.collect()
 
         print("K fin")
@@ -245,7 +253,16 @@ def main():
             )
             results = results._append(temp_df, ignore_index=True)
 
-            L_results = L_results._append({"Dataset": number_r, "L": L, "Time elapsed": end, "Time int": ht, "dist_computed": num_dist}, ignore_index=True)
+            L_results = L_results._append(
+                {
+                    "Dataset": number_r,
+                    "L": L,
+                    "Time elapsed": end,
+                    "Time int": ht,
+                    "dist_computed": num_dist,
+                },
+                ignore_index=True,
+            )
             gc.collect()
         print("L fin")
         results.to_csv("r_partial_dataset" + str(number_r) + ".csv", index=False)
@@ -282,13 +299,21 @@ def main():
             )
             results = results._append(temp_df, ignore_index=True)
 
-            R_results = R_results._append({"Dataset": number_r, "r": r, "Time elapsed": end, "dist_computed": num_dist}, ignore_index=True)
+            R_results = R_results._append(
+                {
+                    "Dataset": number_r,
+                    "r": r,
+                    "Time elapsed": end,
+                    "dist_computed": num_dist,
+                },
+                ignore_index=True,
+            )
             gc.collect()
 
         results.to_csv("r_dataset" + str(number_r) + ".csv", index=False)
         print("Dataset", number_r, "finished")
         shm_ts.unlink()
-    
+
     K_results.to_csv("Results/K_results.csv", index=False)
     L_results.to_csv("Results/L_results.csv", index=False)
     R_results.to_csv("Results/R_results.csv", index=False)
@@ -354,6 +379,7 @@ def main():
 
     results.to_csv("Mem_results.csv", index=False)
     """
+
 
 if __name__ == "__main__":
     # from multiprocessing import freeze_support

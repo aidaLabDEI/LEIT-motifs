@@ -69,16 +69,18 @@ def LEITmotifs(
     if dimensionality > length:
         time_series = time_series.T
         length, dimensionality = time_series.shape
-    
+
     # Check the time series is multidimensional
     if dimensionality == 1:
-        raise ValueError("The time series must be multidimensional, use ATTIMO for unidimensional time series")
-    
+        raise ValueError(
+            "The time series must be multidimensional, use ATTIMO for unidimensional time series"
+        )
+
     # Check that the request is multidimensional
-    if (
-        motif_dimensionality_range[0] == 1
-    ):
-        raise ValueError("The motifs to search must be multidimensional, use ATTIMO for unidimensional motifs")
+    if motif_dimensionality_range[0] == 1:
+        raise ValueError(
+            "The motifs to search must be multidimensional, use ATTIMO for unidimensional motifs"
+        )
 
     # Check the window size is smaller than the length of the time series and the motif range is valid
     if (
@@ -87,12 +89,16 @@ def LEITmotifs(
         or motif_dimensionality_range[1] > dimensionality
         or motif_dimensionality_range[0] < 1
     ):
-        raise ValueError("Invalid window size or motif dimensionality range, remember windows_size < length and 1 < motif_dimensionality_range[0] <= motif_dimensionality_range[1] <= dimensionality")
+        raise ValueError(
+            "Invalid window size or motif dimensionality range, remember windows_size < length and 1 < motif_dimensionality_range[0] <= motif_dimensionality_range[1] <= dimensionality"
+        )
 
     # If the time series has NaN values, replace them with the mean
     if np.isnan(time_series).any():
         time_series = np.nan_to_num(time_series, nan=np.nanmean(time_series))
-        raise Warning("The time series contains NaN values, they have been replaced with the mean, consider modeling the data to avoid this if the motif are not meaningful")
+        raise Warning(
+            "The time series contains NaN values, they have been replaced with the mean, consider modeling the data to avoid this if the motif are not meaningful"
+        )
 
     # Add some noise to remove step-like patterns
     time_series += np.random.normal(0, 0.001, time_series.shape)
@@ -138,11 +144,15 @@ def LEITmotifs(
 
     return motifs, num_dist, time.perf_counter() - time_tot
 
+
 if __name__ == "__main__":
     import pandas as pd
     import os
+
     current_dir = os.path.dirname(__file__)
-    data = pd.read_csv(os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"), sep=r"\s+")
+    data = pd.read_csv(
+        os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"), sep=r"\s+"
+    )
     data = data.drop(data.columns[[0]], axis=1)
     data = np.ascontiguousarray(data.to_numpy())
     try:
@@ -153,4 +163,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     print("All tests passed")
-

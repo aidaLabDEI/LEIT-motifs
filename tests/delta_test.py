@@ -15,23 +15,31 @@ from scipy.signal import savgol_filter
 if __name__ == "__main__":
     current_dir = os.path.dirname(__file__)
     paths = [
-         #os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
-         #os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
-         #os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
-         #os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
-         #os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
-         os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
+        # os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
+        # os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
+        # os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
+        # os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
+        # os.path.join(current_dir, '..', 'Datasets', 'CLEAN_House1.csv'),
+        os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
         # os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
     ]
-    dataset_names = ["potentials", "evaporator", "RUTH", "weather", "el_load", "whales", "quake"]
+    dataset_names = [
+        "potentials",
+        "evaporator",
+        "RUTH",
+        "weather",
+        "el_load",
+        "whales",
+        "quake",
+    ]
     r_vals_computed = [8, 8, 16, 32, 8, 16, 8]
     windows = [50, 75, 500, 5000, 1000, 200, 100]
     dimensionality = [8, 2, 4, 2, 6, 4, 2]
     deltas = [0.01, 0.1, 0.2]
     delta_results = pd.DataFrame(columns=["Dataset", "delta", "distance", "fail_prob"])
 
-    for number, path in enumerate(paths):  
-        number_r = number +5
+    for number, path in enumerate(paths):
+        number_r = number + 5
         # Load the dataset
         if number_r == 3:
             data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(path, 0)
@@ -49,7 +57,7 @@ if __name__ == "__main__":
         elif number_r == 2:
             data = pd.read_csv(path)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
-            #d += np.random.normal(0, 0.1, d.shape)
+            # d += np.random.normal(0, 0.1, d.shape)
         elif number_r == 5 or number_r == 6:
             data = pd.read_parquet(path)
             d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
@@ -82,7 +90,7 @@ if __name__ == "__main__":
                     0.5,
                     100,
                     8,
-                    delta
+                    delta,
                 )
                 # Save the results
                 delta_results = delta_results._append(
@@ -94,8 +102,8 @@ if __name__ == "__main__":
                     },
                     ignore_index=True,
                 )
-                delta_results.to_csv("delta_results.csv", index=False, header=False, mode="a")
-    
-    
-    
+                delta_results.to_csv(
+                    "delta_results.csv", index=False, header=False, mode="a"
+                )
+
     delta_results.to_csv("delta_results.csv", index=False, header=False, mode="a")

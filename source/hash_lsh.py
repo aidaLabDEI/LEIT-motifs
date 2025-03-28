@@ -96,7 +96,7 @@ def multi_compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
         hash_left_all[d] = (left_projections // r).reshape(sqrt_L, K_half)
         hash_right_all[d] = (right_projections // r).reshape(sqrt_L, K_half)
         """
-    
+
     # Interleave the results to get final L hashes of length K
     for d in prange(dim):
         for j in range(L):

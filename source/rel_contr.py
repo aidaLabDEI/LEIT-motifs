@@ -13,10 +13,10 @@ from base import z_normalized_euclidean_distancegmulti
 if __name__ == "__main__":
     current_dir = os.path.dirname(__file__)
     paths = [
-         os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
-         os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
-         os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
-         os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
+        os.path.join(current_dir, "..", "Datasets", "FOETAL_ECG.dat"),
+        os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
+        os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
+        os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
         os.path.join(current_dir, "..", "Datasets", "CLEAN_House1.csv"),
         os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
         os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
@@ -63,8 +63,8 @@ if __name__ == "__main__":
         print(d.shape)
         # Cut to the first 10000 samples
         if d.shape[1] > 20000:
-            num = np.random.randint(0, d.shape[1]-20000)
-            d = d[:, num:num+20000]
+            num = np.random.randint(0, d.shape[1] - 20000)
+            d = d[:, num : num + 20000]
         d += np.random.normal(0, 0.01, d.shape)
         # COmpute the matrix profile
         MP, I_prof = stumpy.mstump(d, m=windows[number_r])
@@ -77,14 +77,15 @@ if __name__ == "__main__":
         d = d.astype(np.float32)
         # Compute the distances for each dimension between the min and the nearest neighbor
         k_maxdist = z_normalized_euclidean_distancegmulti(
-            d[:, min_index:min_index + windows[number_r]].T, d[:, nn_index:nn_index + windows[number_r]].T,
-            np.mean(d[:, min_index:min_index + windows[number_r]], axis=1),
-            np.std(d[:, min_index:min_index + windows[number_r]], axis=1),
-            np.mean(d[:, nn_index:nn_index + windows[number_r]], axis=1),
-              np.std(d[:, nn_index:nn_index + windows[number_r]], axis=1)
+            d[:, min_index : min_index + windows[number_r]].T,
+            d[:, nn_index : nn_index + windows[number_r]].T,
+            np.mean(d[:, min_index : min_index + windows[number_r]], axis=1),
+            np.std(d[:, min_index : min_index + windows[number_r]], axis=1),
+            np.mean(d[:, nn_index : nn_index + windows[number_r]], axis=1),
+            np.std(d[:, nn_index : nn_index + windows[number_r]], axis=1),
         )
         ordered_distances = k_maxdist[1]
-        k_maxdist = ordered_distances[0]#[dimensionality[number_r] - 1]
+        k_maxdist = ordered_distances[0]  # [dimensionality[number_r] - 1]
 
         # Find the n-th min
         n_min_index = np.argsort(MP_dim)[-1]
@@ -92,14 +93,14 @@ if __name__ == "__main__":
 
         # Compute the distances for each dimension between the min and the nearest neighbor
         n_maxdist = z_normalized_euclidean_distancegmulti(
-            d[:, n_min_index:n_min_index + windows[number_r]].T, d[:, nn_index:nn_index + windows[number_r]].T,
-            np.mean(d[:, n_min_index:n_min_index + windows[number_r]], axis=1),
-            np.std(d[:, n_min_index:n_min_index + windows[number_r]], axis=1),
-            np.mean(d[:, nn_index:nn_index + windows[number_r]], axis=1),
-            np.std(d[:, nn_index:nn_index + windows[number_r]], axis=1)
+            d[:, n_min_index : n_min_index + windows[number_r]].T,
+            d[:, nn_index : nn_index + windows[number_r]].T,
+            np.mean(d[:, n_min_index : n_min_index + windows[number_r]], axis=1),
+            np.std(d[:, n_min_index : n_min_index + windows[number_r]], axis=1),
+            np.mean(d[:, nn_index : nn_index + windows[number_r]], axis=1),
+            np.std(d[:, nn_index : nn_index + windows[number_r]], axis=1),
         )
         ordered_distances = n_maxdist[1]
-        n_maxdist = ordered_distances[0]#[dimensionality[number_r] - 1]
- 
-        print("Dataset: ", number_r, "contrast:", (n_maxdist)/k_maxdist)
+        n_maxdist = ordered_distances[0]  # [dimensionality[number_r] - 1]
 
+        print("Dataset: ", number_r, "contrast:", (n_maxdist) / k_maxdist)

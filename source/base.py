@@ -475,7 +475,7 @@ def process_chunk_graph(
         nb.int8[:, :, :],
         nb.int8[:, :, :],
         nb.float32[:, :],
-        nb.int32[: , :, :],
+        nb.int32[:, :, :],
         nb.int32,
         nb.int32,
         nb.int32,
@@ -528,18 +528,22 @@ def inner_cycle(
         hash_mat_curr = (
             hash_mat[:, curr_dim, :-i] if i != 0 else hash_mat[:, curr_dim, :]
         )
-        if i == 0: 
+        if i == 0:
             # In the first iteration at full hash we just compute the inner products between the segments of the bookmark
             new_bookmark = bookmark[curr_dim]
             for index in range(new_bookmark.shape[0]):
                 elem1, elem2 = new_bookmark[index]
                 if elem2 == -1:
                     break
-                for idx1 in range(elem1, elem2-1):
+                for idx1 in range(elem1, elem2 - 1):
                     sub_idx1 = ordering_dim[idx1]
                     for idx2 in range(idx1 + 1, elem2):
                         sub_idx2 = ordering_dim[idx2]
-                        maximum_pair = [sub_idx1, sub_idx2] if sub_idx1 < sub_idx2 else [sub_idx2, sub_idx1]
+                        maximum_pair = (
+                            [sub_idx1, sub_idx2]
+                            if sub_idx1 < sub_idx2
+                            else [sub_idx2, sub_idx1]
+                        )
                         # No trivial match
                         if maximum_pair[1] - maximum_pair[0] <= window:
                             continue
@@ -548,27 +552,35 @@ def inner_cycle(
                         tot_hash2 = original_mat[sub_idx2]
                         if multi_eq(tot_hash1, tot_hash2) >= motif_dimensionality:
                             dist_comp += 1
-                            curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
-                                time_series[sub_idx1 : sub_idx1 + window],
-                                time_series[sub_idx2 : sub_idx2 + window],
-                                dimensions,
-                                means[sub_idx1],
-                                stds[sub_idx1],
-                                means[sub_idx2],
-                                stds[sub_idx2],
-                                motif_dimensionality,
+                            curr_dist, dim, stop_dist = (
+                                z_normalized_euclidean_distanceg(
+                                    time_series[sub_idx1 : sub_idx1 + window],
+                                    time_series[sub_idx2 : sub_idx2 + window],
+                                    dimensions,
+                                    means[sub_idx1],
+                                    stds[sub_idx1],
+                                    means[sub_idx2],
+                                    stds[sub_idx2],
+                                    motif_dimensionality,
+                                )
                             )
                             # Insert the new distance into the sorted top distances
-                            if (
-                                curr_dist < top_dist[0]
-                            ):
+                            if curr_dist < top_dist[0]:
                                 for insert_idx in range(k):
                                     if curr_dist < top_dist[insert_idx]:
                                         # Shift elements to the right to make space for the new entry
-                                        top_dist[1 : insert_idx + 1] = top_dist[:insert_idx]
-                                        top_pairs[1 : insert_idx + 1] = top_pairs[:insert_idx]
-                                        top_dims[1 : insert_idx + 1] = top_dims[:insert_idx]
-                                        top_dists[1 : insert_idx + 1] = top_dists[:insert_idx]
+                                        top_dist[1 : insert_idx + 1] = top_dist[
+                                            :insert_idx
+                                        ]
+                                        top_pairs[1 : insert_idx + 1] = top_pairs[
+                                            :insert_idx
+                                        ]
+                                        top_dims[1 : insert_idx + 1] = top_dims[
+                                            :insert_idx
+                                        ]
+                                        top_dists[1 : insert_idx + 1] = top_dists[
+                                            :insert_idx
+                                        ]
 
                                         # Insert new values
                                         top_dist[insert_idx] = curr_dist
@@ -615,7 +627,11 @@ def inner_cycle(
                                 for idx2 in range(seg2[0], seg2[1]):
                                     sub_idx2 = ordering_dim[idx2]
                                     # Ensure proper order of the indices
-                                    maximum_pair = [sub_idx1, sub_idx2] if sub_idx1 < sub_idx2 else [sub_idx2, sub_idx1]
+                                    maximum_pair = (
+                                        [sub_idx1, sub_idx2]
+                                        if sub_idx1 < sub_idx2
+                                        else [sub_idx2, sub_idx1]
+                                    )
                                     # Skip trivial matches
                                     if maximum_pair[1] - maximum_pair[0] <= window:
                                         continue
@@ -623,26 +639,43 @@ def inner_cycle(
                                     # Compare the hashes on all dimensions except the last i columns
                                     tot_hash1 = original_mat[sub_idx1, :, :-i]
                                     tot_hash2 = original_mat[sub_idx2, :, :-i]
-                                    if multi_eq(tot_hash1, tot_hash2) >= motif_dimensionality:
+                                    if (
+                                        multi_eq(tot_hash1, tot_hash2)
+                                        >= motif_dimensionality
+                                    ):
                                         dist_comp += 1
-                                        curr_dist, dim, stop_dist = z_normalized_euclidean_distanceg(
-                                            time_series[sub_idx1: sub_idx1 + window],
-                                            time_series[sub_idx2: sub_idx2 + window],
-                                            dimensions,
-                                            means[sub_idx1],
-                                            stds[sub_idx1],
-                                            means[sub_idx2],
-                                            stds[sub_idx2],
-                                            motif_dimensionality,
+                                        curr_dist, dim, stop_dist = (
+                                            z_normalized_euclidean_distanceg(
+                                                time_series[
+                                                    sub_idx1 : sub_idx1 + window
+                                                ],
+                                                time_series[
+                                                    sub_idx2 : sub_idx2 + window
+                                                ],
+                                                dimensions,
+                                                means[sub_idx1],
+                                                stds[sub_idx1],
+                                                means[sub_idx2],
+                                                stds[sub_idx2],
+                                                motif_dimensionality,
+                                            )
                                         )
                                         if curr_dist < top_dist[0]:
                                             for insert_idx in range(k):
                                                 if curr_dist < top_dist[insert_idx]:
                                                     # Shift elements right to make room
-                                                    top_dist[1: insert_idx + 1] = top_dist[:insert_idx]
-                                                    top_pairs[1: insert_idx + 1] = top_pairs[:insert_idx]
-                                                    top_dims[1: insert_idx + 1] = top_dims[:insert_idx]
-                                                    top_dists[1: insert_idx + 1] = top_dists[:insert_idx]
+                                                    top_dist[1 : insert_idx + 1] = (
+                                                        top_dist[:insert_idx]
+                                                    )
+                                                    top_pairs[1 : insert_idx + 1] = (
+                                                        top_pairs[:insert_idx]
+                                                    )
+                                                    top_dims[1 : insert_idx + 1] = (
+                                                        top_dims[:insert_idx]
+                                                    )
+                                                    top_dists[1 : insert_idx + 1] = (
+                                                        top_dists[:insert_idx]
+                                                    )
                                                     # Insert the new values
                                                     top_dist[insert_idx] = curr_dist
                                                     top_pairs[insert_idx] = maximum_pair
@@ -859,7 +892,7 @@ def inner_cycle_multi_dict(
     :return: The top distances, the pairs of indices, the dimensions used, the distances, and the total number of distance computations.
     """
     dist_comp = 0
-    couples ={}
+    couples = {}
     top_dist = np.full((k, motif_high - motif_low + 1), np.inf, dtype=np.float32)
     top_pairs = np.full((k, motif_high - motif_low + 1, 2), -1, dtype=np.int32)
     top_dims = np.full((k, motif_high - motif_low + 1, motif_high), -1, dtype=np.int8)
@@ -893,51 +926,50 @@ def inner_cycle_multi_dict(
                     break
 
         for couple in couples:
-                if couples[couple] >= motif_low:
-                    dist_comp += 1
-                    sub_idx1, sub_idx2 = couple
-                    dim, stop_dist = z_normalized_euclidean_distancegmulti(
-                        time_series[sub_idx1 : sub_idx1 + window],
-                        time_series[sub_idx2 : sub_idx2 + window],
-                        means[sub_idx1],
-                        stds[sub_idx1],
-                        means[sub_idx2],
-                        stds[sub_idx2],
-                    )
-                    curr_dists = np.cumsum(stop_dist[:motif_high])
+            if couples[couple] >= motif_low:
+                dist_comp += 1
+                sub_idx1, sub_idx2 = couple
+                dim, stop_dist = z_normalized_euclidean_distancegmulti(
+                    time_series[sub_idx1 : sub_idx1 + window],
+                    time_series[sub_idx2 : sub_idx2 + window],
+                    means[sub_idx1],
+                    stds[sub_idx1],
+                    means[sub_idx2],
+                    stds[sub_idx2],
+                )
+                curr_dists = np.cumsum(stop_dist[:motif_high])
 
-                    for subdim in range_dim:
-                        curr_dist = curr_dists[subdim]
-                        # Insert the new distance into the sorted top distances
-                        if (
-                            curr_dist < top_dist[0, subdim]
-                        ):  # Check against the largest value in top k
-                            for insert_idx in range(k):
-                                if curr_dist < top_dist[insert_idx, subdim]:
-                                    # Shift elements to the right to make space for the new entry
-                                    top_dist[1 : insert_idx + 1, subdim] = top_dist[
-                                        :insert_idx, subdim
-                                    ]
-                                    top_pairs[1 : insert_idx + 1, subdim] = (
-                                        top_pairs[:insert_idx, subdim]
-                                    )
-                                    top_dims[1 : insert_idx + 1, subdim] = top_dims[
-                                        :insert_idx, subdim
-                                    ]
-                                    top_dists[1 : insert_idx + 1, subdim] = (
-                                        top_dists[:insert_idx, subdim]
-                                    )
+                for subdim in range_dim:
+                    curr_dist = curr_dists[subdim]
+                    # Insert the new distance into the sorted top distances
+                    if (
+                        curr_dist < top_dist[0, subdim]
+                    ):  # Check against the largest value in top k
+                        for insert_idx in range(k):
+                            if curr_dist < top_dist[insert_idx, subdim]:
+                                # Shift elements to the right to make space for the new entry
+                                top_dist[1 : insert_idx + 1, subdim] = top_dist[
+                                    :insert_idx, subdim
+                                ]
+                                top_pairs[1 : insert_idx + 1, subdim] = top_pairs[
+                                    :insert_idx, subdim
+                                ]
+                                top_dims[1 : insert_idx + 1, subdim] = top_dims[
+                                    :insert_idx, subdim
+                                ]
+                                top_dists[1 : insert_idx + 1, subdim] = top_dists[
+                                    :insert_idx, subdim
+                                ]
 
-                                    # Insert new values
-                                    top_dist[insert_idx, subdim] = curr_dist
-                                    top_pairs[insert_idx, subdim] = maximum_pair
-                                    top_dims[
-                                        insert_idx, subdim, : subdim + motif_low
-                                    ] = dim[: subdim + motif_low]
-                                    top_dists[
-                                        insert_idx, subdim, : subdim + motif_low
-                                    ] = stop_dist[: subdim + motif_low]
-                                    break
+                                # Insert new values
+                                top_dist[insert_idx, subdim] = curr_dist
+                                top_pairs[insert_idx, subdim] = maximum_pair
+                                top_dims[insert_idx, subdim, : subdim + motif_low] = (
+                                    dim[: subdim + motif_low]
+                                )
+                                top_dists[insert_idx, subdim, : subdim + motif_low] = (
+                                    stop_dist[: subdim + motif_low]
+                                )
+                                break
 
     return top_dist, top_pairs, top_dims, top_dists, dist_comp
-

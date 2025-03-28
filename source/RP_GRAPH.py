@@ -5,7 +5,7 @@ from base import (
     inner_cycle,
 )
 from typing import Tuple
-from multiprocessing import Pool, shared_memory
+from multiprocessing import shared_memory
 import numpy as np
 import itertools
 import bisect
@@ -16,11 +16,13 @@ import time
 from stop import stopgraph
 
 
-def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookmark_name, k):
+def worker(
+    i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookmark_name, k
+):
     # if i == 0 and j == 1:
     #    pr = cProfile.Profile()
     #   pr.enable()
-    #Print all the names
+    # Print all the names
     dist_comp = 0
     top = []
     window = subsequences.w
@@ -28,7 +30,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     dimensionality = subsequences.dimensionality
     motif_dimensionality = subsequences.d
     K = subsequences.K
-    #Print all the names 
+    # Print all the names
     # Time Series
     ex_time_series = shared_memory.SharedMemory(name=subsequences.subsequences)
     time_series = np.ndarray(
@@ -93,10 +95,15 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, bookm
     #   pr.print_stats(sort='cumtime')
     return top, dist_comp, i, j  # , counter
 
-def order_hash(hash_mat_name, indices_name, ordered_name, bookmark_name, dimension, num_s, K):
+
+def order_hash(
+    hash_mat_name, indices_name, ordered_name, bookmark_name, dimension, num_s, K
+):
     # Attach to shared memory
     hash_mat_data = shared_memory.SharedMemory(name=hash_mat_name)
-    hash_mat = np.ndarray((num_s, dimension, K), dtype=np.int8, buffer=hash_mat_data.buf)
+    hash_mat = np.ndarray(
+        (num_s, dimension, K), dtype=np.int8, buffer=hash_mat_data.buf
+    )
 
     indices_data = shared_memory.SharedMemory(name=indices_name)
     indices = np.ndarray((dimension, num_s), dtype=np.int32, buffer=indices_data.buf)
@@ -105,7 +112,9 @@ def order_hash(hash_mat_name, indices_name, ordered_name, bookmark_name, dimensi
     ordered = np.ndarray((num_s, dimension, K), dtype=np.int8, buffer=ordered_data.buf)
 
     bookmark_data = shared_memory.SharedMemory(name=bookmark_name)
-    bookmark = np.ndarray((dimension, num_s, 2), dtype=np.int32, buffer=bookmark_data.buf)
+    bookmark = np.ndarray(
+        (dimension, num_s, 2), dtype=np.int32, buffer=bookmark_data.buf
+    )
     bookmark.fill(-1)
 
     for curr_dim in range(dimension):
@@ -118,7 +127,7 @@ def order_hash(hash_mat_name, indices_name, ordered_name, bookmark_name, dimensi
         unique_indices = np.where(unique_mask)[0] + 1
         # Ensure correct array size
         start_points = np.concatenate(([0], unique_indices))
-        end_points = np.concatenate((unique_indices, [num_s-1]))
+        end_points = np.concatenate((unique_indices, [num_s - 1]))
 
         # Adjust length because the bookmark could be shorter
         min_length = len(start_points)
@@ -188,7 +197,9 @@ def pmotif_findg(
             ordered_container.append(arro.name)
             arri, _ = create_shared_array((dimension, n - window + 1), dtype=np.int32)
             indices_container.append(arri.name)
-            arru, _ = create_shared_array((dimension, (n - window + 1), 2), dtype=np.int32)
+            arru, _ = create_shared_array(
+                (dimension, (n - window + 1), 2), dtype=np.int32
+            )
             bookmark_container.append(arru.name)
             close_container.append(arrn)
             close_container.append(arro)
@@ -199,7 +210,7 @@ def pmotif_findg(
         # Hasher
         rp = RandomProjection(window, bin_width, K, L)  # []
 
-        chunk_sz = max(1000, n//cpu_count()*2)
+        chunk_sz = max(1000, n // cpu_count() * 2)
         num_chunks = max(1, n // chunk_sz)
 
         chunks = [
@@ -221,25 +232,40 @@ def pmotif_findg(
 
         # Hash the subsequences and order them lexigraphically
         st = time.perf_counter()
-
-        with Pool(processes=cpu_count()) as pool:
-            # Process chunks in parallel using starmap
-            pool.starmap(process_chunk_graph, chunks)  # starmap automatically unpacks arguments
+        with ProcessPoolExecutor(
+            max_workers=cpu_count(),
+            # mp_context = multiprocessing.get_context("forkserver")
+        ) as pool:
+            # pool.map(process_chunk_graph, chunks)
+            results = [pool.submit(process_chunk_graph, *chunk) for chunk in chunks]
+            for future in as_completed(results):
+                try:
+                    future.result()
+                except KeyboardInterrupt:
+                    pool.shutdown(wait=False, cancel_futures=True)
 
             # Prepare data for order_hash
             data = [
                 (split, indices, ordered, bookmark, dimension, n - window + 1, K)
                 for split, indices, ordered, bookmark in zip(
-                    hash_container, indices_container, ordered_container, bookmark_container
+                    hash_container,
+                    indices_container,
+                    ordered_container,
+                    bookmark_container,
                 )
             ]
-            
-            # Order hash in parallel
-            pool.starmap(order_hash, data)
+            results = [pool.submit(order_hash, *da) for da in data]
+            for future in as_completed(results):
+                try:
+                    _ = future.result()
+                    # future.result()
+                except KeyboardInterrupt:
+                    pool.shutdown(wait=False, cancel_futures=True)
+
             # print("Ordered")
         # Close the time series otherwise it will be copied in all children processes
-        #std_container.close()
-        #mean_container.close()
+        # std_container.close()
+        # mean_container.close()
         del chunks
         hash_t = time.perf_counter() - st
         print("Hashing time: ", hash_t)
@@ -260,7 +286,7 @@ def pmotif_findg(
         old_top = None
         with ProcessPoolExecutor(
             max_workers=cpu_count(),
-            #mp_context = multiprocessing.get_context("forkserver")
+            # mp_context = multiprocessing.get_context("forkserver")
         ) as executor:
             futures = [
                 executor.submit(
@@ -281,8 +307,8 @@ def pmotif_findg(
                     top_temp, dist_comp_temp, i, j = future.result()
                 except KeyboardInterrupt:
                     executor.shutdown(wait=False, cancel_futures=True)
-                #print(top)
-                
+                # print(top)
+
                 dist_comp += dist_comp_temp
                 for element in top_temp:
                     add = True
@@ -301,9 +327,9 @@ def pmotif_findg(
                             # print(element[0], stored[0])
                             if element[0] > stored[0]:
                                 top.remove(stored)
-                              #  confirmations += 1
-                            #elif element[0] == stored[0]:
-                             #  confirmations += 1
+                            #  confirmations += 1
+                            # elif element[0] == stored[0]:
+                            #  confirmations += 1
                             else:
                                 add = False
                                 continue
@@ -330,12 +356,13 @@ def pmotif_findg(
                         old_top = top[-1]
                     # The condition for stopping is having the motif confirmed, the correct number of motifs and j is L/2 or L
                     if (
-                        (stop_val or confirmations >= L//2) #and (j+1 == L or j+1 == (L//2))
-                    ): 
-                        print(i,j, stop_value, confirmations)
+                        stop_val
+                        or confirmations >= L // 2  # and (j+1 == L or j+1 == (L//2))
+                    ):
+                        print(i, j, stop_value, confirmations)
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
-                        
+
         return top, dist_comp, hash_t
     except Exception as e:
         print(e)
@@ -343,10 +370,9 @@ def pmotif_findg(
     finally:
         # pr.disable()
         # pr.print_stats(sort='cumtime')
-        #Close all the shared memory
+        # Close all the shared memory
         for arr in close_container:
             arr.close()
             arr.unlink()
         mean_container.unlink()
         std_container.unlink()
-        
