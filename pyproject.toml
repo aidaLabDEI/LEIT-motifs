@@ -19,7 +19,8 @@ dependencies = [
     "matplotlib",
     "seaborn",
     "wfdb",
-    "intel-cmplr-lib-rt"
+    "intel-cmplr-lib-rt",
+    "pyts"
 ]
 
 [project.urls]
