@@ -129,7 +129,7 @@ if __name__ == "__main__":
     axs.set_xlabel("Injected dimensions")
     sns.despine(trim=True)
     plt.show()
-    """
+
     # Fusion LK plot
     K_data = pd.read_csv("results/K_results.csv")
     L_data = pd.read_csv("results/L_results.csv")
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 
     plt.show()
     # Multidim plot
-    """
+
     mstumptime=[3.65, 4.45, 37, 39] # 
     mtimeread = [3.65, 4.45,84.04, 1035.73, 2.7*24*60*60, 7.2*24*60*60, 8.4*24*60*60, 11.8*24*60*60]
     data = pd.read_csv("results/dist_time.csv")
@@ -243,13 +243,13 @@ if __name__ == "__main__":
     # axs.spines["left"].set_bounds(0, 35)
     # sns.despine(offset={"left": 10.2})
     # plt.show()
-
+    """
     # Scalability plot
     data = pd.read_csv("results/scalability.csv")
     fig, axs = plt.subplots(1, 1, figsize=(5, 3), layout="constrained")
-    colors = ["dimgray", "cornflowerblue", "crimson", "mediumseagreen"]
-    names = ["MSTUMP","LEIT-motifs (medium)", "LEIT-motifs (hard)", "LEIT-motifs (easy)"]
-    num = [0, 3, 1, 2]
+    colors = ["dimgray", "crimson", "mediumseagreen", "cornflowerblue", "dimgray"]
+    names = ["MSTUMP", "LEIT-motifs (hard)", "LEIT-motifs (easy)", "LEIT-motifs (LTMM)", "MSTUMP (LTMM)"]
+    num = [0, 1, 2, 3, 4]
     # Generate reference complexity curves
     size_range = np.logspace(np.log10(data["Size"].min()), np.log10(data["Size"].max()), 100)
     min_time = data["Time (s)"].min()
@@ -260,23 +260,33 @@ if __name__ == "__main__":
     quadratic_time = min_time * (size_range / size_range.min())**2  # O(n^2)
 
     # Plot reference lines
-    plt.plot(size_range, linear_time, 'k-.', linewidth=1, label="O(n)", alpha= 0.8)  # Dashed black line
-    plt.plot(size_range, quadratic_time, 'k:', linewidth=1, label="O(n²)", alpha=0.8)  # Dotted black line
+    #plt.plot(size_range, linear_time, 'k-.', linewidth=1, label="O(n)", alpha= 0.8)  # Dashed black line
+    #plt.plot(size_range, quadratic_time, 'k:', linewidth=1, label="O(n²)", alpha=0.8)  # Dotted black line
     for val in num:
         n_data = data[data["Algo"] == val]
-        if val == 1: 
-            continue
-        sns.lineplot(
-            data=n_data,
-            x="Size",
-            y="Time (s)",
-            color=colors[val],
-            alpha=0.7,
-            label=names[val],
-            ci=None,
-            linewidth=2,
-        )
-
+        if val < 3:
+            sns.lineplot(
+                data=n_data,
+                x="Size",
+                y="Time (s)",
+                color=colors[val],
+                alpha=0.7,
+                label=names[val],
+                ci=None,
+                linewidth=2,
+                linestyle= "--"
+            )
+        else: 
+            sns.lineplot(
+                data=n_data,
+                x="Size",
+                y="Time (s)",
+                color=colors[val],
+                alpha=0.7,
+                label=names[val],
+                ci=None,
+                linewidth=2,
+            )
         sns.scatterplot(
             data=n_data,
             x="Size",
@@ -296,4 +306,3 @@ if __name__ == "__main__":
         text.set_text(r"\textsc{" + text.get_text() + "}")
     plt.minorticks_off()
     plt.show()
-    """

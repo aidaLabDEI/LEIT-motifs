@@ -8,3 +8,5 @@ matplotlib
 seaborn
 wfdb
 intel-cmplr-lib-rt
+pyts
+stumpy
