@@ -25,15 +25,17 @@ if __name__ == "__main__":
     # 1: evaporator.dat
     # 2: oikolab_weather_dataset.tsf
     # 3: RUTH.csv
-    if len(sys.argv) < 5:
+    if len(sys.argv) < 7:
         print(
-            "Usage: python rs_test.py <dataset> <window_size> <motif_dimensionality> <device>"
+            "Usage: python rs_test.py <dataset> <window_size> <motif_dimensionality> <alpha> <c> <device>"
         )
         sys.exit(1)
     dataset = int(sys.argv[1])
     window_size = int(sys.argv[2])
     dimensionality = int(sys.argv[3])
-    device = int(sys.argv[4])
+    alpha = int(sys.argv[4])
+    c = int(sys.argv[5])
+    device = int(sys.argv[6])
 
     paths = [
         "Datasets/FOETAL_ECG.dat",
@@ -99,7 +101,7 @@ if __name__ == "__main__":
     # Start the timer
     # tracemalloc.start()
     start = time.perf_counter()
-    motifs, num_dist = RP(shm_ts.name, n, dimensions, window_size, dimensionality, 1, window_size//2, 100, 0.9)
+    motifs, num_dist = RP(shm_ts.name, n, dimensions, window_size, dimensionality, 1, alpha, c, 100, 0.9)
     end = time.perf_counter() - start
     print("Time elapsed: ", end)
     print("Distance computations:", num_dist)
