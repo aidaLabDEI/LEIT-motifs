@@ -107,9 +107,8 @@ if __name__ == "__main__":
     print("Distance computations:", num_dist)
     # Plot
     # motifs = queue.PriorityQueue()
-    # print(motifs)
-    for motif in motifs:
-        print(motif[0])
+    print(motifs)
+
     copy = motifs
     motifs = copy
     # motifs = find_all_occur(extract, motifs, window_size)

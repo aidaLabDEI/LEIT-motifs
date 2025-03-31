@@ -7,18 +7,18 @@ from itertools import combinations
 from scipy.sparse import dok_array
 from base import z_normalized_euclidean_distanceg
 
-def SAX(chunk, transformers, window, c):
+def SAX(ts, chunk, transformers, window, c):
     """
     Applies each SAX transformer (one per dimension) on the given chunk.
     Expects chunk to be a 2D array of shape (n_samples, dimensionality).
     """
     n_samples = chunk.shape[0]
     n_dims = len(transformers)
-    # Preallocate output array (assumed numeric output)
+    # Preallocate output array
     transformed_chunk = np.empty((n_samples-window+1, n_dims), dtype=StringDType())
     paa = PiecewiseAggregateApproximation(window_size=c)
     for i, transformer in enumerate(transformers):
-        subsequences = [chunk[s:s+window,i] for s in range(n_samples-window+1)]
+        subsequences = [ts[s:s+window,i] for s in range(n_samples-window+1)]
         subsequences = paa.transform(subsequences)
         saxed = transformer.fit_transform(subsequences)
         # Join into one string for each dimension of a subsequence
@@ -44,7 +44,7 @@ def RP(time_series_name, n, dimensionality, window, motif_dimensionality, k_moti
     # Divide the time series into chunks and apply SAX
     chunk_sz = max(1000, n // cpu_count() * 2)
     num_chunks = max(1, n // chunk_sz)
-    chunks = [(ranges, transformers, window, c_dimensionality) for ranges in np.array_split(ts, num_chunks)]
+    chunks = [(ts, ranges, transformers, window, c_dimensionality) for ranges in np.array_split(ts, num_chunks)]
     
     with Pool(cpu_count()) as pool:
         sax_results = pool.starmap(SAX, [(chunk) for chunk in chunks])
@@ -52,7 +52,7 @@ def RP(time_series_name, n, dimensionality, window, motif_dimensionality, k_moti
         pass
     
     # Initialize the collision matrix and create the random projection sets 
-    collision_matrix =  dok_array(((n-window+1, n-window+1)), dtype=np.int8) #np.zeros((n-window+1, n-window+1))
+    collision_matrix =  dok_array(((n-window+1, n-window+1)), dtype=np.int16) #np.zeros((n-window+1, n-window+1))
     dimensions_sets = list(combinations(np.arange(dimensionality), motif_dimensionality))
     random.shuffle(dimensions_sets)
     
@@ -76,10 +76,13 @@ def RP(time_series_name, n, dimensionality, window, motif_dimensionality, k_moti
                     break
     # Zero out the diagonal and the window around it
     for i in range(n-window+1):
-        collision_matrix[i,i-window//2:i+window//2] = 0
+        collision_matrix[i,i] = 0
+        for j in range(i-window+1, i+window):
+            if j >= 0 and j < n-window+1:
+                collision_matrix[i,j] = 0
     # Find the maximal entries in the collision matrix and compute the distances for them
     top = []
-    max_elements = sorted(collision_matrix.items(), key=lambda x: x[1], reverse=True)[:k_motifs*100]
+    max_elements = sorted(collision_matrix.items(), key=lambda x: x[1], reverse=True)
     dist_comp= 0
     for maximal in max_elements:
         maximal_sub1, maximal_sub2 = maximal[0]
@@ -98,13 +101,13 @@ def RP(time_series_name, n, dimensionality, window, motif_dimensionality, k_moti
         )
         
         # Insert only better elements
-        if len(top)>k_motifs and curr_dist > top[-1][0]:
+        if len(top)>=k_motifs and curr_dist < top[-1][0]:
             top.pop()
-            top.insert(0,[-curr_dist, [dist_comp, (maximal_sub1, maximal_sub2), dim]])
-            sorted(top, reverse=True)
-        elif len(top)>k_motifs:
+            top.insert(0,[curr_dist, [dist_comp, (maximal_sub1, maximal_sub2), dim]])
+            sorted(top, reverse=False)
+        elif len(top)>=k_motifs:
             continue
         else:  
-            top.insert(0,[-curr_dist, [dist_comp, (maximal_sub1, maximal_sub2), dim]])
+            top.insert(0,[curr_dist, [dist_comp, (maximal_sub1, maximal_sub2), dim]])
     
     return top, dist_comp
