@@ -46,7 +46,7 @@ if __name__ == "__main__":
             data=Mem_dataK,
             x="K",
             y="Memory (GB)",
-            color="slategray",
+            color="dimgray",
             ax=ax2,
             legend=False,
             linewidth=1,
@@ -57,11 +57,14 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].set_xlabel("")
         axs[i // 2, i % 2].set_ylabel("")
         ax2.set_ylabel("")
+        ax2.tick_params(axis="y", labelcolor="dimgray")
+
         if i % 2 == 1:
             for n, label in enumerate(ax2.get_yticklabels()):
-                if n == 0 or n == len(ax2.get_yticklabels()) - 1:
+                if n == 0 and i // 2 == 0:
                     label.set_visible(False)
-        ax2.tick_params(axis="y", labelcolor="slategray")
+                elif i // 2 == 1 and n > 2:
+                    label.set_visible(False)
 
         axs[i // 2, i % 2].tick_params(axis="y", labelcolor="mediumseagreen")
         axs[i // 2, i % 2].spines["bottom"].set_bounds(4, 16)
@@ -78,87 +81,88 @@ if __name__ == "__main__":
         va="center",
         fontsize=10,
         rotation=270,
-        color="slategray",
+        color="dimgray",
     )
 
     plt.show()
 
     # !!!L plots
-    data = pd.read_csv("results/L_results.csv")
+    # data = pd.read_csv("results/L_results.csv")
     # FInd the different values in the first column
-    ds_values = data["Dataset"].unique()
+    # ds_values = data["Dataset"].unique()
     # data = data.groupby(["Dataset", "L"]).mean().reset_index()
     # Create a plot with ds_values subplots
-    fig, axs = plt.subplots(2, 2, figsize=(5.9, 3.9), sharex=True, layout="constrained")
-    for i, ds_val in enumerate(ds_values):
-        if i < 2:
-            continue
+    # fig, axs = plt.subplots(2, 2, figsize=(5.9, 3.9), sharex=True, layout="constrained")
+    # for i, ds_val in enumerate(ds_values):
+    #     if i < 2:
+    #         continue
 
-        # Get the data for the current value
-        L_data = data[data["Dataset"] == ds_val]
-        Mem_dataL = mem_data[mem_data["Dataset"] == ds_val]
-        Mem_dataL = Mem_dataL[Mem_dataL["test"] == 1]
-        i = i - 2
-        sns.lineplot(
-            data=L_data,
-            x="L",
-            y="Time elapsed",
-            color="cornflowerblue",
-            ax=axs[i // 2, i % 2],
-            legend=False,
-        )
-        ax2 = axs[i // 2, i % 2].twinx()
-        sns.lineplot(
-            data=Mem_dataL,
-            x="L",
-            y="Memory (GB)",
-            color="slategray",
-            ax=ax2,
-            legend=False,
-            linewidth=1,
-            alpha=0.6,
-        )
-        axs[i // 2, i % 2].spines["bottom"].set_bounds(10, 400)
-        axs[i // 2, i % 2].set_xticks([10, 50, 100, 150, 200, 400])
-        # axs[i // 2, i % 2].stackplot(
-        #     L_data["L"],
-        #     L_data["Time elapsed"],
-        #     color="cornflowerblue",
-        #     alpha=0.65,
-        #     labels=["Search"],
-        # )
-        # axs[i // 2, i % 2].stackplot(
-        #     L_data["L"],
-        #     L_data["Time int"],
-        #     color="mediumslateblue",
-        #     alpha=0.55,
-        #     labels=["Hash"],
-        # )
-        ax2.set_ylabel("")
-        yticks = ax2.get_yticks()
-        if len(yticks) > 2:
-            ax2.set_yticks(yticks[1:-1])
-        ax2.tick_params(axis="y", labelcolor="slategray")
-        ax2.yaxis.set_major_locator(plt.MaxNLocator(3))
-        axs[i // 2, i % 2].tick_params(axis="y", labelcolor="cornflowerblue")
-        axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}", fontsize=10)
-        axs[i // 2, i % 2].set_xlabel("")
-        axs[i // 2, i % 2].set_ylabel("")
-    sns.despine(right=False, trim=True)
-    sns.set_context("paper")
-    fig.supxlabel("Repetitions - L")
-    fig.supylabel("Time (s)", color="cornflowerblue")
-    fig.text(
-        0.98,
-        0.5,
-        r"Memory (GB)",
-        ha="center",
-        va="center",
-        fontsize=10,
-        rotation=270,
-        color="slategray",
-    )
-    plt.show()
+    #     Get the data for the current value
+    #     L_data = data[data["Dataset"] == ds_val]
+    #     Mem_dataL = mem_data[mem_data["Dataset"] == ds_val]
+    #     Mem_dataL = Mem_dataL[Mem_dataL["test"] == 1]
+    #     i = i - 2
+    #     sns.lineplot(
+    #         data=L_data,
+    #         x="L",
+    #         y="Time elapsed",
+    #         color="cornflowerblue",
+    #         ax=axs[i // 2, i % 2],
+    #         legend=False,
+    #         errorbar=None,
+    #     )
+    #     ax2 = axs[i // 2, i % 2].twinx()
+    #     sns.lineplot(
+    #         data=Mem_dataL,
+    #         x="L",
+    #         y="Memory (GB)",
+    #         color="dimgray",
+    #         ax=ax2,
+    #         legend=False,
+    #         linewidth=1,
+    #         alpha=0.6,
+    #     )
+    #     axs[i // 2, i % 2].spines["bottom"].set_bounds(10, 400)
+    #     axs[i // 2, i % 2].set_xticks([10, 50, 100, 150, 200, 400])
+    #     axs[i // 2, i % 2].stackplot(
+    #         L_data["L"],
+    #         L_data["Time elapsed"],
+    #         color="cornflowerblue",
+    #         alpha=0.65,
+    #         labels=["Search"],
+    #     )
+    #     axs[i // 2, i % 2].stackplot(
+    #         L_data["L"],
+    #         L_data["Time int"],
+    #         color="mediumslateblue",
+    #         alpha=0.55,
+    #         labels=["Hash"],
+    #     )
+    #     ax2.set_ylabel("")
+    #     yticks = ax2.get_yticks()
+    #     if len(yticks) > 2:
+    #         ax2.set_yticks(yticks[1:-1])
+    #     ax2.tick_params(axis="y", labelcolor="dimgray")
+    #     ax2.yaxis.set_major_locator(plt.MaxNLocator(3))
+    #     axs[i // 2, i % 2].tick_params(axis="y", labelcolor="cornflowerblue")
+    #     axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}", fontsize=10)
+    #     axs[i // 2, i % 2].set_xlabel("")
+    #     axs[i // 2, i % 2].set_ylabel("")
+    # sns.despine(right=False, trim=True)
+    # sns.set_context("paper")
+    # fig.supxlabel("Repetitions - L")
+    # fig.supylabel("Time (s)", color="cornflowerblue")
+    # fig.text(
+    #     0.98,
+    #     0.5,
+    #     r"Memory (GB)",
+    #     ha="center",
+    #     va="center",
+    #     fontsize=10,
+    #     rotation=270,
+    #     color="dimgray",
+    # )
+    # plt.show()
 
     # # !!!r plots
     # data = pd.read_csv("results/R_results.csv")

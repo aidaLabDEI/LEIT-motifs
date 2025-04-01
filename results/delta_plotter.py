@@ -56,18 +56,14 @@ if __name__ == "__main__":
     #     if not subset.empty:
     #         mean_time = subset["time"].values[0]
     #         plt.text(
-    #             x= 19.1,  # Adjust x position
-    #             y=i -0.3 + j*0.3,  # Align with y-axis category
+    #             y= 0.5,  # Adjust x position
+    #             x=i -0.3 + j*0.3,  # Align with y-axis category
     #             s=f"{mean_time:.2f}s",  # Format text
     #             ha='center',
     #             va='center',
     #             fontsize=10,
     #             color=colors[j],
     #         )
-    # sns.stripplot(
-    # data=data, x="distance", y="Dataset", hue="delta",
-    # dodge=True, alpha=.25, zorder=1, legend=False, palette="muted"
-    # )
 
     # # Show the conditional means, aligning each pointplot in the
     # # center of the strips by adjusting the width allotted to each
