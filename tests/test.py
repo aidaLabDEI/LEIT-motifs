@@ -13,6 +13,7 @@ import time
 import pandas as pd
 import numpy as np
 import wfdb
+import tracemalloc
 from data_loader import convert_tsf_to_dataframe
 from base import create_shared_array
 
@@ -107,7 +108,7 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 8  # find_width_discr(d, window_size, K)
+    r = 16  # find_width_discr(d, window_size, K)
     # d = np.concatenate((d, np.random.normal(0,0.01, (d.shape[0], 4))), axis=1)
     print(d.shape)
     thresh = 0
@@ -117,7 +118,7 @@ if __name__ == "__main__":
     ts[:] = d[:]
     # del d
     # Start the timer
-    # tracemalloc.start()
+    tracemalloc.start()
     start = time.perf_counter()
     # Find the motifs
     # for i in range(5):
@@ -143,11 +144,11 @@ if __name__ == "__main__":
     end = time.perf_counter() - start
     print("Time elapsed: ", end, "of which", hash_t, "for hashing")
     print("Distance computations:", num_dist)
-    # size, peak = tracemalloc.get_traced_memory()
-    # snapshot = tracemalloc.take_snapshot()
-    # top_stats = snapshot.statistics('lineno')
+    size, peak = tracemalloc.get_traced_memory()
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics('lineno')
 
-    # print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
+    print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
     with open("results.txt", "a") as f:
         f.write(
             f"Time elapsed: {end} of which {hash_t} for hashing\nDistance computations: {num_dist}\n"

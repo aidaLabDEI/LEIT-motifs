@@ -8,7 +8,7 @@ from numba import njit, prange
 
 @njit(fastmath=True, parallel=True, cache=True)
 def fill_matrix(collision_matrix, dimensions_sets, sax_results, n, window):
-    for set_idx in prange(len(dimensions_sets)): # Loop over sets
+    for set_idx in range(len(dimensions_sets)): # Loop over sets
         set_dims = dimensions_sets[set_idx] 
         
         words = sax_results[:, set_dims[0]].copy() # Get first dim
@@ -16,7 +16,7 @@ def fill_matrix(collision_matrix, dimensions_sets, sax_results, n, window):
              words += sax_results[:, set_dims[i]] 
              
         sorting = np.argsort(words)
-        for idx1_enum in range(len(sorting) - 1):
+        for idx1_enum in prange(len(sorting) - 1):
             elem1 = sorting[idx1_enum]
             for idx2_enum in range(idx1_enum + 1, len(sorting)):
                 elem2 = sorting[idx2_enum]
@@ -35,7 +35,6 @@ def fill_matrix(collision_matrix, dimensions_sets, sax_results, n, window):
 def SAX(ts, chunk, transformers, window, c):
     """
     Applies each SAX transformer (one per dimension) on the given chunk.
-    Expects chunk to be a 2D array of shape (n_samples, dimensionality).
     """
     n_samples = chunk.shape[0]
     n_dims = len(transformers)
@@ -89,7 +88,7 @@ def RP(time_series_name, n, dimensionality, window, motif_dimensionality, k_moti
     top = []
     dist_comp = 0
     # Take all non-zero elements in the collision matrix
-    max_elements = np.argwhere(collision_matrix > 0)
+    max_elements = np.argwhere(collision_matrix > 3)
     for maximal in max_elements:
         maximal_sub1, maximal_sub2 = maximal
         dist_comp += 1
