@@ -20,7 +20,7 @@ For general use the `LEITmotifs` function does all the heavy lifting (i.e., deal
 The scripts in the folder `tests` replicate all the tests performed in the paper and some additional tests that we could
 not fit in the paper due to space limitations, the scripts produce *.csv* files in the `results` folder.
 
-The file `results/plotter.py` collects all the raw results and plots them.
+The `*_plotter.py` scripts in the folder `results` collect the raw results and plot them.
 
 
 ## Installation as a Python package
