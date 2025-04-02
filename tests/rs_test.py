@@ -3,17 +3,12 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "external_dependecies"))
 sys.path.append("source")
-# from RP_MH import pmotif_find2
-# from RP_DC import pmotif_find3
-from RP_GRAPH import pmotif_findg
-from RP_GRAPH_MULTI import pmotif_findg_multi
+from random_selection import RP
 
-# from RPG_CF import pmotif_findauto
 import time
 import pandas as pd
 import numpy as np
 import wfdb
-import tracemalloc
 from data_loader import convert_tsf_to_dataframe
 from base import create_shared_array
 
@@ -21,7 +16,6 @@ from base import create_shared_array
 import matplotlib.pyplot as plt
 import matplotlib
 from scipy.signal import savgol_filter
-
 
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
@@ -31,30 +25,17 @@ if __name__ == "__main__":
     # 1: evaporator.dat
     # 2: oikolab_weather_dataset.tsf
     # 3: RUTH.csv
-    if len(sys.argv) < 6:
+    if len(sys.argv) < 7:
         print(
-            "Usage: python test.py <dataset> <window_size> <ranged search 0/1> <range_low_motif_dimensionality> <optional><range_high_motif_dimensionality> <K> <L> <device>"
+            "Usage: python rs_test.py <dataset> <window_size> <motif_dimensionality> <alpha> <c> <device>"
         )
         sys.exit(1)
     dataset = int(sys.argv[1])
     window_size = int(sys.argv[2])
-    ranged = int(sys.argv[3])
-    if ranged:
-        dimensionality = (int(sys.argv[4]), int(sys.argv[5]))
-        K = int(sys.argv[6])
-        L = int(sys.argv[7])
-        if len(sys.argv) == 9:
-            device = int(sys.argv[8])
-        else:
-            device = 0
-    else:
-        dimensionality = int(sys.argv[4])
-        K = int(sys.argv[5])
-        L = int(sys.argv[6])
-        if len(sys.argv) == 8:
-            device = int(sys.argv[7])
-        else:
-            device = 0
+    dimensionality = int(sys.argv[3])
+    alpha = int(sys.argv[4])
+    c = int(sys.argv[5])
+    device = int(sys.argv[6])
 
     paths = [
         "Datasets/FOETAL_ECG.dat",
@@ -118,48 +99,16 @@ if __name__ == "__main__":
     ts[:] = d[:]
     # del d
     # Start the timer
-    tracemalloc.start()
+    # tracemalloc.start()
     start = time.perf_counter()
-    # Find the motifs
-    # for i in range(5):
-    if ranged:
-        motifs, num_dist, hash_t = pmotif_findg_multi(
-            shm_ts.name, n, dimensions, window_size, 1, dimensionality, r, thresh, L, K
-        )
-    else:
-        motifs, num_dist, hash_t = pmotif_findg(
-            shm_ts.name,
-            n,
-            dimensions,
-            window_size,
-            1,
-            dimensionality,
-            r,
-            thresh,
-            L,
-            K,
-        )
-
+    motifs, num_dist = RP(shm_ts.name, n, dimensions, window_size, dimensionality, 1, alpha, c, 100, 0.9)
     end = time.perf_counter() - start
-    print("Time elapsed: ", end, "of which", hash_t, "for hashing")
+    print("Time elapsed: ", end)
     print("Distance computations:", num_dist)
-    size, peak = tracemalloc.get_traced_memory()
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
-
-    print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
-    with open("results.txt", "a") as f:
-        f.write(
-            f"Time elapsed: {end} of which {hash_t} for hashing\nDistance computations: {num_dist}\n"
-        )
-    # for stat in top_stats[:10]:
-    #   print(stat)
-
     # Plot
     # motifs = queue.PriorityQueue()
-    # print(motifs)
-    for motif in motifs:
-        print(motif[0])
+    print(motifs)
+
     copy = motifs
     motifs = copy
     # motifs = find_all_occur(extract, motifs, window_size)
@@ -182,29 +131,17 @@ if __name__ == "__main__":
             X[dimension], label=dimension, linewidth=1.2, color="lightgray"
         )  # "#6263e0")
         axs[i].set_axis_off()
-        if ranged:
-            for j, dim_mot in enumerate(motifs):
-                for idx, motif in enumerate(dim_mot):
-                    # Highlight the motifs in all dimensions
-                    for m in motif[1][1]:
-                        if i in motif[1][2]:
-                            axs[i].plot(
-                                X[dimension].iloc[m : m + window_size],
-                                color=colors[(idx + j) % len(colors)],
-                                linewidth=1.8,
-                                alpha=0.7,
-                            )
-        else:
-            for idx, motif in enumerate(motifs):
-                # Highlight the motifs in all dimensions it appears
-                for m in motif[1][1]:
-                    if i in motif[1][2]:
-                        axs[i].plot(
-                            X[dimension].iloc[m : m + window_size],
-                            color=colors[idx],
-                            linewidth=1.8,
-                            alpha=0.7,
-                        )
+
+        for idx, motif in enumerate(motifs):
+            # Highlight the motifs in all dimensions it appears
+            for m in motif[1][1]:
+                if i in motif[1][2]:
+                    axs[i].plot(
+                        X[dimension].iloc[m : m + window_size],
+                        color=colors[idx],
+                        linewidth=1.8,
+                        alpha=0.7,
+                    )
     if device == 1:
         plt.savefig("motifs.svg", format="svg")
     else:
