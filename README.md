@@ -39,7 +39,7 @@ motifs, _ = LEITmotifs(Ts, window, k, (2,D))
 ```
 
 ## Citing
-```latex
+```bibtex
 @article{ceccarello2025leitmotifs,
   title={LEIT-motifs: Scalable Motif Mining in Multidimensional Time Series},
   author={Ceccarello, Matteo and Monaco, Francesco Pio and Silvestri, Francesco},
