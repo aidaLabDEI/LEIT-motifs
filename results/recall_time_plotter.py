@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib
@@ -9,6 +8,8 @@ if __name__ == "__main__":
     # matplotlib.rcParams.update({"text.usetex":True, "text.latex.preamble": r"\usepackage{siunitx} \usepackage{sansmath} \sansmath"})
     sns.set_theme(style="ticks", palette="muted")
     fig, axs = plt.subplots(1, 1, figsize=(5, 3), layout="constrained")
+    recall_data = pd.read_csv("results/recall_results.csv")
+
     means = pd.DataFrame(
         columns=["Dataset", "delta", "time"],
         data=[
@@ -29,11 +30,15 @@ if __name__ == "__main__":
             ["whales", 0.2, 823.73],
         ],
     )
-    means["recall"] = 1
-    means["recall"] = means["recall"].transform(
-        lambda x: x + np.random.uniform(-0.1, 0, size=len(x))
+    means = pd.merge(
+        means,
+        recall_data,
+        how="left",
+        left_on=["Dataset", "delta"],
+        right_on=["Dataset", "delta"],
     )
     means = means.rename(columns={"recall": "Recall", "time": "Time (s)"})
+
     sns.lineplot(
         data=means,
         x="Recall",
@@ -43,10 +48,17 @@ if __name__ == "__main__":
         palette="pastel",
         alpha=0.6,
     )
-    sns.scatterplot(data=means, x="Recall", y="Time (s)", hue="Dataset", style="delta")
+    sns.scatterplot(
+        data=means,
+        x="Recall",
+        y="Time (s)",
+        hue="Dataset",
+        style="delta",
+        legend="brief",
+    )
     # plt.xscale("log")
-    plt.xlim(0.5, 1)
-    plt.yscale("log")
+    plt.xlim(0.5, 1.09)
+    # plt.yscale("log")
     plt.minorticks_off()
     sns.despine(trim=True)
     plt.show()

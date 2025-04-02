@@ -145,7 +145,7 @@ if __name__ == "__main__":
     print("Distance computations:", num_dist)
     size, peak = tracemalloc.get_traced_memory()
     snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
+    top_stats = snapshot.statistics("lineno")
 
     print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
     with open("results.txt", "a") as f:
