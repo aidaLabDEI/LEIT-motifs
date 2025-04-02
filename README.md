@@ -15,6 +15,7 @@ The algorithm has **anytime** properties, computation can be stopped at any give
 
 For general use the `LEITmotifs` function does all the heavy lifting (i.e., deals with NaN values, transforms the time series in the correct format for the algorithm, etc.).
 
+We additionally include our implementation of the  *axis-aligned projection algorithm* introduced in the work of *[Minnen et al., 2007](https://faculty.cc.gatech.edu/~isbell/papers/minnen-icdm2007.pdf)*.
 
 ## Reproducibility
 The scripts in the folder `tests` replicate all the tests performed in the paper and some additional tests that we could
@@ -37,3 +38,12 @@ from LEITmotifs import LEITmotifs
 motifs, _ = LEITmotifs(Ts, window, k, (2,D))
 ```
 
+## Citing
+```latex
+@article{ceccarello2025leitmotifs,
+  title={LEIT-motifs: Scalable Motif Mining in Multidimensional Time Series},
+  author={Ceccarello, Matteo and Monaco, Francesco Pio and Silvestri, Francesco},
+  journal={arXiv preprint arXiv:2502.14446},
+  year={2025}
+}
+```
