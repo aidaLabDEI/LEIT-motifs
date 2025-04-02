@@ -51,7 +51,7 @@ if __name__ == "__main__":
                 alpha=0.7,
                 label=names[val],
                 ci=None,
-                linewidth=2,
+                linewidth=1.5,
                 linestyle="--",
             )
         else:
@@ -63,7 +63,7 @@ if __name__ == "__main__":
                 alpha=0.7,
                 label=names[val],
                 ci=None,
-                linewidth=2,
+                linewidth=1.5,
             )
         sns.scatterplot(
             data=n_data,
@@ -71,7 +71,7 @@ if __name__ == "__main__":
             y="Time (s)",
             color=colors[val],
             alpha=0.8,
-            marker="o",
+            marker="X",
             s=50,
         )
 

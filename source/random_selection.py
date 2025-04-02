@@ -51,6 +51,45 @@ def SAX(ts, chunk, transformers, window, c):
     return transformed_chunk
 
 def RP(time_series_name, n, dimensionality, window, motif_dimensionality, k_motifs, dictionary_dim, c_dimensionality, max_iter, threshold):
+    """
+    The method is based on the work of :math:`Minnen, David, et al. "Detecting subdimensional motifs: An efficient algorithm for generalized multivariate pattern discovery." Seventh IEEE international conference on data mining (ICDM 2007). IEEE, 2007.`
+    Iit works by creating SAX representations of the subsequences, selecting random subdimensions and filling a collision
+    matrix when the SAX words are equal. 
+    SAX is tuned with this heuristic: when the matrix is too dense the dictionary is augmented, when the matrix is too sparse the words are shortened.
+    This heuristic may drastically increase the computation time, since the old collision matrix is trashed.
+    We swapped the original method to find the subdimensional motifs that required computing a distance distribution for each dimension with
+    the method used in :math:`LEIT-motifs`, this produces better results and removes the threshold input parameter that is difficult to tune manually on data.
+    
+    Parameters
+    ----------
+    time_series_name : str
+        The name of the shared memory array containing the time series data.
+    n : int
+        The lenght if the time series.
+    dimensionality : int
+        The number of dimensions in the time series.
+    window : int
+        The size of the window for the motifs.
+    motif_dimensionality : int
+        The dimensionality of the motifs to find.
+    k_motifs : int
+        The number of motifs to find.
+    dictionary_dim : int
+        The number of symbols in the SAX dictionary.
+    c_dimensionality : int
+        The dimensionality of the SAX representation. If None, set to window.
+    max_iter : int
+        The maximum number of iterations for the Projection cycle.
+    threshold : float
+        The threshold for the distance to consider a match. Not used in this implementation.
+        
+    Returns
+    -------
+    top : list
+        A list of the top k motifs found, each containing the distance, indices of the motifs, and dimensions.
+    dist_comp : int
+        The number of distance computations performed.
+    """
     # If c_dimensionality is not specified, set it to window
     if c_dimensionality is None:
         c_dimensionality = window
@@ -87,8 +126,13 @@ def RP(time_series_name, n, dimensionality, window, motif_dimensionality, k_moti
     # Find the maximal entries in the collision matrix and compute the distances for them
     top = []
     dist_comp = 0
+    max_elements = np.zeros((1, 2), dtype=np.int64)
     # Take all non-zero elements in the collision matrix
-    max_elements = np.argwhere(collision_matrix > 3)
+    exp_matrix_entries = motif_dimensionality
+    while max_elements.shape[0] < 2 and exp_matrix_entries > 0:
+        max_elements = np.argwhere(collision_matrix >= exp_matrix_entries)
+        exp_matrix_entries -= 1
+    
     for maximal in max_elements:
         maximal_sub1, maximal_sub2 = maximal
         dist_comp += 1

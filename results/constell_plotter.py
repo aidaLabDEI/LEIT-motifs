@@ -84,7 +84,8 @@ if __name__ == "__main__":
             color=colors[val],
             alpha=0.95,
             label=names[val],
-            ci=None,
+            errorbar=None,
+            linewidth=1
         )
         sns.scatterplot(
             data=n_data,
@@ -95,7 +96,7 @@ if __name__ == "__main__":
             marker="X",
         )
 
-        axs.axhline(mtimeread[val], color=colors[val], linestyle="dotted")
+        axs.axhline(mtimeread[val], color=colors[val], linestyle=(0, (1, 10)), linewidth=1.2)
     legend = axs.legend()
     for text in legend.get_texts():
         text.set_text(r"\textsc{" + text.get_text() + "}")
