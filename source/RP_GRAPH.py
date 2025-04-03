@@ -355,8 +355,8 @@ def pmotif_findg(
                         confirmations = 0
                         old_top = top[-1]
                     # The condition for stopping is having the motif confirmed, the correct number of motifs and j is L/2 or L
-                    if (stop_val or confirmations >= 5) and (
-                        j + 1 == L or j + 1 == (L // 2)
+                    if ((stop_val or confirmations >= 5) #and (
+                        #j + 1 == L or j + 1 == (L // 2)
                     ):
                         # print(i, j, stop_value, confirmations)
                         executor.shutdown(wait=False, cancel_futures=True)
