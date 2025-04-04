@@ -63,7 +63,7 @@ if __name__ == "__main__":
         "darkcyan",
         "xkcd:dull green",
         "firebrick",
-        "xkcd:marigold",
+        "xkcd:pale purple",
     ]
     names = [
         "potentials",
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         )
 
         axs.axhline(
-            mtimeread[val], color=colors[val], linestyle=(0, (1, 10)), linewidth=1.2
+            mtimeread[val], color=colors[val], linestyle=(0, (1, 10)), linewidth=1.7
         )
     legend = axs.legend()
     for text in legend.get_texts():

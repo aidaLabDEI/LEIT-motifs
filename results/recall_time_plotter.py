@@ -5,7 +5,7 @@ import matplotlib
 
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
-    matplotlib.rcParams.update({"text.usetex":True, "text.latex.preamble": r"\usepackage{siunitx} \usepackage{sansmath} \sansmath"})
+    matplotlib.rcParams.update({"text.usetex":True, "text.latex.preamble": r"\usepackage{siunitx} \usepackage{stix} \usepackage{sansmath} \sansmath"})
     sns.set_theme(style="ticks", palette="muted")
     fig, axs = plt.subplots(1, 1, figsize=(5, 3), layout="constrained")
     recall_data = pd.read_csv("results/recall_results.csv")
@@ -38,7 +38,12 @@ if __name__ == "__main__":
             ["whales", 0.2, 823.73],
             ["whales", 0.5, 753.75],
             ["whales", 0.8, 329],
-        ],
+            ["el_load", 0.01, 10080],
+            ["el_load", 0.1, 10080],
+            ["el_load", 0.2, 10080],
+            ["el_load", 0.5, 5401],
+            ["el_load", 0.8, 3120],
+        ]
     )
     means = pd.merge(
         means,
@@ -48,12 +53,24 @@ if __name__ == "__main__":
         right_on=["Dataset", "delta"],
     )
     means = means.rename(columns={"recall": "Recall", "time": "Time (s)"})
+    
+    colors = [
+        "crimson",
+        "cornflowerblue",
+        "mediumseagreen",
+        "darkorange",
+        "darkcyan",
+        "xkcd:dull green",
+        "firebrick",
+        "xkcd:pale purple",
+    ]
 
     sns.lineplot(
         data=means,
         x="Time (s)",
         y="Recall",
         hue="Dataset",
+        palette=colors,
         legend=False,
         alpha=0.8,
     )
@@ -63,12 +80,52 @@ if __name__ == "__main__":
         y="Recall",
         style="delta",
         hue="Dataset",
-        legend="brief",
+        palette=colors,
+        legend=False,
         alpha=0.7,
     )
+    markers = ["$0.01$",
+               "$0.1$",
+               "$0.2$",
+               "$0.5$",
+               "$0.8$",
+               ]
+    mark = ["o", "X", "s", "P", "D"]
+    
+    for index, delta in enumerate(means["delta"].unique()):
+        plt.text(
+            99.8,
+            index * 0.05 + 0.4,
+            markers[4-index],
+            color="slategray",
+            ha="left",
+            va="center",
+        )
+        plt.scatter(
+            80.8,
+            index * 0.05 + 0.401,
+            marker=mark[4-index],
+            color="slategray",
+            alpha=0.9,
+            s= 20
+        )
+    plt.text(
+        99.8,
+        0.05*5 +0.4,
+        "$\\delta$",
+        color="slategray",
+        ha="left",
+        va="center",
+    )
+        
+    plt.xlabel(r"Time (s)", fontsize=12)
+    plt.ylabel(r"Recall", fontsize=12)
     plt.xscale("log")
     #plt.xlim(0.7, 1.09)
     #plt.yscale("log")
+    # legend = axs.legend()
+    # for text in legend.get_texts():
+    #     text.set_text(r"\textsc{" + text.get_text() + "}")
     plt.minorticks_off()
     sns.despine(trim=True)
     plt.show()
