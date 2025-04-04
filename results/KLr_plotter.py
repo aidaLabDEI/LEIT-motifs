@@ -89,16 +89,16 @@ if __name__ == "__main__":
 
     # !!!L plots
     data = pd.read_csv("results/L_results.csv")
-   # FInd the different values in the first column
+    # FInd the different values in the first column
     ds_values = data["Dataset"].unique()
     data = data.groupby(["Dataset", "L"]).mean().reset_index()
-    #Create a plot with ds_values subplots
+    # Create a plot with ds_values subplots
     fig, axs = plt.subplots(2, 2, figsize=(5.9, 3.9), sharex=True, layout="constrained")
     for i, ds_val in enumerate(ds_values):
         if i < 2:
             continue
 
-       # Get the data for the current value
+        # Get the data for the current value
         L_data = data[data["Dataset"] == ds_val]
         Mem_dataL = mem_data[mem_data["Dataset"] == ds_val]
         Mem_dataL = Mem_dataL[Mem_dataL["test"] == 1]
@@ -111,7 +111,7 @@ if __name__ == "__main__":
             ax=axs[i // 2, i % 2],
             legend=False,
             zorder=100,
-            )
+        )
         ax2 = axs[i // 2, i % 2].twinx()
         sns.lineplot(
             data=Mem_dataL,
@@ -174,13 +174,27 @@ if __name__ == "__main__":
         r_data = data[data["Dataset"] == ds_val]
         i = i - 2
 
-        sns.lineplot(data=r_data, x="r", y="dist_computed", color= "crimson", ax=axs[i // 2, i % 2], errorbar=None)
+        sns.lineplot(
+            data=r_data,
+            x="r",
+            y="dist_computed",
+            color="crimson",
+            ax=axs[i // 2, i % 2],
+            errorbar=None,
+        )
 
-        axs[i//2, i%2].scatter(r_dc[i+2], r_dist[i+2], color="crimson", zorder=5, s=40, label="Self-tuned r")
+        axs[i // 2, i % 2].scatter(
+            r_dc[i + 2],
+            r_dist[i + 2],
+            color="crimson",
+            zorder=5,
+            s=40,
+            label="Self-tuned r",
+        )
         axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}")
-        axs[i//2,i%2].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
-        axs[i // 2, i % 2].set_xlabel('')
-        axs[i // 2, i % 2].set_ylabel('')
+        axs[i // 2, i % 2].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+        axs[i // 2, i % 2].set_xlabel("")
+        axs[i // 2, i % 2].set_ylabel("")
         axs[i // 2, i % 2].spines["bottom"].set_bounds(2, 32)
         axs[i // 2, i % 2].set_xticks([2, 4, 8, 16, 32])
         axs[i // 2, i % 2].tick_params(axis="y", labelcolor="crimson")

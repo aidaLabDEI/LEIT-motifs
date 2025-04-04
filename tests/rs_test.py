@@ -101,7 +101,9 @@ if __name__ == "__main__":
     # Start the timer
     # tracemalloc.start()
     start = time.perf_counter()
-    motifs, num_dist = RP(shm_ts.name, n, dimensions, window_size, dimensionality, 1, alpha, c, 100, 0.9)
+    motifs, num_dist = RP(
+        shm_ts.name, n, dimensions, window_size, dimensionality, 1, alpha, c, 100, 0.9
+    )
     end = time.perf_counter() - start
     print("Time elapsed: ", end)
     print("Distance computations:", num_dist)

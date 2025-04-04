@@ -440,14 +440,15 @@ def process_chunk_graph(
                 axis=-1,
             )
         for idx in ranges:
-            subsequence = time_series[idx : idx + window]
+            subsequence = np.ascontiguousarray(time_series[idx : idx + window])
 
             std_container[idx] = np.where(
                 std_container[idx] == 0, 0.00001, std_container[idx]
             )
 
             subsequence_n = (subsequence - mean_container[idx]) / std_container[idx]
-            subsequence_n = np.ascontiguousarray(subsequence_n.T, dtype=np.float32)
+            subsequence_n = subsequence_n.T
+
             hashed_sub = multi_compute_hash(
                 subsequence_n, rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L
             )

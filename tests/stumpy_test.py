@@ -18,9 +18,9 @@ if __name__ == "__main__":
         # os.path.join(current_dir, "..", "Datasets", "evaporator.dat"),
         # os.path.join(current_dir, "..", "Datasets", "RUTH.csv"),
         # os.path.join(current_dir, "..", "Datasets", "oikolab_weather_dataset.tsf"),
-        #os.path.join(current_dir, "..", "Datasets", "CLEAN_House1.csv"),
-        #os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
-        #os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
+        # os.path.join(current_dir, "..", "Datasets", "CLEAN_House1.csv"),
+        # os.path.join(current_dir, "..", "Datasets", "whales.parquet"),
+        # os.path.join(current_dir, "..", "Datasets", "quake.parquet"),
         os.path.join(current_dir, "..", "Datasets", "FL010"),
     ]
 
@@ -70,8 +70,8 @@ if __name__ == "__main__":
             tracemalloc.start()
             # Test for different window sizes in order to give an estimate on the full dataset
             for i in [1000000]:
-            #i = 0
-                d_temp = d[:i,:]
+                # i = 0
+                d_temp = d[:i, :]
                 print(d_temp.shape)
                 start = time.perf_counter()
                 m = stumpy.mstump(d_temp.T, windows[number])

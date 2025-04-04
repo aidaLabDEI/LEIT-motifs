@@ -16,6 +16,7 @@ source/find_bin_width.py
 source/hash_lsh.py
 source/jitted_utilities.py
 source/playground.py
+source/random_selection.py
 source/rel_contr.py
 source/stop.py
 tests/test.py

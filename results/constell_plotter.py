@@ -63,7 +63,7 @@ if __name__ == "__main__":
         "darkcyan",
         "xkcd:dull green",
         "firebrick",
-        "xkcd:marigold",
+        "xkcd:pale purple",
     ]
     names = [
         "potentials",
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             alpha=0.95,
             label=names[val],
             errorbar=None,
-            linewidth=1
+            linewidth=1,
         )
         sns.scatterplot(
             data=n_data,
@@ -96,7 +96,9 @@ if __name__ == "__main__":
             marker="X",
         )
 
-        axs.axhline(mtimeread[val], color=colors[val], linestyle=(0, (1, 10)), linewidth=1.2)
+        axs.axhline(
+            mtimeread[val], color=colors[val], linestyle=(0, (1, 10)), linewidth=1.7
+        )
     legend = axs.legend()
     for text in legend.get_texts():
         text.set_text(r"\textsc{" + text.get_text() + "}")

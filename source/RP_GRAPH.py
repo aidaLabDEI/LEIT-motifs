@@ -95,9 +95,11 @@ def order_hash(hash_mat_name, indices_name, ordered_name, dimension, num_s, K):
     indices = np.ndarray((dimension, num_s), dtype=np.int32, buffer=indices_data.buf)
     ordered_data = shared_memory.SharedMemory(name=ordered_name)
     ordered = np.ndarray((num_s, dimension, K), dtype=np.int8, buffer=ordered_data.buf)
+    hash_mat_t = hash_mat.transpose(1, 0, 2)
     for curr_dim in range(dimension):
-        indices[curr_dim, :] = np.lexsort(hash_mat[:, curr_dim, :].T[::-1])
-        ordered[:, curr_dim, :] = hash_mat[indices[curr_dim, :], curr_dim, :]
+        curr_slice = hash_mat_t[curr_dim, :, :]
+        indices[curr_dim, :] = np.lexsort([curr_slice[:, k] for k in reversed(range(K))])
+        ordered[:, curr_dim, :] = curr_slice[indices[curr_dim, :], :]
 
     hash_mat_data.close()
     indices_data.close()
@@ -167,9 +169,9 @@ def pmotif_findg(
         # Hasher
         rp = RandomProjection(window, bin_width, K, L)  # []
 
-        chunk_sz = n // (cpu_count() * 2)  # min(int(np.sqrt(n)), 1000)
+        chunk_sz = n // (cpu_count() * 2) if n <= 1000000 else np.sqrt(n)
         num_chunks = max(1, n // chunk_sz)
-
+        print("Num chunks: ", num_chunks, "Chunk size: ", chunk_sz)
         chunks = [
             (
                 time_series_name,
@@ -200,7 +202,7 @@ def pmotif_findg(
                     future.result()
                 except KeyboardInterrupt:
                     pool.shutdown(wait=False, cancel_futures=True)
-            # print("Hashed")
+            print("Hashed")
 
             data = [
                 (split, indices, ordered, dimension, n - window + 1, K)

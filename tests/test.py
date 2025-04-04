@@ -13,7 +13,6 @@ import time
 import pandas as pd
 import numpy as np
 import wfdb
-import tracemalloc
 from data_loader import convert_tsf_to_dataframe
 from base import create_shared_array
 
@@ -118,7 +117,7 @@ if __name__ == "__main__":
     ts[:] = d[:]
     # del d
     # Start the timer
-    tracemalloc.start()
+    # tracemalloc.start()
     start = time.perf_counter()
     # Find the motifs
     # for i in range(5):
@@ -138,16 +137,17 @@ if __name__ == "__main__":
             thresh,
             L,
             K,
+            0.8
         )
 
     end = time.perf_counter() - start
     print("Time elapsed: ", end, "of which", hash_t, "for hashing")
     print("Distance computations:", num_dist)
-    size, peak = tracemalloc.get_traced_memory()
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
+    # size, peak = tracemalloc.get_traced_memory()
+    # snapshot = tracemalloc.take_snapshot()
+    # top_stats = snapshot.statistics("lineno")
 
-    print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
+    # print(f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB")
     with open("results.txt", "a") as f:
         f.write(
             f"Time elapsed: {end} of which {hash_t} for hashing\nDistance computations: {num_dist}\n"

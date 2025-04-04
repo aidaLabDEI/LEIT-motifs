@@ -6,7 +6,7 @@ from matplotlib.ticker import ScalarFormatter
 
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
-    # matplotlib.rcParams.update({"text.usetex":True, "text.latex.preamble": r"\usepackage{siunitx} \usepackage{sansmath} \sansmath"})
+    matplotlib.rcParams.update({"text.usetex":True, "text.latex.preamble": r"\usepackage{siunitx} \usepackage{sansmath} \sansmath"})
     xfmt = ScalarFormatter()
     xfmt.set_scientific(True)
     xfmt.set_powerlimits((1, 2))
@@ -18,6 +18,10 @@ if __name__ == "__main__":
     data["relative error"] = data.groupby(["Dataset", "delta"])["distance"].transform(
         lambda x: (x - x.min()) / x.min()
     )
+    # Print the mean absolute relative error for each dataset and delta
+    means = data.groupby(["Dataset", "delta"])["relative error"].mean().reset_index()
+    # Print the mean
+    print(means)
     sns.boxplot(
         data=data,
         x="Dataset",
