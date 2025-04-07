@@ -29,4 +29,14 @@ el_load,0.1,1.0
 el_load,0.2,1.0
 el_load,0.5,0.66
 el_load,0.8,0.33
+quake,0.01,1.0
+quake,0.1,1.0
+quake,0.2,0.916
+quake,0.5,0.66
+quake,0.8,0.58
+LTMM,0.01,1.0
+LTMM,0.1,1.0
+LTMM,0.2,0.916
+LTMM,0.5,0.66
+LTMM,0.8,0.58
 

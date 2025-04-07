@@ -20,8 +20,8 @@ dependencies = [
     "seaborn",
     "wfdb",
     "intel-cmplr-lib-rt",
-    "build",
-    "pyarrow"
+    "pyts",
+    "stumpy"
 ]
 
 [project.urls]
@@ -29,4 +29,4 @@ Homepage = "https://github.com/aidaLabDEI/LEIT-motifs"
 Paper = "https://doi.org/10.48550/arXiv.2502.14446"
 
 [tool.setuptools]
-packages = ["source"]
+packages = ["source"]  # Replace with your actual package name

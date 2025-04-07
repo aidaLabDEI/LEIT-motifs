@@ -137,7 +137,7 @@ if __name__ == "__main__":
             thresh,
             L,
             K,
-            0.8
+            0.2
         )
 
     end = time.perf_counter() - start

@@ -653,10 +653,12 @@ def inner_cycle_multi(
     range_dim = np.arange(motif_high - motif_low + 1)
     for curr_dim in range(dimensionality):
         ordering_dim = ordering[curr_dim]
-        hash_mat_curr = (
-            hash_mat[:, curr_dim, :-i] if i != 0 else hash_mat[:, curr_dim, :]
-        )
-        original_mat_curr = original_mat[:, :, :-i] if i != 0 else original_mat[:, :, :]
+        if i == 0:
+            hash_mat_curr = hash_mat[:, curr_dim, :]
+            original_mat_curr = original_mat[:, :, :]
+        else:
+            hash_mat_curr = hash_mat[:, curr_dim, :-i]
+            original_mat_curr = original_mat[:, :, :-i]
         for idx, elem1 in enumerate(hash_mat_curr):
             for idx2, elem2 in enumerate(hash_mat_curr[idx + 1 :]):
                 sub_idx1 = ordering_dim[idx]

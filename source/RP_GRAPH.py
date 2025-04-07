@@ -202,7 +202,6 @@ def pmotif_findg(
                     future.result()
                 except KeyboardInterrupt:
                     pool.shutdown(wait=False, cancel_futures=True)
-            print("Hashed")
 
             data = [
                 (split, indices, ordered, dimension, n - window + 1, K)
@@ -300,7 +299,7 @@ def pmotif_findg(
                         motif_dimensionality,
                     )
                     if (
-                        stop_val #and (j+1 == L or j+1 == (L//2))
+                        stop_val and (j+1 == L or j+1 == (L//2))
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
                         print("i,j: ", i, j)
                         executor.shutdown(wait=False, cancel_futures=True)
