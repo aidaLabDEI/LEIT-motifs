@@ -67,40 +67,50 @@ def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
 
 
 @jit(nopython=True, cache=True, fastmath=True)
-def multi_compute_hash(data, mean, std, a_l, b_l, a_r, b_r, r, K, L):
-    data = (data - mean) / std
-    dim = data.shape[1]
-    data = np.ascontiguousarray(data.T)
+def multi_compute_hash(ts, ranges, window, means, stds, a_l, b_l, a_r, b_r, r, K, L):
     sqrt_L = int(np.ceil((np.sqrt(L))))
     K_half = K // 2
-    hash_left_all = np.empty((dim, sqrt_L, K_half), dtype=np.int8)
-    hash_right_all = np.empty((dim, sqrt_L, K_half), dtype=np.int8)
-    hash_values = np.empty((L, dim, K), dtype=np.int8)
+    # Preallocate the hash array
+    hash_arr = np.empty((ts.shape[0] - window + 1, ts.shape[1], L, K), dtype=np.int8)
+    dim = ts.shape[1]
+    for idx in ranges:
+        data = ts[idx : idx + window]
+        # Replace 0s with a small value to avoid division by zero
+        stds[idx] = np.where(stds[idx] == 0, 0.001, stds[idx])
+        data = (data - means[idx]) / stds[idx]
+        data = np.ascontiguousarray(data.T)
 
-    # Compute the K/2 hashes for both collections
-    for d in prange(dim):
-        for l_idx in range(sqrt_L):
-            for i in range(K_half):
-                hash_left_all[d, l_idx, i] = (
-                    np.dot(a_l[l_idx, i], data[d]) + b_l[l_idx, i]
-                ) // r
+        hash_left_all = np.empty((dim, sqrt_L, K_half), dtype=np.int8)
+        hash_right_all = np.empty((dim, sqrt_L, K_half), dtype=np.int8)
+        hash_values = np.empty((L, dim, K), dtype=np.int8)
 
-                hash_right_all[d, l_idx, i] = (
-                    np.dot(a_r[l_idx, i], data[d]) + b_r[l_idx, i]
-                ) // r
+        # Compute the K/2 hashes for both collections
+        for d in prange(dim):
+            for l_idx in range(sqrt_L):
+                for i in range(K_half):
+                    hash_left_all[d, l_idx, i] = (
+                        np.dot(a_l[l_idx, i], data[d]) + b_l[l_idx, i]
+                    ) // r
 
-    # Interleave the results to get final L hashes of length K
-    for d in prange(dim):
-        for j in range(L):
-            l_idx = j // sqrt_L
-            r_idx = j % sqrt_L
+                    hash_right_all[d, l_idx, i] = (
+                        np.dot(a_r[l_idx, i], data[d]) + b_r[l_idx, i]
+                    ) // r
 
-            hash_left = hash_left_all[d, l_idx]
-            hash_right = hash_right_all[d, r_idx]
-            hash_values[j, d, 0::2] = hash_left
-            hash_values[j, d, 1::2] = hash_right
+        # Interleave the results to get final L hashes of length K
+        for d in prange(dim):
+            for j in range(L):
+                l_idx = j // sqrt_L
+                r_idx = j % sqrt_L
 
-    return hash_values
+                hash_left = hash_left_all[d, l_idx]
+                hash_right = hash_right_all[d, r_idx]
+                hash_values[j, d, 0::2] = hash_left
+                hash_values[j, d, 1::2] = hash_right
+        # Store the hashes in the output array
+        for d in prange(dim):
+            hash_arr[idx, d] = hash_values[:, d]
+
+    return hash_arr
 
 
 def euclidean_hash(data, rp):

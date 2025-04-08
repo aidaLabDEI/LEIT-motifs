@@ -439,18 +439,36 @@ def process_chunk_graph(
                 ),
                 axis=-1,
             )
-        for idx in ranges:
-            subsequence = time_series[idx : idx + window]
+        hashed = multi_compute_hash(
+            time_series,
+            ranges,
+            window,
+            mean_container,
+            std_container,
+            rp.a_l,
+            rp.b_l,
+            rp.a_r,
+            rp.b_r,
+            rp.r,
+            rp.K,
+            rp.L,
+        )
+        # Unpack hashed in the shared memory
+        for rep in range(L):
+            hash_arrs[rep][ranges, :, :] = hashed[ranges, :, rep]
 
-            std_container[idx] = np.where(
-                std_container[idx] == 0, 0.00001, std_container[idx]
-            )
-            
-            hashed_sub = multi_compute_hash(
-                subsequence, mean_container[idx], std_container[idx], rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L
-            )
-            for rep in range(L):
-                hash_arrs[rep][idx] = hashed_sub[rep]
+        # for idx in ranges:
+        #     subsequence = time_series[idx : idx + window]
+
+        #     std_container[idx] = np.where(
+        #         std_container[idx] == 0, 0.00001, std_container[idx]
+        #     )
+
+        #     hashed_sub = multi_compute_hash(
+        #         subsequence, mean_container[idx], std_container[idx], rp.a_l, rp.b_l, rp.a_r, rp.b_r, rp.r, rp.K, rp.L
+        #     )
+        #     for rep in range(L):
+        #         hash_arrs[rep][idx] = hashed_sub[rep]
     # Close all the shared memory objects
     except Exception as e:
         print(e)
@@ -460,6 +478,7 @@ def process_chunk_graph(
         exist_ts.close()
         mean_existing_shm.close()
         std_existing_shm.close()
+
 
 @njit(
     nb.types.Tuple(
