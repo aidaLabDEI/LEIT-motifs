@@ -20,6 +20,7 @@ Requires-Dist: wfdb
 Requires-Dist: intel-cmplr-lib-rt
 Requires-Dist: pyts
 Requires-Dist: stumpy
+Requires-Dist: librosa
 Dynamic: license-file
 
 # <div align = "center"> LEIT-motifs </div>

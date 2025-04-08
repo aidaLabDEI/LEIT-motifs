@@ -67,8 +67,10 @@ def compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
 
 
 @jit(nopython=True, cache=True, fastmath=True)
-def multi_compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
-    dim = data.shape[0]
+def multi_compute_hash(data, mean, std, a_l, b_l, a_r, b_r, r, K, L):
+    data = (data - mean) / std
+    dim = data.shape[1]
+    data = np.ascontiguousarray(data.T)
     sqrt_L = int(np.ceil((np.sqrt(L))))
     K_half = K // 2
     hash_left_all = np.empty((dim, sqrt_L, K_half), dtype=np.int8)
@@ -86,16 +88,6 @@ def multi_compute_hash(data, a_l, b_l, a_r, b_r, r, K, L):
                 hash_right_all[d, l_idx, i] = (
                     np.dot(a_r[l_idx, i], data[d]) + b_r[l_idx, i]
                 ) // r
-    """
-    for d in prange(dim):
-        # Compute dot products for all l_idx and K_half in one go
-        left_projections = np.dot(a_l.reshape(sqrt_L * K_half, -1), data[d]) + b_l.reshape(sqrt_L * K_half)
-        right_projections = np.dot(a_r.reshape(sqrt_L * K_half, -1), data[d]) + b_r.reshape(sqrt_L * K_half)
-
-        # Reshape results back to (sqrt_L, K_half)
-        hash_left_all[d] = (left_projections // r).reshape(sqrt_L, K_half)
-        hash_right_all[d] = (right_projections // r).reshape(sqrt_L, K_half)
-        """
 
     # Interleave the results to get final L hashes of length K
     for d in prange(dim):

@@ -21,7 +21,8 @@ dependencies = [
     "wfdb",
     "intel-cmplr-lib-rt",
     "pyts",
-    "stumpy"
+    "stumpy",
+    "librosa"
 ]
 
 [project.urls]

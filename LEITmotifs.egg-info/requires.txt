@@ -10,3 +10,4 @@ wfdb
 intel-cmplr-lib-rt
 pyts
 stumpy
+librosa
