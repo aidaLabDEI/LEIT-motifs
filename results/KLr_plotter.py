@@ -15,7 +15,7 @@ if __name__ == "__main__":
     xfmt = ScalarFormatter()
     xfmt.set_scientific(True)
     xfmt.set_powerlimits((0, 0))
-    names = ["weather", "whales", "el_load","LTMM"]
+    names = ["weather", "whales", "el_load", "LTMM"]
     mem_data = pd.read_csv("results/MemLK_results.csv")
 
     # !!!K plots
@@ -67,7 +67,9 @@ if __name__ == "__main__":
                 elif i // 2 == 1 and n > 1:
                     label.set_visible(False)
 
-        axs[i // 2, i % 2].tick_params(axis="y", labelcolor="mediumseagreen", color="mediumseagreen")
+        axs[i // 2, i % 2].tick_params(
+            axis="y", labelcolor="mediumseagreen", color="mediumseagreen"
+        )
         axs[i // 2, i % 2].spines["bottom"].set_bounds(4, 16)
         axs[i // 2, i % 2].set_xticks([4, 8, 12, 16])
     sns.despine(right=False, trim=True)
@@ -135,7 +137,9 @@ if __name__ == "__main__":
                 elif i // 2 == 1 and n > 0:
                     label.set_visible(False)
         ax2.tick_params(axis="y", labelcolor="dimgray", color="dimgray")
-        axs[i // 2, i % 2].tick_params(axis="y", labelcolor="cornflowerblue", color="cornflowerblue")
+        axs[i // 2, i % 2].tick_params(
+            axis="y", labelcolor="cornflowerblue", color="cornflowerblue"
+        )
         axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}", fontsize=10)
         axs[i // 2, i % 2].set_xlabel("")
         axs[i // 2, i % 2].set_ylabel("")

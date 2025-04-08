@@ -86,6 +86,7 @@ def worker(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k):
     #   pr.print_stats(sort='cumtime')
     return top, dist_comp, i, j  # , counter
 
+
 def order_hash(hash_mat_name, indices_name, ordered_name, dimension, num_s, K):
     hash_mat_data = shared_memory.SharedMemory(name=hash_mat_name)
     hash_mat = np.ndarray(
@@ -98,7 +99,9 @@ def order_hash(hash_mat_name, indices_name, ordered_name, dimension, num_s, K):
     hash_mat_t = hash_mat.transpose(1, 0, 2)
     for curr_dim in range(dimension):
         curr_slice = hash_mat_t[curr_dim, :, :]
-        indices[curr_dim, :] = np.lexsort([curr_slice[:, k] for k in reversed(range(K))])
+        indices[curr_dim, :] = np.lexsort(
+            [curr_slice[:, k] for k in reversed(range(K))]
+        )
         ordered[:, curr_dim, :] = curr_slice[indices[curr_dim, :], :]
 
     hash_mat_data.close()
@@ -299,7 +302,7 @@ def pmotif_findg(
                         motif_dimensionality,
                     )
                     if (
-                        stop_val #and (j+1 == L or j+1 == (L//2))
+                        stop_val  # and (j+1 == L or j+1 == (L//2))
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
                         print("i,j: ", i, j)
                         executor.shutdown(wait=False, cancel_futures=True)

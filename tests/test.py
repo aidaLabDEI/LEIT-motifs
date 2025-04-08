@@ -56,15 +56,15 @@ if __name__ == "__main__":
             device = 0
 
     paths = [
-        "Datasets/FOETAL_ECG.dat",              #0
-        "Datasets/evaporator.dat",              #1
-        "Datasets/oikolab_weather_dataset.tsf", #2
-        "Datasets/RUTH.csv",                    #3
-        "Datasets/CLEAN_House1.csv",            #4
-        "Datasets/whales.parquet",              #5
-        "Datasets/quake.parquet",               #6
-        "Datasets/steamgen.csv",                #7
-        "Datasets/FL010",                       #8
+        "Datasets/FOETAL_ECG.dat",  # 0
+        "Datasets/evaporator.dat",  # 1
+        "Datasets/oikolab_weather_dataset.tsf",  # 2
+        "Datasets/RUTH.csv",  # 3
+        "Datasets/CLEAN_House1.csv",  # 4
+        "Datasets/whales.parquet",  # 5
+        "Datasets/quake.parquet",  # 6
+        "Datasets/steamgen.csv",  # 7
+        "Datasets/FL010",  # 8
     ]
     d = None
 
@@ -137,7 +137,7 @@ if __name__ == "__main__":
             thresh,
             L,
             K,
-            0.2
+            0.2,
         )
 
     end = time.perf_counter() - start

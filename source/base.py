@@ -782,7 +782,7 @@ def inner_cycle_multi_dict(
     :return: The top distances, the pairs of indices, the dimensions used, the distances, and the total number of distance computations.
     """
     dist_comp = 0
-    couples ={}
+    couples = {}
     top_dist = np.full((k, motif_high - motif_low + 1), np.inf, dtype=np.float32)
     top_pairs = np.full((k, motif_high - motif_low + 1, 2), -1, dtype=np.int32)
     top_dims = np.full((k, motif_high - motif_low + 1, motif_high), -1, dtype=np.int8)
@@ -816,51 +816,50 @@ def inner_cycle_multi_dict(
                     break
 
         for couple in couples:
-                if couples[couple] >= motif_low:
-                    dist_comp += 1
-                    sub_idx1, sub_idx2 = couple
-                    dim, stop_dist = z_normalized_euclidean_distancegmulti(
-                        time_series[sub_idx1 : sub_idx1 + window],
-                        time_series[sub_idx2 : sub_idx2 + window],
-                        means[sub_idx1],
-                        stds[sub_idx1],
-                        means[sub_idx2],
-                        stds[sub_idx2],
-                    )
-                    curr_dists = np.cumsum(stop_dist[:motif_high])
+            if couples[couple] >= motif_low:
+                dist_comp += 1
+                sub_idx1, sub_idx2 = couple
+                dim, stop_dist = z_normalized_euclidean_distancegmulti(
+                    time_series[sub_idx1 : sub_idx1 + window],
+                    time_series[sub_idx2 : sub_idx2 + window],
+                    means[sub_idx1],
+                    stds[sub_idx1],
+                    means[sub_idx2],
+                    stds[sub_idx2],
+                )
+                curr_dists = np.cumsum(stop_dist[:motif_high])
 
-                    for subdim in range_dim:
-                        curr_dist = curr_dists[subdim]
-                        # Insert the new distance into the sorted top distances
-                        if (
-                            curr_dist < top_dist[0, subdim]
-                        ):  # Check against the largest value in top k
-                            for insert_idx in range(k):
-                                if curr_dist < top_dist[insert_idx, subdim]:
-                                    # Shift elements to the right to make space for the new entry
-                                    top_dist[1 : insert_idx + 1, subdim] = top_dist[
-                                        :insert_idx, subdim
-                                    ]
-                                    top_pairs[1 : insert_idx + 1, subdim] = (
-                                        top_pairs[:insert_idx, subdim]
-                                    )
-                                    top_dims[1 : insert_idx + 1, subdim] = top_dims[
-                                        :insert_idx, subdim
-                                    ]
-                                    top_dists[1 : insert_idx + 1, subdim] = (
-                                        top_dists[:insert_idx, subdim]
-                                    )
+                for subdim in range_dim:
+                    curr_dist = curr_dists[subdim]
+                    # Insert the new distance into the sorted top distances
+                    if (
+                        curr_dist < top_dist[0, subdim]
+                    ):  # Check against the largest value in top k
+                        for insert_idx in range(k):
+                            if curr_dist < top_dist[insert_idx, subdim]:
+                                # Shift elements to the right to make space for the new entry
+                                top_dist[1 : insert_idx + 1, subdim] = top_dist[
+                                    :insert_idx, subdim
+                                ]
+                                top_pairs[1 : insert_idx + 1, subdim] = top_pairs[
+                                    :insert_idx, subdim
+                                ]
+                                top_dims[1 : insert_idx + 1, subdim] = top_dims[
+                                    :insert_idx, subdim
+                                ]
+                                top_dists[1 : insert_idx + 1, subdim] = top_dists[
+                                    :insert_idx, subdim
+                                ]
 
-                                    # Insert new values
-                                    top_dist[insert_idx, subdim] = curr_dist
-                                    top_pairs[insert_idx, subdim] = maximum_pair
-                                    top_dims[
-                                        insert_idx, subdim, : subdim + motif_low
-                                    ] = dim[: subdim + motif_low]
-                                    top_dists[
-                                        insert_idx, subdim, : subdim + motif_low
-                                    ] = stop_dist[: subdim + motif_low]
-                                    break
+                                # Insert new values
+                                top_dist[insert_idx, subdim] = curr_dist
+                                top_pairs[insert_idx, subdim] = maximum_pair
+                                top_dims[insert_idx, subdim, : subdim + motif_low] = (
+                                    dim[: subdim + motif_low]
+                                )
+                                top_dists[insert_idx, subdim, : subdim + motif_low] = (
+                                    stop_dist[: subdim + motif_low]
+                                )
+                                break
 
     return top_dist, top_pairs, top_dims, top_dists, dist_comp
-

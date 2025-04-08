@@ -45,7 +45,7 @@ for i in range(n_bands):
     plt.plot(
         times,
         band_energies[i, :],
-        label=f"Band {i+1} ({band_edges[i]:.2f}-{band_edges[i+1]:.2f} Hz)",
+        label=f"Band {i + 1} ({band_edges[i]:.2f}-{band_edges[i + 1]:.2f} Hz)",
     )
 
 parquet = pd.DataFrame(band_energies).T

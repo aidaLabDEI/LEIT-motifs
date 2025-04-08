@@ -6,7 +6,12 @@ from matplotlib.ticker import ScalarFormatter
 
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
-    matplotlib.rcParams.update({"text.usetex":True, "text.latex.preamble": r"\usepackage{siunitx} \usepackage{sansmath} \sansmath"})
+    matplotlib.rcParams.update(
+        {
+            "text.usetex": True,
+            "text.latex.preamble": r"\usepackage{siunitx} \usepackage{sansmath} \sansmath",
+        }
+    )
     xfmt = ScalarFormatter()
     xfmt.set_scientific(True)
     xfmt.set_powerlimits((1, 2))

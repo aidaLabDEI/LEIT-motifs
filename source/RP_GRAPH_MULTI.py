@@ -16,6 +16,7 @@ from hash_lsh import RandomProjection
 import time
 from stop import stopgraph
 
+
 def worker_multi(i, j, subsequences, hash_mat_name, ordering_name, ordered_name, k):
     # if i == 0 and j == 1:
     #    pr = cProfile.Profile()
@@ -242,7 +243,7 @@ def pmotif_findg_multi(
         start_time = time.perf_counter()
         with ProcessPoolExecutor(
             max_workers=cpu_count(),
-            #mp_context=multiprocessing.get_context("fork"),
+            # mp_context=multiprocessing.get_context("fork"),
         ) as executor:
             futures = [
                 executor.submit(
@@ -319,8 +320,8 @@ def pmotif_findg_multi(
                                 hash_t,
                                 "for hashing",
                             )
-                    
-                            #Find the number of the the first false value in the stop_val array
+
+                            # Find the number of the the first false value in the stop_val array
                             # index_val = np.where(stop_val == False)[0]
                             # if len(index_val) > 0:
                             #     # Once a lower dimensionality is confirmed, increase the minimum weight for collision consideration
@@ -328,16 +329,14 @@ def pmotif_findg_multi(
                             #             motif_dimensionality[0] + index_val[0],
                             #             motif_dimensionality[1],
                             #     )
-                        
+
                             # If all dimensions confirmend their motifs, stop the search
                             if np.all(stop_val):
                                 executor.shutdown(wait=False, cancel_futures=True)
                                 break
 
-
         return tops, dist_comp, hash_t
     except (KeyboardInterrupt, FileNotFoundError, OSError):
-
         return tops, dist_comp, hash_t
     finally:
         # Close all the shared memory
@@ -346,4 +345,3 @@ def pmotif_findg_multi(
             arr.unlink()
         mean_container.unlink()
         std_container.unlink()
-

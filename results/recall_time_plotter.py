@@ -5,7 +5,12 @@ import matplotlib
 
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
-    matplotlib.rcParams.update({"text.usetex":True, "text.latex.preamble": r"\usepackage{siunitx} \usepackage{stix} \usepackage{sansmath} \sansmath"})
+    matplotlib.rcParams.update(
+        {
+            "text.usetex": True,
+            "text.latex.preamble": r"\usepackage{siunitx} \usepackage{stix} \usepackage{sansmath} \sansmath",
+        }
+    )
     sns.set_theme(style="ticks", palette="muted")
     fig, axs = plt.subplots(1, 1, figsize=(5, 3), layout="constrained")
     recall_data = pd.read_csv("results/recall_results.csv")
@@ -53,7 +58,7 @@ if __name__ == "__main__":
             ["LTMM", 0.2, 696.92],
             ["LTMM", 0.5, 696.91],
             ["LTMM", 0.8, 696.9],
-        ]
+        ],
     )
     means = pd.merge(
         means,
@@ -63,7 +68,7 @@ if __name__ == "__main__":
         right_on=["Dataset", "delta"],
     )
     means = means.rename(columns={"recall": "Recall", "time": "Time (s)"})
-    
+
     colors = [
         "crimson",
         "cornflowerblue",
@@ -95,19 +100,20 @@ if __name__ == "__main__":
         legend=False,
         alpha=0.7,
     )
-    markers = ["$0.01$",
-               "$0.1$",
-               "$0.2$",
-               "$0.5$",
-               "$0.8$",
-               ]
+    markers = [
+        "$0.01$",
+        "$0.1$",
+        "$0.2$",
+        "$0.5$",
+        "$0.8$",
+    ]
     mark = ["o", "X", "s", "P", "D"]
-    
+
     for index, delta in enumerate(means["delta"].unique()):
         plt.text(
             99.8,
             index * 0.05 + 0.4,
-            markers[4-index],
+            markers[4 - index],
             color="slategray",
             ha="left",
             va="center",
@@ -115,25 +121,25 @@ if __name__ == "__main__":
         plt.scatter(
             80.8,
             index * 0.05 + 0.401,
-            marker=mark[4-index],
+            marker=mark[4 - index],
             color="slategray",
             alpha=0.9,
-            s= 20
+            s=20,
         )
     plt.text(
         99.8,
-        0.05*5 +0.4,
+        0.05 * 5 + 0.4,
         "$\\delta$",
         color="slategray",
         ha="left",
         va="center",
     )
-        
+
     plt.xlabel(r"Time (s)")
     plt.ylabel(r"Recall")
     plt.xscale("log")
-    #plt.xlim(0.7, 1.09)
-    #plt.yscale("log")
+    # plt.xlim(0.7, 1.09)
+    # plt.yscale("log")
     # legend = axs.legend()
     # for text in legend.get_texts():
     #     text.set_text(r"\textsc{" + text.get_text() + "}")

@@ -35,11 +35,11 @@ if __name__ == "__main__":
     r_vals_computed = [8, 8, 16, 32, 8, 16, 8]
     windows = [50, 75, 500, 5000, 1000, 200, 100]
     dimensionality = [8, 2, 4, 2, 6, 4, 2]
-    deltas = [0.5, 0.8]#[0.01, 0.1, 0.2]
+    deltas = [0.5, 0.8]  # [0.01, 0.1, 0.2]
     recall_results = pd.DataFrame(columns=["Dataset", "delta", "recall"])
 
     for number, path in enumerate(paths):
-        number_r = number 
+        number_r = number
         # Load the dataset
         if number_r == 3:
             data, freq, fc_hor, mis_val, eq_len = convert_tsf_to_dataframe(path, 0)
