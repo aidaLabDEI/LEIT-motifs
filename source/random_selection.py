@@ -153,11 +153,11 @@ def RP(
     dist_comp = 0
     max_elements = np.zeros((1, 2), dtype=np.int64)
     # Take all non-zero elements in the collision matrix
-    exp_matrix_entries = motif_dimensionality
-    while max_elements.shape[0] < 2 and exp_matrix_entries > 0:
+    exp_matrix_entries = np.max(collision_matrix)#motif_dimensionality
+    while max_elements.shape[0] < 5 and exp_matrix_entries > 0:
         max_elements = np.argwhere(collision_matrix >= exp_matrix_entries)
         exp_matrix_entries -= 1
-
+    print("Max elements found:", max_elements.shape[0])
     for maximal in max_elements:
         maximal_sub1, maximal_sub2 = maximal
         dist_comp += 1

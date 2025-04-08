@@ -15,7 +15,7 @@ if __name__ == "__main__":
     xfmt = ScalarFormatter()
     xfmt.set_scientific(True)
     xfmt.set_powerlimits((0, 0))
-    names = ["RUTH", "weather", "whales", "el_load"]
+    names = ["weather", "whales", "el_load","LTMM"]
     mem_data = pd.read_csv("results/MemLK_results.csv")
 
     # !!!K plots
@@ -25,13 +25,13 @@ if __name__ == "__main__":
     # Create a plot with ds_values subplots
     fig, axs = plt.subplots(2, 2, figsize=(5.9, 3.9), sharex=True, layout="constrained")
     for i, ds_val in enumerate(ds_values):
-        if i < 2:
+        if i < 3:
             continue
         # Get the data for the current value
         K_data = data[data["Dataset"] == ds_val]
         Mem_dataK = mem_data[mem_data["Dataset"] == ds_val]
         Mem_dataK = Mem_dataK[Mem_dataK["test"] == 0]
-        i = i - 2
+        i = i - 3
         sns.lineplot(
             data=K_data,
             x="K",
@@ -58,16 +58,16 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].set_xlabel("")
         axs[i // 2, i % 2].set_ylabel("")
         ax2.set_ylabel("")
-        ax2.tick_params(axis="y", labelcolor="dimgray")
+        ax2.tick_params(axis="y", labelcolor="dimgray", color="dimgray")
 
         if i % 2 == 1:
             for n, label in enumerate(ax2.get_yticklabels()):
                 if n == 0 and i // 2 == 0:
                     label.set_visible(False)
-                elif i // 2 == 1 and n > 2:
+                elif i // 2 == 1 and n > 1:
                     label.set_visible(False)
 
-        axs[i // 2, i % 2].tick_params(axis="y", labelcolor="mediumseagreen")
+        axs[i // 2, i % 2].tick_params(axis="y", labelcolor="mediumseagreen", color="mediumseagreen")
         axs[i // 2, i % 2].spines["bottom"].set_bounds(4, 16)
         axs[i // 2, i % 2].set_xticks([4, 8, 12, 16])
     sns.despine(right=False, trim=True)
@@ -95,14 +95,14 @@ if __name__ == "__main__":
     # Create a plot with ds_values subplots
     fig, axs = plt.subplots(2, 2, figsize=(5.9, 3.9), sharex=True, layout="constrained")
     for i, ds_val in enumerate(ds_values):
-        if i < 2:
+        if i < 3:
             continue
 
         # Get the data for the current value
         L_data = data[data["Dataset"] == ds_val]
         Mem_dataL = mem_data[mem_data["Dataset"] == ds_val]
         Mem_dataL = Mem_dataL[Mem_dataL["test"] == 1]
-        i = i - 2
+        i = i - 3
         sns.lineplot(
             data=L_data,
             x="L",
@@ -128,16 +128,14 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].set_xticks([10, 50, 100, 150, 200, 400])
         ax2.set_ylabel("")
         yticks = ax2.get_yticks()
-        if len(yticks) > 2:
-            ax2.set_yticks(yticks[1:-1])
-        ax2.tick_params(axis="y", labelcolor="dimgray")
         if i % 2 == 1:
             for n, label in enumerate(ax2.get_yticklabels()):
                 if n == 0 and i // 2 == 0:
                     label.set_visible(False)
-                elif i // 2 == 1 and n > 2:
+                elif i // 2 == 1 and n > 0:
                     label.set_visible(False)
-        axs[i // 2, i % 2].tick_params(axis="y", labelcolor="cornflowerblue")
+        ax2.tick_params(axis="y", labelcolor="dimgray", color="dimgray")
+        axs[i // 2, i % 2].tick_params(axis="y", labelcolor="cornflowerblue", color="cornflowerblue")
         axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}", fontsize=10)
         axs[i // 2, i % 2].set_xlabel("")
         axs[i // 2, i % 2].set_ylabel("")
@@ -162,17 +160,17 @@ if __name__ == "__main__":
     # Find the different values in the first column
     ds_values = data["Dataset"].unique()
     r = [4, 8, 16, 32]
-    r_dc = [6, 8, 15, 32, 15, 10]
-    r_dist = [16, 312, 212, 38106, 310000000, 442]
+    r_dc = [6, 8, 15, 32, 15, 10, 8]
+    r_dist = [16, 312, 212, 38106, 310000000, 442, 3186]
 
     # Create a plot with ds_values subplots
     fig, axs = plt.subplots(2, 2, figsize=(5.9, 3.9), sharex=True, layout="constrained")
     for i, ds_val in enumerate(ds_values):
-        if i < 2:
+        if i < 3:
             continue
         # Get the data for the current value
         r_data = data[data["Dataset"] == ds_val]
-        i = i - 2
+        i = i - 3
 
         sns.lineplot(
             data=r_data,
@@ -184,8 +182,8 @@ if __name__ == "__main__":
         )
 
         axs[i // 2, i % 2].scatter(
-            r_dc[i + 2],
-            r_dist[i + 2],
+            r_dc[i + 3],
+            r_dist[i + 3],
             color="crimson",
             zorder=5,
             s=40,
@@ -197,7 +195,7 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].set_ylabel("")
         axs[i // 2, i % 2].spines["bottom"].set_bounds(2, 32)
         axs[i // 2, i % 2].set_xticks([2, 4, 8, 16, 32])
-        axs[i // 2, i % 2].tick_params(axis="y", labelcolor="crimson")
+        axs[i // 2, i % 2].tick_params(axis="y", labelcolor="crimson", color="crimson")
     plt.legend()
     sns.despine(trim=True)
     sns.set_context("paper")

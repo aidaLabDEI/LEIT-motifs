@@ -16,18 +16,18 @@ if __name__ == "__main__":
             ["potentials", 0.01, 0.51],
             ["potentials", 0.1, 0.45],
             ["potentials", 0.2, 0.42],
-            ["potentials", 0.5, 0.32],
+            ["potentials", 0.5, 0.325],
             ["potentials", 0.8, 0.32],
-            ["evaporator", 0.01, 0.55],
+            ["evaporator", 0.01, 0.551],
             ["evaporator", 0.1, 0.55],
-            ["evaporator", 0.2, 0.49],
-            ["evaporator", 0.5, 0.47],
-            ["evaporator", 0.8, 0.49],
+            ["evaporator", 0.2, 0.491],
+            ["evaporator", 0.5, 0.49],
+            ["evaporator", 0.8, 0.47],
             ["RUTH", 0.01, 8.10],
             ["RUTH", 0.1, 3.27],
             ["RUTH", 0.2, 3.22],
-            ["RUTH", 0.5, 3.22],
-            ["RUTH", 0.8, 3.22],
+            ["RUTH", 0.5, 3.221],
+            ["RUTH", 0.8, 3.222],
             ["weather", 0.01, 33.37],
             ["weather", 0.1, 32.45],
             ["weather", 0.2, 30.75],
@@ -39,20 +39,20 @@ if __name__ == "__main__":
             ["whales", 0.5, 753.75],
             ["whales", 0.8, 329],
             ["el_load", 0.01, 10080],
-            ["el_load", 0.1, 10080],
-            ["el_load", 0.2, 10080],
+            ["el_load", 0.1, 10080.1],
+            ["el_load", 0.2, 10080.2],
             ["el_load", 0.5, 5401],
             ["el_load", 0.8, 3120],
             ["quake", 0.01, 12960],
             ["quake", 0.1, 12400],
             ["quake", 0.2, 11520],
-            ["quake", 0.5, 10138],
+            ["quake", 0.5, 10138.1],
             ["quake", 0.8, 10138],
             ["LTMM", 0.01, 1902],
             ["LTMM", 0.1, 1865],
-            ["LTMM", 0.2, 1850],
-            ["LTMM", 0.5, 1850],
-            ["LTMM", 0.8, 1850],
+            ["LTMM", 0.2, 696.92],
+            ["LTMM", 0.5, 696.91],
+            ["LTMM", 0.8, 696.9],
         ]
     )
     means = pd.merge(
@@ -82,6 +82,7 @@ if __name__ == "__main__":
         hue="Dataset",
         palette=colors,
         legend=False,
+        errorbar=None,
         alpha=0.8,
     )
     sns.scatterplot(
@@ -128,8 +129,8 @@ if __name__ == "__main__":
         va="center",
     )
         
-    plt.xlabel(r"Time (s)", fontsize=12)
-    plt.ylabel(r"Recall", fontsize=12)
+    plt.xlabel(r"Time (s)")
+    plt.ylabel(r"Recall")
     plt.xscale("log")
     #plt.xlim(0.7, 1.09)
     #plt.yscale("log")

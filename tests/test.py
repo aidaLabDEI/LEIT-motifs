@@ -56,15 +56,15 @@ if __name__ == "__main__":
             device = 0
 
     paths = [
-        "Datasets/FOETAL_ECG.dat",
-        "Datasets/evaporator.dat",
-        "Datasets/oikolab_weather_dataset.tsf",
-        "Datasets/RUTH.csv",
-        "Datasets/CLEAN_House1.csv",
-        "Datasets/whales.parquet",
-        "Datasets/quake.parquet",
-        "Datasets/steamgen.csv",
-        "Datasets/FL010",
+        "Datasets/FOETAL_ECG.dat",              #0
+        "Datasets/evaporator.dat",              #1
+        "Datasets/oikolab_weather_dataset.tsf", #2
+        "Datasets/RUTH.csv",                    #3
+        "Datasets/CLEAN_House1.csv",            #4
+        "Datasets/whales.parquet",              #5
+        "Datasets/quake.parquet",               #6
+        "Datasets/steamgen.csv",                #7
+        "Datasets/FL010",                       #8
     ]
     d = None
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         data = data.drop(data.columns[[0]], axis=1)
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
-    r = 8  # find_width_discr(d, window_size, K)
+    r = 4  # find_width_discr(d, window_size, K)
     # d = np.concatenate((d, np.random.normal(0,0.01, (d.shape[0], 4))), axis=1)
     print(d.shape)
     thresh = 0
