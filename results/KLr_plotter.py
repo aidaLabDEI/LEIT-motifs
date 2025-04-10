@@ -17,6 +17,7 @@ if __name__ == "__main__":
     xfmt.set_powerlimits((0, 0))
     names = ["weather", "whales", "el_load", "LTMM"]
     mem_data = pd.read_csv("results/MemLK_results.csv")
+    sns.set_context("paper")
 
     # !!!K plots
     data = pd.read_csv("results/K_results.csv")
@@ -32,16 +33,33 @@ if __name__ == "__main__":
         Mem_dataK = mem_data[mem_data["Dataset"] == ds_val]
         Mem_dataK = Mem_dataK[Mem_dataK["test"] == 0]
         i = i - 3
-        sns.lineplot(
-            data=K_data,
-            x="K",
-            y="Time elapsed",
-            color="mediumseagreen",
-            ax=axs[i // 2, i % 2],
-            legend=False,
-            errorbar=None,
-            zorder=100,
-        )
+        if i < 3:
+            sns.lineplot(
+                data=K_data,
+                x="K",
+                y="Time elapsed",
+                color="mediumseagreen",
+                ax=axs[i // 2, i % 2],
+                legend=False,
+                errorbar=None,
+                zorder=100,
+            )
+        else:
+            # Plot the first two point dashed, then solid
+            axs[i // 2, i % 2].plot(
+                K_data["K"][:2],
+                K_data["Time elapsed"][:2],
+                color="mediumseagreen",
+                linestyle="dotted",
+                linewidth=1,
+            )
+            axs[i // 2, i % 2].plot(
+                K_data["K"][1:],
+                K_data["Time elapsed"][1:],
+                color="mediumseagreen",
+                linewidth=1,
+            )
+            
         ax2 = axs[i // 2, i % 2].twinx()
         sns.lineplot(
             data=Mem_dataK,
@@ -51,7 +69,7 @@ if __name__ == "__main__":
             ax=ax2,
             legend=False,
             linewidth=1,
-            alpha=0.6,
+            linestyle="dashed",
             zorder=1,
         )
         axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}", fontsize=10)
@@ -59,21 +77,33 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].set_ylabel("")
         ax2.set_ylabel("")
         ax2.tick_params(axis="y", labelcolor="dimgray", color="dimgray")
-
+        
         if i % 2 == 1:
             for n, label in enumerate(ax2.get_yticklabels()):
                 if n == 0 and i // 2 == 0:
                     label.set_visible(False)
-                elif i // 2 == 1 and n > 1:
+                elif i // 2 == 1 and n > 3:
                     label.set_visible(False)
 
+        # Set the damn axis
         axs[i // 2, i % 2].tick_params(
             axis="y", labelcolor="mediumseagreen", color="mediumseagreen"
         )
         axs[i // 2, i % 2].spines["bottom"].set_bounds(4, 16)
         axs[i // 2, i % 2].set_xticks([4, 8, 12, 16])
-    sns.despine(right=False, trim=True)
-    sns.set_context("paper")
+        axs[i // 2, i % 2].spines["left"].set_color("mediumseagreen")
+        left_ticks = axs[i // 2, i % 2].get_yticks()
+        axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
+        axs[i // 2, i % 2].spines["top"].set_visible(False)
+        axs[i // 2, i % 2].spines["right"].set_visible(False)
+        ax2.spines["bottom"].set_visible(False)
+        ax2.spines["top"].set_visible(False)
+        ax2.spines["left"].set_visible(False)
+        ax2.spines["right"].set_color("dimgray")
+        ax2.spines["right"].set_linestyle("dashed")
+        right_ticks = ax2.get_yticks()
+        ax2.spines["right"].set_bounds(right_ticks[1], right_ticks[-2])
+    
     fig.supxlabel("Concatenations - K")
     fig.supylabel("Time (s)", color="mediumseagreen")
     fig.text(
@@ -123,18 +153,16 @@ if __name__ == "__main__":
             ax=ax2,
             legend=False,
             linewidth=1,
-            alpha=0.6,
+            linestyle="dashed",
             zorder=1,
         )
-        axs[i // 2, i % 2].spines["bottom"].set_bounds(10, 400)
-        axs[i // 2, i % 2].set_xticks([10, 50, 100, 150, 200, 400])
         ax2.set_ylabel("")
         yticks = ax2.get_yticks()
         if i % 2 == 1:
             for n, label in enumerate(ax2.get_yticklabels()):
                 if n == 0 and i // 2 == 0:
                     label.set_visible(False)
-                elif i // 2 == 1 and n > 0:
+                elif i // 2 == 1 and n > 1:
                     label.set_visible(False)
         ax2.tick_params(axis="y", labelcolor="dimgray", color="dimgray")
         axs[i // 2, i % 2].tick_params(
@@ -143,8 +171,26 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}", fontsize=10)
         axs[i // 2, i % 2].set_xlabel("")
         axs[i // 2, i % 2].set_ylabel("")
-    sns.despine(right=False, trim=True)
-    sns.set_context("paper")
+        
+        # Set the damn axis
+        axs[i // 2, i % 2].tick_params(
+            axis="y", labelcolor="cornflowerblue", color="cornflowerblue"
+        )
+        axs[i // 2, i % 2].spines["bottom"].set_bounds(10, 400)
+        axs[i // 2, i % 2].set_xticks([10, 50, 100, 150, 200, 400])
+        axs[i // 2, i % 2].spines["left"].set_color("cornflowerblue")
+        left_ticks = axs[i // 2, i % 2].get_yticks()
+        axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
+        axs[i // 2, i % 2].spines["top"].set_visible(False)
+        axs[i // 2, i % 2].spines["right"].set_visible(False)
+        ax2.spines["bottom"].set_visible(False)
+        ax2.spines["top"].set_visible(False)
+        ax2.spines["left"].set_visible(False)
+        ax2.spines["right"].set_color("dimgray")
+        ax2.spines["right"].set_linestyle("dashed")
+        right_ticks = ax2.get_yticks()
+        ax2.spines["right"].set_bounds(right_ticks[1], right_ticks[-2])
+
     fig.supxlabel("Repetitions - L")
     fig.supylabel("Time (s)", color="cornflowerblue")
     fig.text(
@@ -200,8 +246,12 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].spines["bottom"].set_bounds(2, 32)
         axs[i // 2, i % 2].set_xticks([2, 4, 8, 16, 32])
         axs[i // 2, i % 2].tick_params(axis="y", labelcolor="crimson", color="crimson")
+        axs[i // 2, i % 2].spines["left"].set_color("crimson")
+        left_ticks = axs[i // 2, i % 2].get_yticks()
+        axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
+        axs[i // 2, i % 2].spines["top"].set_visible(False)
+        axs[i // 2, i % 2].spines["right"].set_visible(False)
     plt.legend()
-    sns.despine(trim=True)
     sns.set_context("paper")
     fig.supxlabel("Discretization parameter - r")
     fig.supylabel("Compared couples", color="crimson")

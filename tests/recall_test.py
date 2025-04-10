@@ -36,7 +36,7 @@ if __name__ == "__main__":
     windows = [50, 75, 500, 5000, 1000, 200, 100]
     dimensionality = [8, 2, 4, 2, 6, 4, 2]
     deltas = [0.5, 0.8]  # [0.01, 0.1, 0.2]
-    recall_results = pd.DataFrame(columns=["Dataset", "delta", "recall"])
+    recall_results = pd.DataFrame(columns=["Dataset", "delta", "recall", "mare"])
 
     for number, path in enumerate(paths):
         number_r = number
@@ -97,12 +97,14 @@ if __name__ == "__main__":
             # print(results)
             min_true = np.min(results)
             # Count the recall
+            mare = np.mean((results-min_true)/min_true)
             recall_val = np.sum((np.array(results) - min_true) < 0.1) / len(results)
             recall_results = recall_results._append(
                 {
                     "Dataset": dataset_names[number_r],
                     "delta": delta,
                     "recall": recall_val,
+                    "mare": mare,  
                 },
                 ignore_index=True,
             )

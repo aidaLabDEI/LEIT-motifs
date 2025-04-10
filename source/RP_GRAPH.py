@@ -174,7 +174,6 @@ def pmotif_findg(
 
         chunk_sz = n // (cpu_count() * 2) if n <= 1000000 else np.sqrt(n)
         num_chunks = max(1, n // chunk_sz)
-        print("Num chunks: ", num_chunks, "Chunk size: ", chunk_sz)
         chunks = [
             (
                 time_series_name,
@@ -302,7 +301,7 @@ def pmotif_findg(
                         motif_dimensionality,
                     )
                     if (
-                        stop_val  # and (j+1 == L or j+1 == (L//2))
+                        stop_val  and (j+1 == L or j+1 == (L//2))
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
                         print("i,j: ", i, j)
                         executor.shutdown(wait=False, cancel_futures=True)
