@@ -16,11 +16,11 @@ if __name__ == "__main__":
     xfmt.set_scientific(True)
     xfmt.set_powerlimits((0, 0))
     names = ["weather", "whales", "el_load", "LTMM"]
-    mem_data = pd.read_csv("results/MemLK_results.csv")
+    mem_data = pd.read_csv("results/csv/MemLK_results.csv")
     sns.set_context("paper")
 
     # !!!K plots
-    data = pd.read_csv("results/K_results.csv")
+    data = pd.read_csv("results/csv/K_results.csv")
     # FInd the different values in the first column
     ds_values = data["Dataset"].unique()
     # Create a plot with ds_values subplots
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     plt.show()
 
     # !!!L plots
-    data = pd.read_csv("results/L_results.csv")
+    data = pd.read_csv("results/csv/L_results.csv")
     # FInd the different values in the first column
     ds_values = data["Dataset"].unique()
     data = data.groupby(["Dataset", "L"]).mean().reset_index()
@@ -206,7 +206,7 @@ if __name__ == "__main__":
     plt.show()
 
     ### !!!r plots
-    data = pd.read_csv("results/R_results.csv")
+    data = pd.read_csv("results/csv/R_results.csv")
     # Find the different values in the first column
     ds_values = data["Dataset"].unique()
     r = [4, 8, 16, 32]
@@ -258,8 +258,8 @@ if __name__ == "__main__":
     plt.show()
 
     # Fusion LK plot - Removed because you should never use a double x axis
-    # K_data = pd.read_csv("results/K_results.csv")
-    # L_data = pd.read_csv("results/L_results.csv")
+    # K_data = pd.read_csv("results/csv/K_results.csv")
+    # L_data = pd.read_csv("results/csv/L_results.csv")
     # ds_values = K_data["Dataset"].unique()
     # fig, axs = plt.subplots(2, 2, figsize=(6.5, 5), sharex=True, layout="constrained")
 

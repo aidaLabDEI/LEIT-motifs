@@ -52,9 +52,9 @@ if __name__ == "__main__":
         8.4 * 24 * 60 * 60,
         11.8 * 24 * 60 * 60,
     ]
-    data = pd.read_csv("results/dist_time.csv")
+    data = pd.read_csv("results/csv/dist_time.csv")
     ds_values = data["dataset"].unique()
-    fig, axs = plt.subplots(1, 1, figsize=(5, 6), layout="constrained")
+    fig, axs = plt.subplots(1, 1, figsize=(5, 5), layout="constrained")
     colors = [
         "crimson",
         "cornflowerblue",
@@ -75,6 +75,7 @@ if __name__ == "__main__":
         "el_load",
         "LTMM",
     ]
+
     for val in ds_values:
         n_data = data[data["dataset"] == val]
         sns.lineplot(
@@ -99,7 +100,7 @@ if __name__ == "__main__":
         axs.axhline(
             mtimeread[val], color=colors[val], linestyle=(0, (1, 10)), linewidth=1.7
         )
-    legend = axs.legend()
+    legend = axs.legend(loc= (0.01, 0.2))
     for text in legend.get_texts():
         text.set_text(r"\textsc{" + text.get_text() + "}")
     plt.xscale("log")

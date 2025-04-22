@@ -13,7 +13,7 @@ if __name__ == "__main__":
     )
     sns.set_theme(style="ticks", palette="muted")
     fig, axs = plt.subplots(1, 1, figsize=(5, 3), layout="constrained")
-    recall_data = pd.read_csv("results/recall_results.csv")
+    recall_data = pd.read_csv("results/csv/recall_results.csv")
 
     means = pd.DataFrame(
         columns=["Dataset", "delta", "time"],
@@ -85,6 +85,9 @@ if __name__ == "__main__":
         "xkcd:pale purple",
     ]
 
+    # Drop the lines with delta 0.8
+    means = means[means["delta"] != 0.8]
+    
     sns.lineplot(
         data=means,
         x="Recall",
@@ -110,37 +113,55 @@ if __name__ == "__main__":
         "$0.1$",
         "$0.2$",
         "$0.4$",
-        "$0.8$",
     ]
-    mark = ["o", "X", "s", "P", "D"]
+    mark = ["o", "X", "s", "P"]
+    
 
     for index, delta in enumerate(means["delta"].unique()):
         plt.text(
-            0.23,
+            0.33,
             index * 0.05 + 0.3,
-            markers[4 - index],
+            markers[3- index],
             color="slategray",
             ha="left",
             va="center",
         )
         plt.scatter(
-            0.2,
+            0.3,
             index * 0.05 + 0.301,
-            marker=mark[4 - index],
+            marker=mark[3- index],
             color="slategray",
             alpha=0.9,
             s=20,
         )
     plt.text(
-        0.25,
-        0.05 * 5 + 0.3,
+        0.35,
+        0.05 * 4 + 0.3,
         "$\\delta$",
         color="slategray",
         ha="left",
         va="center",
     )
+    # Plot the legend for the datasets
+    for index, dataset in enumerate(reversed(means["Dataset"].unique())):
+        plt.text(
+            0.35,
+            index * 0.06 + 0.56,
+            r"\textsc{" + dataset + "}",
+            #color=colors[index],
+            ha="left",
+            va="center",
+            fontsize=11,
+        )
+        # A small line
+        plt.plot(
+            [0.3, 0.34],
+            [index * 0.06 + 0.56, index * 0.06 + 0.56],
+            color=colors[7-index],
+            linewidth=1,
+        )
 
-    plt.xlabel(r"Recall")
+    plt.xlabel(r"Recall ($\geq 1 ‑\delta$)")
     plt.ylabel(r"Fraction of Time")
     #plt.xscale("log")
     # plt.xlim(0.7, 1.09)

@@ -18,7 +18,7 @@ if __name__ == "__main__":
     sns.set_theme(style="ticks", palette="muted")
 
     # !!! Delta plots
-    data = pd.read_csv("results/delta_results.csv")
+    data = pd.read_csv("results/csv/delta_results.csv")
     # Find the different values in the first column
     data["relative error"] = data.groupby(["Dataset", "delta"])["distance"].transform(
         lambda x: (x - x.min()) / x.min()

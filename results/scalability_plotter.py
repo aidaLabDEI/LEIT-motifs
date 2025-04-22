@@ -13,7 +13,7 @@ if __name__ == "__main__":
         }
     )
     # Scalability plot
-    data = pd.read_csv("results/scalability.csv")
+    data = pd.read_csv("results/csv/scalability.csv")
     fig, axs = plt.subplots(1, 1, figsize=(5, 3), layout="constrained")
     colors = ["dimgray", "crimson", "mediumseagreen", "cornflowerblue", "dimgray"]
     names = [

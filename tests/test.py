@@ -108,7 +108,12 @@ if __name__ == "__main__":
         d = np.ascontiguousarray(data.to_numpy(), dtype=np.float32)
     del data
     r = 8  # find_width_discr(d, window_size, K)
-    # d = np.concatenate((d, np.random.normal(0,0.01, (d.shape[0], 4))), axis=1)
+    
+    # Concatenate noise dimensions
+    #d = np.concatenate((d, np.random.normal(0,0.01, (d.shape[0], 1400))), axis=1)
+    # Add noise to time series
+    #d += np.random.normal(0, 7.01, d.shape)
+    
     print(d.shape)
     thresh = 0
     dimensions = d.shape[1]
