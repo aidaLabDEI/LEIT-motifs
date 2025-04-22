@@ -31,11 +31,14 @@ pip install git+https://github.com/aidaLabDEI/LEIT-motifs
 ```
 ```python
 from LEITmotifs import LEITmotifs
-# Example usage:
+# Example usage
+# Find k multidimensional motifs for each dimensionality from 2 to D:
 # let Ts be a D-dimensional time series as a numpy array,
 # window the length of the motifs to discover,
 # and k the number of motifs to discover
 motifs, _ = LEITmotifs(Ts, window, k, (2,D))
+# Find k multidimensional motifs that span d dimensions, d∈[2,D]:
+motifs, _ = LEITmotifs(Ts, window, k, (d,d))
 ```
 
 ## Citing
