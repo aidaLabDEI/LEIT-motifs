@@ -18,3 +18,4 @@ tests/data_loader.py
 pyproject.toml.*
 arc/
 uv.lock
+LEITmotifs.egg-info/PKG-INFO

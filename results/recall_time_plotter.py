@@ -1,10 +1,11 @@
+from icecream import ic
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import matplotlib
 
 if __name__ == "__main__":
-    matplotlib.use("WebAgg")
+    # matplotlib.use("WebAgg")
     matplotlib.rcParams.update(
         {
             "text.usetex": True,
@@ -74,20 +75,38 @@ if __name__ == "__main__":
         lambda x: x / x.max()
     )
 
-    colors = [
-        "crimson",
-        "cornflowerblue",
-        "mediumseagreen",
-        "darkorange",
-        "darkcyan",
-        "xkcd:dull green",
-        "firebrick",
-        "xkcd:pale purple",
-    ]
+    # colors = [
+    #     "crimson",
+    #     "cornflowerblue",
+    #     "mediumseagreen",
+    #     "darkorange",
+    #     "darkcyan",
+    #     "xkcd:dull green",
+    #     "firebrick",
+    #     "xkcd:pale purple",
+    # ]
+    colors = list(matplotlib.colors.TABLEAU_COLORS.keys())
 
     # Drop the lines with delta 0.8
     means = means[means["delta"] != 0.8]
     
+    label_data = means[means["delta"] == 0.4]
+    for i, (_, row) in enumerate(label_data.iterrows()):
+        dataset = row["Dataset"]
+        vertical_alignment = "center"
+        if dataset in ["el_load"]:
+            vertical_alignment = "bottom"
+        elif dataset in ["weather", "LTMM"]:
+            vertical_alignment = "top"
+        plt.text(
+            x=row["Recall"] - 0.02,
+            y=row["Time (s)"],
+            s= r"\textsc{" + dataset + "}",
+            color=colors[i],
+            ha="right",
+            va=vertical_alignment,
+        )
+
     sns.lineplot(
         data=means,
         x="Recall",
@@ -117,9 +136,10 @@ if __name__ == "__main__":
     mark = ["o", "X", "s", "P"]
     
 
+    base_x = 0.45
     for index, delta in enumerate(means["delta"].unique()):
         plt.text(
-            0.33,
+            base_x + 0.03,
             index * 0.05 + 0.3,
             markers[3- index],
             color="slategray",
@@ -127,7 +147,7 @@ if __name__ == "__main__":
             va="center",
         )
         plt.scatter(
-            0.3,
+            base_x,
             index * 0.05 + 0.301,
             marker=mark[3- index],
             color="slategray",
@@ -135,31 +155,31 @@ if __name__ == "__main__":
             s=20,
         )
     plt.text(
-        0.35,
+        base_x + 0.05,
         0.05 * 4 + 0.3,
         "$\\delta$",
         color="slategray",
         ha="left",
         va="center",
     )
-    # Plot the legend for the datasets
-    for index, dataset in enumerate(reversed(means["Dataset"].unique())):
-        plt.text(
-            0.35,
-            index * 0.06 + 0.56,
-            r"\textsc{" + dataset + "}",
-            #color=colors[index],
-            ha="left",
-            va="center",
-            fontsize=11,
-        )
-        # A small line
-        plt.plot(
-            [0.3, 0.34],
-            [index * 0.06 + 0.56, index * 0.06 + 0.56],
-            color=colors[7-index],
-            linewidth=1,
-        )
+    # # Plot the legend for the datasets
+    # for index, dataset in enumerate(reversed(means["Dataset"].unique())):
+    #     plt.text(
+    #         0.35,
+    #         index * 0.06 + 0.56,
+    #         r"\textsc{" + dataset + "}",
+    #         #color=colors[index],
+    #         ha="left",
+    #         va="center",
+    #         fontsize=11,
+    #     )
+    #     # A small line
+    #     plt.plot(
+    #         [0.3, 0.34],
+    #         [index * 0.06 + 0.56, index * 0.06 + 0.56],
+    #         color=colors[7-index],
+    #         linewidth=1,
+    #     )
 
     plt.xlabel(r"Recall ($\geq 1 ‑\delta$)")
     plt.ylabel(r"Fraction of Time")
@@ -170,5 +190,9 @@ if __name__ == "__main__":
     # for text in legend.get_texts():
     #     text.set_text(r"\textsc{" + text.get_text() + "}")
     plt.minorticks_off()
-    sns.despine(trim=True)
-    plt.show()
+    # sns.despine(trim=True)
+    sns.despine(top=True, right=True)
+    if plt.isinteractive():
+        plt.show()
+    else:
+        plt.savefig("figures/time_recall_r.pdf")
