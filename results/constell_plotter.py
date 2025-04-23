@@ -5,7 +5,7 @@ import matplotlib
 from matplotlib.ticker import ScalarFormatter
 
 if __name__ == "__main__":
-    matplotlib.use("WebAgg")
+    # matplotlib.use("WebAgg")
     matplotlib.rcParams.update(
         {
             "text.usetex": True,
@@ -65,6 +65,7 @@ if __name__ == "__main__":
         "firebrick",
         "xkcd:pale purple",
     ]
+    colors = list(matplotlib.colors.TABLEAU_COLORS.keys())
     names = [
         "potentials",
         "evaporator",
@@ -75,9 +76,38 @@ if __name__ == "__main__":
         "el_load",
         "LTMM",
     ]
+    baseline_label_x = [
+        0.3,
+        100,
+        0.3,
+        0.3,
+        0.3,
+        30,
+        3,
+        0.3,
+    ]
 
     for val in ds_values:
         n_data = data[data["dataset"] == val]
+        minx = n_data["Distance"].min()
+        miny = n_data["Time (s)"].min()
+        label_x = minx - 0.2*minx
+        label_y = miny
+        horizontal_alignment = "right"
+        vertical_alignment = "center"
+        if names[val] in ["LTMM", "potentials"]:
+            label_x = minx
+            label_y = miny + 0.2*miny
+            horizontal_alignment = "left"
+            vertical_alignment = "bottom"
+        plt.text(
+            x=label_x,
+            y=label_y,
+            s=r"\textsc{" + names[val] + "}",
+            color=colors[val],
+            ha=horizontal_alignment,
+            va=vertical_alignment
+        )
         sns.lineplot(
             data=n_data,
             x="Distance",
@@ -98,16 +128,46 @@ if __name__ == "__main__":
         )
 
         axs.axhline(
-            mtimeread[val], color=colors[val], linestyle=(0, (1, 10)), linewidth=1.7
+            mtimeread[val],
+            color=colors[val],
+            # linestyle=(0, (1, 10)),
+            linestyle=(0, (3, 1)),
+            linewidth=.7
         )
-    legend = axs.legend(loc= (0.01, 0.2))
-    for text in legend.get_texts():
-        text.set_text(r"\textsc{" + text.get_text() + "}")
+        y_adj = dict(
+            evaporator = 0.3,
+            potentials = -0.3,
+            el_load = +50000,
+            quake = -50000
+        )
+        plt.text(
+            x=baseline_label_x[val],
+            y=mtimeread[val] + y_adj.get(names[val], 0),
+            s=r"\textsc{" + names[val] + "} (Mstump)",
+            color=colors[val],
+            ha="left",
+            va="center",
+            fontsize=7,
+            bbox=dict(
+                facecolor="white",
+                linewidth=0,
+                pad=0
+            )
+        )
+    # legend = axs.legend(loc= (0.01, 0.2))
+    # for text in legend.get_texts():
+    #     text.set_text(r"\textsc{" + text.get_text() + "}")
+    axs.get_legend().remove()
     plt.xscale("log")
     plt.yscale("log")
-    sns.despine(trim=True)
+    # sns.despine(trim=True)
+    sns.despine(top=True, right=True)
     plt.minorticks_off()
-    plt.show()
+    if plt.isinteractive():
+        plt.show()
+    else:
+        plt.savefig("figures/multisub_small.pdf")
+
     #     if val == 0:
     #         axs.axhline(mstumptime[val], color=colors[val], linestyle='dotted')
     #         axs.text(300, mstumptime[val]-2, f"MSTUMP: {mtimeread[val]} s", color=colors[val])
