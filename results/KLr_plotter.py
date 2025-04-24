@@ -1,3 +1,4 @@
+import sys
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -5,7 +6,7 @@ import matplotlib
 from matplotlib.ticker import ScalarFormatter
 
 if __name__ == "__main__":
-    matplotlib.use("WebAgg")
+    # matplotlib.use("WebAgg")
     matplotlib.rcParams.update(
         {
             "text.usetex": True,
@@ -93,7 +94,7 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].set_xticks([4, 8, 12, 16])
         axs[i // 2, i % 2].spines["left"].set_color("mediumseagreen")
         left_ticks = axs[i // 2, i % 2].get_yticks()
-        axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
+        # axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
         axs[i // 2, i % 2].spines["top"].set_visible(False)
         axs[i // 2, i % 2].spines["right"].set_visible(False)
         ax2.spines["bottom"].set_visible(False)
@@ -102,7 +103,7 @@ if __name__ == "__main__":
         ax2.spines["right"].set_color("dimgray")
         ax2.spines["right"].set_linestyle("dashed")
         right_ticks = ax2.get_yticks()
-        ax2.spines["right"].set_bounds(right_ticks[1], right_ticks[-2])
+        # ax2.spines["right"].set_bounds(right_ticks[1], right_ticks[-2])
     
     fig.supxlabel("Concatenations - K")
     fig.supylabel("Time (s)", color="mediumseagreen")
@@ -117,7 +118,9 @@ if __name__ == "__main__":
         color="dimgray",
     )
 
-    plt.show()
+    plt.savefig("results/K_plot.pdf")
+    # sys.exit()
+    # plt.show()
 
     # !!!L plots
     data = pd.read_csv("results/csv/L_results.csv")
@@ -180,7 +183,7 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].set_xticks([10, 50, 100, 150, 200, 400])
         axs[i // 2, i % 2].spines["left"].set_color("cornflowerblue")
         left_ticks = axs[i // 2, i % 2].get_yticks()
-        axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
+        # axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
         axs[i // 2, i % 2].spines["top"].set_visible(False)
         axs[i // 2, i % 2].spines["right"].set_visible(False)
         ax2.spines["bottom"].set_visible(False)
@@ -189,7 +192,7 @@ if __name__ == "__main__":
         ax2.spines["right"].set_color("dimgray")
         ax2.spines["right"].set_linestyle("dashed")
         right_ticks = ax2.get_yticks()
-        ax2.spines["right"].set_bounds(right_ticks[1], right_ticks[-2])
+        # ax2.spines["right"].set_bounds(right_ticks[1], right_ticks[-2])
 
     fig.supxlabel("Repetitions - L")
     fig.supylabel("Time (s)", color="cornflowerblue")
@@ -203,7 +206,8 @@ if __name__ == "__main__":
         rotation=270,
         color="dimgray",
     )
-    plt.show()
+    # plt.show()
+    plt.savefig("results/L_plot.pdf")
 
     ### !!!r plots
     data = pd.read_csv("results/csv/R_results.csv")
@@ -237,25 +241,26 @@ if __name__ == "__main__":
             color="crimson",
             zorder=5,
             s=40,
-            label="Self-tuned r",
+            label="auto-tuned r",
         )
         axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}")
         axs[i // 2, i % 2].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
         axs[i // 2, i % 2].set_xlabel("")
         axs[i // 2, i % 2].set_ylabel("")
-        axs[i // 2, i % 2].spines["bottom"].set_bounds(2, 32)
+        # axs[i // 2, i % 2].spines["bottom"].set_bounds(2, 32)
         axs[i // 2, i % 2].set_xticks([2, 4, 8, 16, 32])
         axs[i // 2, i % 2].tick_params(axis="y", labelcolor="crimson", color="crimson")
         axs[i // 2, i % 2].spines["left"].set_color("crimson")
         left_ticks = axs[i // 2, i % 2].get_yticks()
-        axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
+        # axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
         axs[i // 2, i % 2].spines["top"].set_visible(False)
         axs[i // 2, i % 2].spines["right"].set_visible(False)
     plt.legend()
     sns.set_context("paper")
     fig.supxlabel("Discretization parameter - r")
     fig.supylabel("Compared couples", color="crimson")
-    plt.show()
+    # plt.show()
+    plt.savefig("results/r_plot.pdf")
 
     # Fusion LK plot - Removed because you should never use a double x axis
     # K_data = pd.read_csv("results/csv/K_results.csv")
