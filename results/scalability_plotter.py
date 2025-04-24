@@ -5,7 +5,7 @@ import matplotlib
 import numpy as np
 
 if __name__ == "__main__":
-    matplotlib.use("WebAgg")
+    # matplotlib.use("WebAgg")
     matplotlib.rcParams.update(
         {
             "text.usetex": True,
@@ -77,9 +77,11 @@ if __name__ == "__main__":
 
     plt.yscale("log")
     plt.xscale("log")
-    sns.despine(trim=True)
+    # sns.despine(trim=True)
+    sns.despine(top=True, right=True)
     legend = axs.legend()
     for text in legend.get_texts():
         text.set_text(r"\textsc{" + text.get_text() + "}")
     plt.minorticks_off()
-    plt.show()
+    # plt.show()
+    plt.savefig("figures/scalability.pdf")
