@@ -118,7 +118,7 @@ if __name__ == "__main__":
         color="dimgray",
     )
 
-    plt.savefig("results/K_plot.pdf")
+    plt.savefig("figures/K_plot.pdf")
     # sys.exit()
     # plt.show()
 
@@ -207,7 +207,7 @@ if __name__ == "__main__":
         color="dimgray",
     )
     # plt.show()
-    plt.savefig("results/L_plot.pdf")
+    plt.savefig("figures/L_plot.pdf")
 
     ### !!!r plots
     data = pd.read_csv("results/csv/R_results.csv")
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     fig.supxlabel("Discretization parameter - r")
     fig.supylabel("Compared couples", color="crimson")
     # plt.show()
-    plt.savefig("results/r_plot.pdf")
+    plt.savefig("figures/r_plot.pdf")
 
     # Fusion LK plot - Removed because you should never use a double x axis
     # K_data = pd.read_csv("results/csv/K_results.csv")
