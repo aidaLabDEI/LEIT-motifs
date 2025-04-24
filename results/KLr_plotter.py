@@ -241,7 +241,7 @@ if __name__ == "__main__":
             color="crimson",
             zorder=5,
             s=40,
-            label="auto-tuned r",
+            label="Auto-tuned r",
         )
         axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}")
         axs[i // 2, i % 2].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
