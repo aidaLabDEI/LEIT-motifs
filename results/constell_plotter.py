@@ -91,13 +91,13 @@ if __name__ == "__main__":
         n_data = data[data["dataset"] == val]
         minx = n_data["Distance"].min()
         miny = n_data["Time (s)"].min()
-        label_x = minx - 0.2*minx
+        label_x = minx - 0.2 * minx
         label_y = miny
         horizontal_alignment = "right"
         vertical_alignment = "center"
         if names[val] in ["LTMM", "potentials"]:
             label_x = minx
-            label_y = miny + 0.2*miny
+            label_y = miny + 0.2 * miny
             horizontal_alignment = "left"
             vertical_alignment = "bottom"
         plt.text(
@@ -106,7 +106,7 @@ if __name__ == "__main__":
             s=r"\textsc{" + names[val] + "}",
             color=colors[val],
             ha=horizontal_alignment,
-            va=vertical_alignment
+            va=vertical_alignment,
         )
         sns.lineplot(
             data=n_data,
@@ -132,14 +132,9 @@ if __name__ == "__main__":
             color=colors[val],
             # linestyle=(0, (1, 10)),
             linestyle=(0, (3, 1)),
-            linewidth=.7
+            linewidth=0.7,
         )
-        y_adj = dict(
-            evaporator = 0.3,
-            potentials = -0.3,
-            el_load = +50000,
-            quake = -50000
-        )
+        y_adj = dict(evaporator=0.3, potentials=-0.3, el_load=+50000, quake=-50000)
         plt.text(
             x=baseline_label_x[val],
             y=mtimeread[val] + y_adj.get(names[val], 0),
@@ -148,16 +143,14 @@ if __name__ == "__main__":
             ha="left",
             va="center",
             fontsize=7,
-            bbox=dict(
-                facecolor="white",
-                linewidth=0,
-                pad=0
-            )
+            bbox=dict(facecolor="white", linewidth=0, pad=0),
         )
     # legend = axs.legend(loc= (0.01, 0.2))
     # for text in legend.get_texts():
     #     text.set_text(r"\textsc{" + text.get_text() + "}")
     axs.get_legend().remove()
+    axs.spines["left"].set_bounds(min(data["Time (s)"]), max(data["Time (s)"]))
+    axs.spines["bottom"].set_bounds(min(data["Distance"]), max(data["Distance"]))
     plt.xscale("log")
     plt.yscale("log")
     # sns.despine(trim=True)

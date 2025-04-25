@@ -1,4 +1,3 @@
-import sys
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -60,7 +59,7 @@ if __name__ == "__main__":
                 color="mediumseagreen",
                 linewidth=1,
             )
-            
+
         ax2 = axs[i // 2, i % 2].twinx()
         sns.lineplot(
             data=Mem_dataK,
@@ -78,7 +77,7 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].set_ylabel("")
         ax2.set_ylabel("")
         ax2.tick_params(axis="y", labelcolor="dimgray", color="dimgray")
-        
+
         if i % 2 == 1:
             for n, label in enumerate(ax2.get_yticklabels()):
                 if n == 0 and i // 2 == 0:
@@ -97,14 +96,23 @@ if __name__ == "__main__":
         # axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
         axs[i // 2, i % 2].spines["top"].set_visible(False)
         axs[i // 2, i % 2].spines["right"].set_visible(False)
+        # Tufte styling original axis
+        axs[i // 2, i % 2].spines["left"].set_bounds(
+            min(K_data["Time elapsed"]), max(K_data["Time elapsed"])
+        )
+        axs[i // 2, i % 2].spines["bottom"].set_bounds(4, 16)
         ax2.spines["bottom"].set_visible(False)
         ax2.spines["top"].set_visible(False)
         ax2.spines["left"].set_visible(False)
         ax2.spines["right"].set_color("dimgray")
         ax2.spines["right"].set_linestyle("dashed")
+        # Tufte twin axis
+        ax2.spines["right"].set_bounds(
+            min(Mem_dataK["Memory (GB)"]), max(Mem_dataK["Memory (GB)"])
+        )
         right_ticks = ax2.get_yticks()
         # ax2.spines["right"].set_bounds(right_ticks[1], right_ticks[-2])
-    
+
     fig.supxlabel("Concatenations - K")
     fig.supylabel("Time (s)", color="mediumseagreen")
     fig.text(
@@ -174,7 +182,7 @@ if __name__ == "__main__":
         axs[i // 2, i % 2].set_title(r"\textsc{" + names[i] + "}", fontsize=10)
         axs[i // 2, i % 2].set_xlabel("")
         axs[i // 2, i % 2].set_ylabel("")
-        
+
         # Set the damn axis
         axs[i // 2, i % 2].tick_params(
             axis="y", labelcolor="cornflowerblue", color="cornflowerblue"
@@ -186,11 +194,20 @@ if __name__ == "__main__":
         # axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
         axs[i // 2, i % 2].spines["top"].set_visible(False)
         axs[i // 2, i % 2].spines["right"].set_visible(False)
+        # Tufte styling original axis
+        axs[i // 2, i % 2].spines["left"].set_bounds(
+            min(L_data["Time elapsed"]), max(L_data["Time elapsed"])
+        )
+        axs[i // 2, i % 2].spines["bottom"].set_bounds(10, 400)
         ax2.spines["bottom"].set_visible(False)
         ax2.spines["top"].set_visible(False)
         ax2.spines["left"].set_visible(False)
         ax2.spines["right"].set_color("dimgray")
         ax2.spines["right"].set_linestyle("dashed")
+        # Tufte twin axis
+        ax2.spines["right"].set_bounds(
+            min(Mem_dataL["Memory (GB)"]), max(Mem_dataL["Memory (GB)"])
+        )
         right_ticks = ax2.get_yticks()
         # ax2.spines["right"].set_bounds(right_ticks[1], right_ticks[-2])
 
@@ -255,6 +272,10 @@ if __name__ == "__main__":
         # axs[i // 2, i % 2].spines["left"].set_bounds(left_ticks[1], left_ticks[-2])
         axs[i // 2, i % 2].spines["top"].set_visible(False)
         axs[i // 2, i % 2].spines["right"].set_visible(False)
+        axs[i // 2, i % 2].spines["left"].set_bounds(
+            min(r_data["dist_computed"]), max(r_data["dist_computed"])
+        )
+        axs[i // 2, i % 2].spines["bottom"].set_bounds(2, 32)
     plt.legend()
     sns.set_context("paper")
     fig.supxlabel("Discretization parameter - r")

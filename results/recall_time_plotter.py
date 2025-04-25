@@ -68,8 +68,8 @@ if __name__ == "__main__":
         right_on=["Dataset", "delta"],
     )
     means = means.rename(columns={"recall": "Recall", "time": "Time (s)"})
-    
-    #Min Max Sca
+
+    # Min Max Sca
     means["Time (s)"] = means.groupby("Dataset")["Time (s)"].transform(
         lambda x: x / x.max()
     )
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     # Drop the lines with delta 0.8
     means = means[means["delta"] != 0.8]
-    
+
     label_data = means[means["delta"] == 0.4]
     for i, (_, row) in enumerate(label_data.iterrows()):
         dataset = row["Dataset"]
@@ -100,7 +100,7 @@ if __name__ == "__main__":
         plt.text(
             x=row["Recall"] - 0.02,
             y=row["Time (s)"],
-            s= r"\textsc{" + dataset + "}",
+            s=r"\textsc{" + dataset + "}",
             color=colors[i],
             ha="right",
             va=vertical_alignment,
@@ -133,14 +133,13 @@ if __name__ == "__main__":
         "$0.4$",
     ]
     mark = ["o", "X", "s", "P"]
-    
 
     base_x = 0.45
     for index, delta in enumerate(means["delta"].unique()):
         plt.text(
             base_x + 0.03,
             index * 0.05 + 0.3,
-            markers[3- index],
+            markers[3 - index],
             color="slategray",
             ha="left",
             va="center",
@@ -148,7 +147,7 @@ if __name__ == "__main__":
         plt.scatter(
             base_x,
             index * 0.05 + 0.301,
-            marker=mark[3- index],
+            marker=mark[3 - index],
             color="slategray",
             alpha=0.9,
             s=20,
@@ -182,7 +181,7 @@ if __name__ == "__main__":
 
     plt.xlabel(r"Recall ($\geq 1 ‑\delta$)")
     plt.ylabel(r"Fraction of Time")
-    #plt.xscale("log")
+    # plt.xscale("log")
     # plt.xlim(0.7, 1.09)
     # plt.yscale("log")
     # legend = axs.legend()
@@ -191,6 +190,8 @@ if __name__ == "__main__":
     plt.minorticks_off()
     # sns.despine(trim=True)
     sns.despine(top=True, right=True)
+    axs.spines["left"].set_bounds(min(means["Time (s)"]), max(means["Time (s)"]))
+    axs.spines["bottom"].set_bounds(min(means["Recall"]), max(means["Recall"]))
     if plt.isinteractive():
         plt.show()
     else:

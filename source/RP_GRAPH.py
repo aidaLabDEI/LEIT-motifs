@@ -300,8 +300,8 @@ def pmotif_findg(
                         bin_width,
                         motif_dimensionality,
                     )
-                    if (
-                        stop_val  and (j+1 == L or j+1 == (L//2))
+                    if stop_val and (
+                        j + 1 == L or j + 1 == (L // 2)
                     ):  # (stop_val or confirmations >= 4) and len(top) >= k:
                         print("i,j: ", i, j)
                         executor.shutdown(wait=False, cancel_futures=True)

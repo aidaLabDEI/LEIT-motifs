@@ -97,14 +97,14 @@ if __name__ == "__main__":
             # print(results)
             min_true = np.min(results)
             # Count the recall
-            mare = np.mean((results-min_true)/min_true)
+            mare = np.mean((results - min_true) / min_true)
             recall_val = np.sum((np.array(results) - min_true) < 0.1) / len(results)
             recall_results = recall_results._append(
                 {
                     "Dataset": dataset_names[number_r],
                     "delta": delta,
                     "recall": recall_val,
-                    "mare": mare,  
+                    "mare": mare,
                 },
                 ignore_index=True,
             )
