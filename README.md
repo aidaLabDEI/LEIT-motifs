@@ -27,7 +27,7 @@ The `*_plotter.py` scripts in the folder `results` collect the raw results and p
 ## Installation as a Python package
 
 ```bash
-pip install git+https://github.com/aidaLabDEI/LEIT-motifs
+pip install git+https://github.com/aidaLabDEI/MOMENTI-motifs
 ```
 ```python
 from MOMENTI import MOMENTI

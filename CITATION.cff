@@ -27,5 +27,5 @@ identifiers:
   - type: doi
     value: 10.48550/arXiv.2502.14446
     description: arXiv
-repository-code: 'https://github.com/aidaLabDEI/LEIT-motifs'
+repository-code: 'https://github.com/aidaLabDEI/MOMENTI-motifs'
 license: AGPL-3.0

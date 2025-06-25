@@ -156,9 +156,9 @@ if __name__ == "__main__":
     data = data.drop(data.columns[[0]], axis=1)
     data = np.ascontiguousarray(data.to_numpy())
     try:
-        motifs, num_dist = MOMENTI(data, 50, 1, (8, 8))
+        motifs, num_dist, ht = MOMENTI(data, 50, 1, (8, 8))
         print(motifs)
-        motifs, num_dist = MOMENTI(data, 50, 1, (2, 8))
+        motifs, num_dist, ht = MOMENTI(data, 50, 1, (2, 8))
         print(motifs)
     except Exception as e:
         print(e)
