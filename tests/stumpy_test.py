@@ -67,7 +67,7 @@ if __name__ == "__main__":
                 f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB"
             )
         else:
-            tracemalloc.start()
+            #tracemalloc.start()
             # Test for different window sizes in order to give an estimate on the full dataset
             for i in [1000000]:
                 # i = 0
@@ -77,8 +77,8 @@ if __name__ == "__main__":
                 m = stumpy.mstump(d_temp.T, windows[number])
                 #
                 end = time.perf_counter() - start
-                size, peak = tracemalloc.get_traced_memory()
+                #size, peak = tracemalloc.get_traced_memory()
                 print("Dataset", number, "prefix", i, "time elapsed:", end, "seconds")
-                print(
-                    f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB"
-                )
+                # print(
+                #     f"Current memory usage is {size / 10**6}MB; Peak was {peak / 10**6}MB"
+                # )

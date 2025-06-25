@@ -3,8 +3,8 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "LEITmotifs"
-version = "0.2.0"
+name = "MOMENTI"
+version = "0.2.5"
 description = "Scalable discovery of multidimensional motifs in time series"
 authors = [{ name = "Francesco Pio Monaco", email = "monacofran@dei.unipd.it" }]
 readme = "README.md"

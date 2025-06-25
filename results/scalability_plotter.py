@@ -18,9 +18,9 @@ if __name__ == "__main__":
     colors = ["dimgray", "crimson", "mediumseagreen", "cornflowerblue", "dimgray"]
     names = [
         "MSTUMP (synth)",
-        "LEIT-motifs (synth)",
-        "LEIT-motifs (easy)",
-        "LEIT-motifs (LTMM)",
+        "MOMENTI (synth)",
+        "MOMENTI (easy)",
+        "MOMENTI (LTMM)",
         "MSTUMP (LTMM)",
     ]
     num = [0, 1, 2, 3, 4]
@@ -83,7 +83,8 @@ if __name__ == "__main__":
     for text in legend.get_texts():
         text.set_text(r"\textsc{" + text.get_text() + "}")
     plt.minorticks_off()
-    axs.spines["left"].set_bounds(min(data["Time (s)"]), max(data["Time (s)"]))
+    leit_data = data[data["Algo"] == 3]
+    axs.spines["left"].set_bounds(min(data["Time (s)"]), max(leit_data["Time (s)"]))
     axs.spines["bottom"].set_bounds(min(data["Size"]), max(data["Size"]))
     # plt.show()
     plt.savefig("figures/scalability.pdf")

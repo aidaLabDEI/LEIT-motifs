@@ -3,7 +3,7 @@ import time
 
 sys.path.append("source")
 import stumpy
-from LEITmotifs import LEITmotifs
+from MOMENTI import LEITmotifs
 import numpy as np
 import pandas as pd
 

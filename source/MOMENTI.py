@@ -8,7 +8,7 @@ from base import create_shared_array
 from find_bin_width import find_width_discr
 
 
-def LEITmotifs(
+def MOMENTI(
     time_series: np.ndarray,
     window: int,
     k: int,
@@ -19,7 +19,7 @@ def LEITmotifs(
     r: int = 0,
 ) -> Tuple[list, int]:
     """
-    Find the motifs in a time series using the LEIT-motifs algorithm
+    Find the motifs in a time series using the MOMENTI algorithm
 
     Parameters
     ----------
@@ -30,7 +30,7 @@ def LEITmotifs(
     k : int
         The number of motifs to find
     motif_dimensionality_range : tuple
-        The range of the motif dimensionality, if the values are the same, the algorithm will use the base LEIT-motifs algorithm
+        The range of the motif dimensionality, if the values are the same, the algorithm will use the base MOMENTI algorithm
     L : int, optional
         The number of LSH repetitions, by default 200
     K : int, optional
@@ -156,9 +156,9 @@ if __name__ == "__main__":
     data = data.drop(data.columns[[0]], axis=1)
     data = np.ascontiguousarray(data.to_numpy())
     try:
-        motifs, num_dist = LEITmotifs(data, 50, 1, (8, 8))
+        motifs, num_dist = MOMENTI(data, 50, 1, (8, 8))
         print(motifs)
-        motifs, num_dist = LEITmotifs(data, 50, 1, (2, 8))
+        motifs, num_dist = MOMENTI(data, 50, 1, (2, 8))
         print(motifs)
     except Exception as e:
         print(e)
