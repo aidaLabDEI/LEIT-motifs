@@ -1,4 +1,4 @@
-# <div align = "center"> LEIT-motifs </div>
+# <div align = "center"> MOMENTI </div>
 <div align = "center"> <strong>Scalable discovery of multidimensional motifs in time series</strong>
 
 The algorithm employs Locality Sensitive Hashing `(LSH)` to prune the number of distance computations required to discover subdimensional motifs in multidimensional time series. </div>
@@ -36,15 +36,15 @@ from LEITmotifs import LEITmotifs
 # let Ts be a D-dimensional time series as a numpy array,
 # window the length of the motifs to discover,
 # and k the number of motifs to discover
-motifs, _ = LEITmotifs(Ts, window, k, (2,D))
+motifs, _ = MOMENTI(Ts, window, k, (2,D))
 # Find k multidimensional motifs that span d dimensions, d∈[2,D]:
-motifs, _ = LEITmotifs(Ts, window, k, (d,d))
+motifs, _ = MOMENTI(Ts, window, k, (d,d))
 ```
 
 ## Citing
 ```bibtex
-@article{ceccarello2025leitmotifs,
-  title={LEIT-motifs: Scalable Motif Mining in Multidimensional Time Series},
+@article{ceccarello2025momenti,
+  title={MOMENTI: Scalable Motif Mining in Multidimensional Time Series},
   author={Ceccarello, Matteo and Monaco, Francesco Pio and Silvestri, Francesco},
   journal={arXiv preprint arXiv:2502.14446},
   year={2025}
