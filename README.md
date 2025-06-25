@@ -13,7 +13,7 @@ The algorithm has **anytime** properties, computation can be stopped at any give
 
 **Discretized Random Projections LSH** has been implemented with the use of *tensoring* to minimize the hash evaluations.
 
-For general use the `LEITmotifs` function does all the heavy lifting (i.e., deals with NaN values, transforms the time series in the correct format for the algorithm, etc.).
+For general use the `MOMENTI` function does all the heavy lifting (i.e., deals with NaN values, transforms the time series in the correct format for the algorithm, etc.).
 
 We additionally include our implementation of the  *axis-aligned projection algorithm* introduced in the work of *[Minnen et al., 2007](https://faculty.cc.gatech.edu/~isbell/papers/minnen-icdm2007.pdf)*.
 
@@ -30,7 +30,7 @@ The `*_plotter.py` scripts in the folder `results` collect the raw results and p
 pip install git+https://github.com/aidaLabDEI/LEIT-motifs
 ```
 ```python
-from LEITmotifs import LEITmotifs
+from MOMENTI import MOMENTI
 # Example usage
 # Find k multidimensional motifs for each dimensionality from 2 to D:
 # let Ts be a D-dimensional time series as a numpy array,
