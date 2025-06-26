@@ -83,8 +83,8 @@ if __name__ == "__main__":
     for text in legend.get_texts():
         text.set_text(r"\textsc{" + text.get_text() + "}")
     plt.minorticks_off()
-    leit_data = data[data["Algo"] == 3]
-    axs.spines["left"].set_bounds(min(data["Time (s)"]), max(leit_data["Time (s)"]))
+    momenti_data = data[data["Algo"] == 3]
+    axs.spines["left"].set_bounds(min(data["Time (s)"]), max(momenti_data["Time (s)"]))
     axs.spines["bottom"].set_bounds(min(data["Size"]), max(data["Size"]))
     # plt.show()
     plt.savefig("figures/scalability.pdf")

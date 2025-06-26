@@ -248,7 +248,7 @@ if __name__ == "__main__":
     data = pd.read_csv("results/scalability.csv")
     fig, axs = plt.subplots(1, 1, figsize=(5, 3), layout="constrained")
     colors = ["dimgray", "cornflowerblue", "crimson", "mediumseagreen"]
-    names = ["MSTUMP","LEIT-motifs (medium)", "LEIT-motifs (hard)", "LEIT-motifs (easy)"]
+    names = ["MSTUMP","MOMENTI-motifs (medium)", "MOMENTI-motifs (hard)", "MOMENTI-motifs (easy)"]
     num = [0, 3, 1, 2]
     # Generate reference complexity curves
     size_range = np.logspace(np.log10(data["Size"].min()), np.log10(data["Size"].max()), 100)

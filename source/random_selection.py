@@ -75,7 +75,7 @@ def RP(
     SAX is tuned with this heuristic: when the matrix is too dense the dictionary is augmented, when the matrix is too sparse the words are shortened.
     This heuristic may drastically increase the computation time, since the old collision matrix is trashed.
     We swapped the original method to find the subdimensional motifs that required computing a distance distribution for each dimension with
-    the method used in :math:`LEIT-motifs`, this produces better results and removes the threshold input parameter that is difficult to tune manually on data.
+    the method used in :math:`MOMENTI-motifs`, this produces better results and removes the threshold input parameter that is difficult to tune manually on data.
 
     Parameters
     ----------

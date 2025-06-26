@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/aidaLabDEI/LEIT-motifs"
+Homepage = "https://github.com/aidaLabDEI/MOMENTI-motifs"
 Paper = "https://doi.org/10.48550/arXiv.2502.14446"
 
 [tool.setuptools]

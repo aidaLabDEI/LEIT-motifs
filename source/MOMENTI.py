@@ -55,7 +55,7 @@ def MOMENTI(
 
     Examples
     --------
-    >>> motifs, distance computations = leitmotifs(data, 50, 1, (2, 2))
+    >>> motifs, distance computations = MOMENTI(data, 50, 1, (2, 2))
     ([ [24, [98, [30, 250], [0, 5], [10, 14]]] ], 100, 10.5)
     """
 

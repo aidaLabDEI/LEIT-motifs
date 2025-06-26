@@ -66,7 +66,7 @@ def sum(a_name):
 if __name__ == "__main__":
     matplotlib.use("WebAgg")
     r"""
-    data = pd.read_csv("/home/monaco/bt_analysis/code/LEIT-motifs/Datasets/FOETAL_ECG.dat", sep=r"\s+")
+    data = pd.read_csv("/home/monaco/bt_analysis/code/MOMENTI-motifs/Datasets/FOETAL_ECG.dat", sep=r"\s+")
     data = data.to_numpy()
     print(data.shape)
     window= 50

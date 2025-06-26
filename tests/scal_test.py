@@ -3,7 +3,7 @@ import time
 
 sys.path.append("source")
 import stumpy
-from MOMENTI import LEITmotifs
+from MOMENTI import MOMENTI
 import numpy as np
 import pandas as pd
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     dataframe = pd.DataFrame(
         {"Algo": int(), "Size": int(), "Time (s)": float()}, index=[]
     )
-    # LEIT-motifs or Stumpy
+    # MOMENTI-motifs or Stumpy
     engines = [1]
     # Easy, medium or hard
     f = [1, 2, 3]
@@ -79,14 +79,14 @@ if __name__ == "__main__":
                                 np.random.normal(0, 0.1, (window, motif_dimensions))
                             )
 
-                    _, _, time_tot = LEITmotifs(
+                    _, _, time_tot = MOMENTI(
                         d, window, 1, (motif_dimensions, motif_dimensions)
                     )
                     dataframe = dataframe._append(
                         {"Algo": int(difficulty), "Size": int(n), "Time (s)": time_tot},
                         ignore_index=True,
                     )
-                    print("Time taken for LEIT-motifs with n = ", n, " is ", time_tot)
+                    print("Time taken for MOMENTI-motifs with n = ", n, " is ", time_tot)
             else:
                 d = d.T
                 time_tot = time.perf_counter()
