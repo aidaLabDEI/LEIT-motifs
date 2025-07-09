@@ -1,31 +1,17 @@
-# This CITATION.cff file was generated with cffinit.
-# Visit https://bit.ly/cffinit to generate yours today!
-
 cff-version: 1.2.0
-title: MOMENTI
-message: >-
-  If you use this software, please cite it using the
-  metadata from this file.
-type: software
+message: If you use this software, please cite it using the metadata from this file.
 authors:
-  - given-names: Matteo
-    family-names: Ceccarello
-    email: matteo.ceccarello@unipd.it
-    affiliation: Università degli Studi di Padova
-    orcid: 'https://orcid.org/0000-0003-2783-0218'
-  - given-names: Francesco Pio
-    family-names: Monaco
-    email: francescopio.monaco@unipd.it
-    affiliation: Università degli Studi di Padova
-    orcid: 'https://orcid.org/0009-0003-6341-3021'
-  - given-names: Francesco
-    family-names: Silvestri
-    email: francesco.silvestri@unipd.it
-    affiliation: Università degli Studi di Padova
-    orcid: 'https://orcid.org/0000-0002-9077-9921'
-identifiers:
-  - type: doi
-    value: 10.48550/arXiv.2502.14446
-    description: arXiv
-repository-code: 'https://github.com/aidaLabDEI/MOMENTI-motifs'
-license: AGPL-3.0
+  - family-names: Ceccarello
+    given-names: Matteo
+  - family-names: Monaco
+    given-names: Francesco Pio
+  - family-names: Silvestri
+    given-names: Francesco
+title: MOMENTI: Scalable Motif Mining in Multidimensional Time Series
+journal: PVLDB
+volume: 18
+issue: 10
+pages: 3463-3476
+date-published: 2025
+doi: 10.14778/3748191.3748208
+repository-code: https://github.com/aidaLabDEI/MOMENTI-motifs
