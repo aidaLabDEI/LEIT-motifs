@@ -11,7 +11,7 @@ title: MOMENTI: Scalable Motif Mining in Multidimensional Time Series
 journal: PVLDB
 volume: 18
 issue: 10
-pages: 3463-3476
+pages: "3463-3476"
 date-published: 2025
 doi: 10.14778/3748191.3748208
 repository-code: https://github.com/aidaLabDEI/MOMENTI-motifs
