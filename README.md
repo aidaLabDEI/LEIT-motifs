@@ -43,10 +43,15 @@ motifs, _ = MOMENTI(Ts, window, k, (d,d))
 
 ## Citing
 ```bibtex
-@article{ceccarello2025momenti,
-  title={MOMENTI: Scalable Motif Mining in Multidimensional Time Series},
-  author={Ceccarello, Matteo and Monaco, Francesco Pio and Silvestri, Francesco},
-  journal={arXiv preprint arXiv:2502.14446},
-  year={2025}
+@article{Ceccarello2025MOMENTI,
+  author = {Ceccarello, Matteo and Monaco, Francesco Pio and Silvestri, Francesco},
+  title = {{MOMENTI: Scalable Motif Mining in Multidimensional Time Series}},
+  journal = {PVLDB},
+  volume = {18},
+  number = {10},
+  pages = {3463--3476},
+  year = {2025},
+  doi = {10.14778/3748191.3748208},
+  url = {https://github.com/aidaLabDEI/MOMENTI-motifs}
 }
 ```
